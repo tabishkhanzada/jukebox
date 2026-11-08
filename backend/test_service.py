@@ -1,5 +1,6 @@
 """
 Unit Tests for Module 1: NASA Data Ingestion & Sanitization Engine
+Verifies authentic NASA POWER data processing, sentinel cleaning, and streak analysis.
 """
 
 import unittest
@@ -8,7 +9,6 @@ import numpy as np
 from backend.data_service import (
     clean_and_normalize_data,
     get_earth_data,
-    generate_synthetic_backup,
     PRESET_CITIES,
     PARAMETERS_METADATA
 )
@@ -51,26 +51,21 @@ class TestDataService(unittest.TestCase):
         self.assertEqual(norms[1], 0.5)
         self.assertEqual(norms[2], 1.0)
 
-    def test_synthetic_backup_generation(self):
-        synth = generate_synthetic_backup(
-            "TestCity",
-            {"lat": 30.0, "lon": 70.0},
-            "temperature",
-            2024,
-            PARAMETERS_METADATA["temperature"]
-        )
-        self.assertEqual(synth["status"], "fallback")
-        self.assertEqual(len(synth["dates"]), 366)
-        self.assertEqual(len(synth["values"]), 366)
-        self.assertEqual(len(synth["normalized"]), 366)
+    def test_rainfall_dry_spell_calculation(self):
+        # 3 rain days, followed by 5 consecutive dry days, then 1 rain day
+        values = [10.0, 5.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15.0]
+        dates = [f"2024-01-0{i+1}" for i in range(len(values))]
+        df = pd.DataFrame({"date": dates, "value": values})
+        _, insights = clean_and_normalize_data(df, "PRECTOTCORR")
+        self.assertEqual(insights["longest_dry_spell_days"], 5)
+        self.assertEqual(insights["heavy_rain_days"], 0)
 
-    def test_cached_fetch(self):
-        # Karachi was just fetched and cached
+    def test_cached_authentic_nasa_fetch(self):
+        # Karachi was fetched directly from NASA POWER API
         res = get_earth_data(city="Karachi", data_type="temperature", year=2024)
         self.assertEqual(res["status"], "success")
-        self.assertEqual(res["cached"], True)
+        self.assertEqual(res["data_source"], "NASA Langley Research Center POWER Project")
         self.assertEqual(len(res["dates"]), 366)
 
 if __name__ == "__main__":
     unittest.main()
-

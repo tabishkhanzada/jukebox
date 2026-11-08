@@ -20,7 +20,7 @@ from backend.data_service import (
     PARAMETERS_METADATA,
     CACHE_DIR
 )
-from backend.ai_service import generate_ai_climate_analysis
+from backend.ai_service import generate_climate_analysis
 
 app = FastAPI(
     title="NASA Earth Information Jukebox API",
@@ -142,7 +142,7 @@ def get_climate_data(
         )
         return data
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Data pipeline error: {str(e)}")
+        raise HTTPException(status_code=502, detail=f"NASA POWER API Error: {str(e)}")
 
 
 @app.get("/api/compare", tags=["Sonification Data"])
@@ -228,7 +228,7 @@ def get_climate_explanation(
     """
     try:
         data = get_earth_data(city=city, data_type=type, year=year)
-        explanation = generate_ai_climate_analysis(
+        explanation = generate_climate_analysis(
             city=data["city"],
             year=year,
             data_type=type,

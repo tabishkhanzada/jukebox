@@ -36,6 +36,8 @@ class EarthJukeboxApp {
       metricPills: document.querySelectorAll(".metric-pill"),
       
       // Header & Map Actions
+      errorBanner: document.getElementById("errorBanner"),
+      errorMessage: document.getElementById("errorMessage"),
       toggleMapBtn: document.getElementById("toggleMapBtn"),
       mapDrawer: document.getElementById("mapDrawer"),
       closeMapBtn: document.getElementById("closeMapBtn"),
@@ -340,12 +342,17 @@ class EarthJukeboxApp {
 
   /**
    * Primary Telemetry Ingestion Pipeline:
-   * Requests data from FastAPI backend or falls back to simulated offline data.
+   * Requests authentic Earth observations from the FastAPI backend / NASA POWER API.
+   * If an error occurs, displays authentic error diagnostics without simulating fake data.
    */
   async loadTelemetry(forceRefresh = false) {
     this.sonifier.stop();
     this.dom.fetchBtn.innerHTML = '<span class="btn-icon">⏳</span> Ingesting...';
     this.dom.fetchBtn.disabled = true;
+
+    if (this.dom.errorBanner) {
+      this.dom.errorBanner.classList.add("hidden");
+    }
 
     let url = `${API_BASE_URL}/data?type=${this.activeMetric}&year=${this.activeYear}&force_refresh=${forceRefresh}`;
     if (this.customCoords) {
@@ -356,10 +363,17 @@ class EarthJukeboxApp {
 
     try {
       const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        let errorDetail = `HTTP ${response.status} ${response.statusText}`;
+        try {
+          const errJson = await response.json();
+          if (errJson && errJson.detail) errorDetail = errJson.detail;
+        } catch (_) {}
+        throw new Error(errorDetail);
+      }
       const data = await response.json();
 
-      // If metric is temperature and not custom coordinates, pre-fetch rainfall for dual-track
+      // If metric is temperature and not custom coordinates, pre-fetch authentic rainfall for dual-track
       if (this.activeMetric === "temperature" && this.activeCity) {
         try {
           const rainUrl = `${API_BASE_URL}/data?city=${encodeURIComponent(this.activeCity)}&type=rainfall&year=${this.activeYear}`;
@@ -376,9 +390,11 @@ class EarthJukeboxApp {
 
       this.processDataSuccess(data);
     } catch (err) {
-      console.warn("Backend API request failed; activating client-side offline generator:", err);
-      const fallbackData = this.generateClientOfflineData();
-      this.processDataSuccess(fallbackData);
+      console.error("NASA POWER telemetry retrieval failed:", err);
+      if (this.dom.errorBanner && this.dom.errorMessage) {
+        this.dom.errorMessage.textContent = `NASA POWER Error: ${err.message}. Please verify coordinates, internet access, and ensure backend is running at ${API_BASE_URL.replace('/api', '')}.`;
+        this.dom.errorBanner.classList.remove("hidden");
+      }
     } finally {
       this.dom.fetchBtn.innerHTML = '<span class="btn-icon">⚡</span> Ingest Telemetry';
       this.dom.fetchBtn.disabled = false;
@@ -408,10 +424,8 @@ class EarthJukeboxApp {
     this.dom.chartHeading.textContent = `${data.city} — ${data.parameter_name} (${data.year})`;
     this.dom.climateTag.textContent = data.location.climate || "Global Observation Point";
     this.dom.cacheBadge.textContent = data.cached
-      ? "⚡ Cached NASA POWER Telemetry"
-      : data.status === "fallback"
-      ? "⚠️ Offline Simulated Dataset"
-      : "🛰️ Live Ingested from NASA POWER";
+      ? "⚡ Authentic NASA POWER Telemetry (Cached)"
+      : "🛰️ Live Ingested from NASA POWER API";
 
     // 4. Update Statistics Card
     const ins = data.insights;
@@ -437,7 +451,7 @@ class EarthJukeboxApp {
   }
 
   /**
-   * Fetch AI Climate Intelligence Briefing
+   * Fetch Climatological Analysis Briefing
    */
   async fetchAiBrief() {
     if (!this.currentData) return;
@@ -458,7 +472,7 @@ class EarthJukeboxApp {
         this.dom.aiBriefContainer.classList.remove("hidden");
       }
     } catch (e) {
-      console.warn("AI brief fetch failed:", e);
+      console.warn("Analysis brief fetch failed:", e);
     } finally {
       this.dom.generateAiBriefBtn.innerHTML = "<span>✨</span> Generate AI Brief";
       this.dom.generateAiBriefBtn.disabled = false;
@@ -518,77 +532,10 @@ class EarthJukeboxApp {
     const exportUrl = `${API_BASE_URL}/export?city=${encodeURIComponent(city)}&year=${year}&format=csv`;
     window.open(exportUrl, "_blank");
   }
-
-  /**
-   * Client-side offline fallback data generator
-   */
-  generateClientOfflineData() {
-    const year = this.activeYear;
-    const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-    const totalDays = isLeap ? 366 : 365;
-
-    const dates = [];
-    const values = [];
-    const normalized = [];
-
-    const startDate = new Date(year, 0, 1);
-    for (let i = 0; i < totalDays; i++) {
-      const cur = new Date(startDate.getTime() + i * 86400000);
-      const iso = cur.toISOString().split("T")[0];
-      dates.push(iso);
-
-      const rad = (i / totalDays) * 2 * Math.PI;
-      let val = 0;
-      if (this.activeMetric === "temperature") {
-        val = 24.0 - 10.0 * Math.cos(rad) + (Math.random() - 0.5) * 2.5;
-      } else if (this.activeMetric === "rainfall") {
-        val = Math.random() < 0.18 ? Math.random() * 35.0 : 0.0;
-      } else {
-        val = 4.0 + Math.random() * 6.0;
-      }
-      values.push(parseFloat(val.toFixed(2)));
-    }
-
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const mean = parseFloat((values.reduce((a, b) => a + b, 0) / values.length).toFixed(2));
-
-    for (let v of values) {
-      normalized.push(parseFloat(((v - min) / (max - min || 1)).toFixed(4)));
-    }
-
-    const maxIdx = values.indexOf(max);
-    const minIdx = values.indexOf(min);
-
-    return {
-      status: "fallback",
-      city: this.activeCity || "Local Observation",
-      identifier: "client_fallback",
-      location: { climate: "Simulated Climate Model" },
-      data_type: this.activeMetric,
-      parameter_code: this.activeMetric === "temperature" ? "T2M" : "PRECTOTCORR",
-      parameter_name: this.activeMetric === "temperature" ? "Air Temperature at 2m" : "Precipitation",
-      unit: this.activeMetric === "temperature" ? "°C" : "mm/day",
-      year: year,
-      dates: dates,
-      values: values,
-      normalized: normalized,
-      insights: {
-        min: min,
-        max: max,
-        mean: mean,
-        std: 5.2,
-        peak_record: { date: dates[maxIdx], value: max },
-        trough_record: { date: dates[minIdx], value: min },
-        total_days: totalDays
-      },
-      narrative: `Simulated offline climate model for ${year}. Peak observed on ${dates[maxIdx]} at ${max}. Audio sonification active.`,
-      cached: false
-    };
-  }
 }
 
 // Boot application when DOM is ready
 window.addEventListener("DOMContentLoaded", () => {
   window.earthJukebox = new EarthJukeboxApp();
 });
+

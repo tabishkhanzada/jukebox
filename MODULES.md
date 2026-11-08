@@ -15,7 +15,7 @@
 - [x] Implement multi-tier local file caching in `backend/cache/`
 - [x] Calculate statistical climate intelligence (mean, min, max, peak date, rain streaks)
 - [x] Generate automated human-readable climate stories and narratives
-- [x] Build offline simulation fallback for zero-downtime presentations
+- [x] Authentic NASA POWER API data fetching with robust error handling (no fake synthetic data)
 - [x] Pre-warm cache for preset cities (Karachi, Lahore, London, New York, Dubai, Tokyo)
 - [x] Add CSV/JSON dataset export serializer for research downloads
 

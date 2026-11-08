@@ -161,10 +161,18 @@ def clean_and_normalize_data(df: pd.DataFrame, param_code: str) -> Tuple[pd.Data
         insights["rain_days_count"] = int(len(rain_days))
         insights["total_rainfall"] = round(float(df["value"].sum()), 2)
         insights["heavy_rain_days"] = int(len(df[df["value"] > 15.0]))
+        
+        # Real streak calculation (longest dry spell)
+        is_dry = df["value"] <= 0.1
+        dry_groups = (~is_dry).cumsum()[is_dry]
+        insights["longest_dry_spell_days"] = int(dry_groups.value_counts().max()) if not dry_groups.empty else 0
     elif param_code == "T2M":
         insights["days_above_35c"] = int(len(df[df["value"] > 35.0]))
         insights["days_below_0c"] = int(len(df[df["value"] < 0.0]))
         insights["temp_range"] = round(vmax - vmin, 2)
+    elif param_code == "WS2M":
+        insights["windy_days_above_8ms"] = int(len(df[df["value"] > 8.0]))
+        insights["calm_days_below_2ms"] = int(len(df[df["value"] < 2.0]))
 
     return df, insights
 
@@ -281,13 +289,15 @@ def get_earth_data(
         except Exception as e:
             logger.warning(f"Failed reading cache file {cache_file}: {e}. Will refetch.")
 
-    # 4. Fetch from NASA POWER API
+    # 4. Fetch from NASA POWER API (100% Real Earth Observation Telemetry)
     try:
         raw_dict = fetch_nasa_power_data(target_lat, target_lon, year, param_code)
     except Exception as e:
-        logger.error(f"NASA POWER API request failed: {e}")
-        # If fetch fails, check if we have ANY backup or generate a realistic fallback
-        return generate_synthetic_backup(city_display, location_meta, data_type, year, param_meta, error_msg=str(e))
+        logger.error(f"NASA POWER API request failed for {identifier} ({year}): {e}")
+        raise RuntimeError(
+            f"Failed to retrieve authentic NASA POWER data for {city_display} ({year}): {str(e)}. "
+            f"Please verify internet connection or check NASA POWER service availability."
+        )
 
     # 5. Process into DataFrame
     df = pd.DataFrame({
@@ -324,88 +334,24 @@ def get_earth_data(
         "cached": False
     }
 
-    # 8. Save to Cache
+    # 8. Save to Cache for offline reproducibility
     try:
         with open(cache_file, "w", encoding="utf-8") as f:
             result_to_cache = dict(result)
             result_to_cache["cached"] = True
             json.dump(result_to_cache, f, indent=2)
-            logger.info(f"Cached successfully: {cache_file}")
+            logger.info(f"Cached authentic NASA telemetry: {cache_file}")
     except Exception as e:
         logger.warning(f"Could not write cache file: {e}")
 
     return result
 
 
-def generate_synthetic_backup(
-    city_name: str,
-    location_meta: Dict[str, Any],
-    data_type: str,
-    year: int,
-    param_meta: Dict[str, Any],
-    error_msg: str = ""
-) -> Dict[str, Any]:
-    """
-    Offline failsafe: If NASA POWER is completely unreachable or offline during a live demo,
-    generates statistically accurate astronomical curve for the location and year so the
-    presentation and music playback never crash.
-    """
-    logger.warning(f"Using offline synthetic fallback for {city_name} {year} ({error_msg})")
-    dates = pd.date_range(start=f"{year}-01-01", end=f"{year}-12-31", freq="D").strftime("%Y-%m-%d").tolist()
-    n = len(dates)
-    t = np.linspace(0, 2 * np.pi, n)
-
-    lat = location_meta.get("lat", 30.0)
-    # Seasonal phase shift depends on hemisphere
-    phase = 0 if lat >= 0 else np.pi
-
-    if data_type == "temperature":
-        base_temp = 20.0 - (abs(lat) * 0.25)
-        amplitude = 12.0 * np.cos(np.radians(lat))
-        values = base_temp - amplitude * np.cos(t - phase) + np.random.normal(0, 1.2, n)
-        values = np.round(values, 2)
-    elif data_type == "rainfall":
-        # Sporadic rain spikes
-        rain_prob = 0.15
-        rain_mask = np.random.random(n) < rain_prob
-        values = np.where(rain_mask, np.random.exponential(12.0, n), 0.0)
-        values = np.round(values, 2)
-    else:
-        values = np.round(np.random.normal(4.5, 1.5, n).clip(0.5, 15.0), 2)
-
-    vmin, vmax = float(values.min()), float(values.max())
-    normalized = (values - vmin) / (vmax - vmin) if vmax > vmin else np.full(n, 0.5)
-
-    df_synth = pd.DataFrame({"date": dates, "value": values, "normalized": np.round(normalized, 4)})
-    _, insights = clean_and_normalize_data(df_synth, param_meta["param_code"])
-    narrative = generate_climate_narrative(city_name, data_type, year, insights)
-
-    return {
-        "status": "fallback",
-        "notice": "Offline simulated climate data (NASA POWER API unreachable)",
-        "error_details": error_msg,
-        "city": city_name,
-        "identifier": city_name,
-        "location": location_meta,
-        "data_type": data_type,
-        "parameter_code": param_meta["param_code"],
-        "parameter_name": param_meta["name"],
-        "unit": param_meta["unit"],
-        "year": year,
-        "dates": dates,
-        "values": values.tolist(),
-        "normalized": normalized.round(4).tolist(),
-        "insights": insights,
-        "narrative": narrative,
-        "data_source": "Simulated Earth Model (Offline Mode)",
-        "cached": False
-    }
-
-
 if __name__ == "__main__":
-    print("Testing Module 1 Data Service...")
+    print("Testing Module 1 Data Service with authentic NASA POWER API...")
     sample = get_earth_data(city="Karachi", data_type="temperature", year=2024)
     print(f"City: {sample['city']}, Year: {sample['year']}, Data points: {len(sample['dates'])}")
     print(f"Min: {sample['insights']['min']}°C, Max: {sample['insights']['max']}°C, Mean: {sample['insights']['mean']}°C")
     print("Narrative:", sample["narrative"])
+
 
