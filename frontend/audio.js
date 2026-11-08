@@ -18,6 +18,8 @@ class EarthSonifier {
     this.data = null;
     this.secondaryData = null; // Authentic rainfall data for dual-track
     this.dualTrackEnabled = false;
+    this.compareData = null; // Authentic City 2 data for comparative sonification
+    this.compareMode = false;
     this.pitchMode = "planetary"; // "planetary" (True absolute physical scale) or "seasonal" (Local dynamic range)
 
     // Drift-free scheduling timer state
@@ -113,6 +115,13 @@ class EarthSonifier {
       // 1. Melody Synthesizer for Temperature / Primary pitch
       this.buildMelodySynth(this.currentInstrumentKey);
 
+      // Comparative Synthesizer for Dual-City side-by-side sonification
+      this.compareSynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.02, decay: 0.22, sustain: 0.1, release: 0.25 }
+      }).connect(this.reverb);
+      this.compareSynth.volume.value = -3.5;
+
       // 2. Percussion Synthesizer for Rainfall / Drum hits
       this.rainSynth = new Tone.MembraneSynth({
         pitchDecay: 0.05,
@@ -205,6 +214,11 @@ class EarthSonifier {
 
   setDualTrack(enabled) {
     this.dualTrackEnabled = enabled;
+  }
+
+  setCompareData(compareData, enabled = true) {
+    this.compareData = compareData;
+    this.compareMode = enabled && compareData !== null;
   }
 
   setPitchMode(mode) {
