@@ -32,10 +32,10 @@ The UI is inspired by modern space control consoles (NASA Goddard, James Webb Sp
 | `--text-primary` | `#f8fafc` | Headings, active values, primary labels |
 | `--text-secondary` | `#94a3b8` | Subtitles, parameter names, helper text |
 | `--text-muted` | `#64748b` | Units, fine timestamps, footnotes |
-| `--accent-cyan` | `#38bdf8` | Neon telemetry, precipitation, active pills |
+| `--accent-cyan` | `#38bdf8` | Neon telemetry, precipitation, active pills, live datastream status dot |
+| `--accent-blue` | `#0ea5e9` | Secondary telemetry accent and glowing badges |
 | `--accent-amber` | `#f59e0b` | Temperature warm peaks, primary Play button |
 | `--accent-warm` | `#ea580c` | Heatwave indicators, peak records |
-| `--accent-emerald` | `#10b981` | Real-time live datastream status dot |
 | `--accent-violet` | `#8b5cf6` | AI science brief button and container |
 
 ### Typography Scale
