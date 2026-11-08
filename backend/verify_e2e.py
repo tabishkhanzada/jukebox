@@ -10,7 +10,7 @@ assert "The Earth Information Jukebox" in r_root.text
 print("✓ Root index.html served correctly")
 
 # 2. Static files check at root path
-for asset in ["style.css", "audio.js", "chart.js", "app.js"]:
+for asset in ["style.css", "globe.js", "audio.js", "chart.js", "app.js"]:
     r_asset = client.get(f"/{asset}")
     assert r_asset.status_code == 200, f"Asset /{asset} failed: {r_asset.status_code}"
     print(f"✓ Static asset /{asset} loaded ({len(r_asset.text)} bytes)")

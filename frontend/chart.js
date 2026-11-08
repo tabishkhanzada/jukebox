@@ -39,19 +39,19 @@ class ClimateChartEngine {
         ctx.beginPath();
         ctx.moveTo(x, topY);
         ctx.lineTo(x, bottomY);
-        ctx.lineWidth = 2.5;
-        ctx.strokeStyle = "#38bdf8"; // Neon Sky Blue
-        ctx.shadowColor = "#0ea5e9";
-        ctx.shadowBlur = 14;
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#ff5722"; // Mars Solar Orange Playhead
+        ctx.shadowColor = "#ff7043";
+        ctx.shadowBlur = 12;
         ctx.stroke();
 
         // 2. Draw glowing tracking ring at data point
         ctx.beginPath();
-        ctx.arc(x, point.y, 6.5, 0, 2 * Math.PI);
+        ctx.arc(x, point.y, 5, 0, 2 * Math.PI);
         ctx.fillStyle = "#ffffff";
         ctx.fill();
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = "#38bdf8";
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = "#ff5722";
         ctx.stroke();
 
         ctx.restore();
@@ -96,16 +96,16 @@ class ClimateChartEngine {
     // Setup color gradients
     let gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
     if (isRainfall) {
-      gradient.addColorStop(0, "rgba(56, 189, 248, 0.65)");
-      gradient.addColorStop(1, "rgba(2, 132, 199, 0.02)");
+      gradient.addColorStop(0, "rgba(56, 189, 248, 0.45)");
+      gradient.addColorStop(1, "rgba(2, 132, 199, 0.01)");
     } else {
-      gradient.addColorStop(0, "rgba(249, 115, 22, 0.7)");
-      gradient.addColorStop(0.5, "rgba(59, 130, 246, 0.35)");
-      gradient.addColorStop(1, "rgba(14, 165, 233, 0.03)");
+      gradient.addColorStop(0, "rgba(255, 87, 34, 0.45)");
+      gradient.addColorStop(0.5, "rgba(234, 88, 12, 0.15)");
+      gradient.addColorStop(1, "rgba(255, 87, 34, 0.00)");
     }
 
     // Chart.js labels (Clean month tags)
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
     const formattedLabels = earthData.dates.map((d, i) => {
       if (d.endsWith("-01") || i === 0 || i === earthData.dates.length - 1) {
         const parts = d.split("-");
@@ -121,15 +121,15 @@ class ClimateChartEngine {
         type: isRainfall ? "bar" : "line",
         label: `${earthData.parameter_name} (${earthData.unit})`,
         data: earthData.values,
-        borderColor: isRainfall ? "#38bdf8" : "#f59e0b",
-        borderWidth: isRainfall ? 1.5 : 2.5,
+        borderColor: isRainfall ? "#38bdf8" : "#ff5722",
+        borderWidth: 2,
         backgroundColor: gradient,
         fill: true,
         tension: 0.35,
         pointRadius: 0,
-        pointHoverRadius: 5,
+        pointHoverRadius: 4,
         pointHoverBackgroundColor: "#ffffff",
-        pointHoverBorderColor: "#38bdf8",
+        pointHoverBorderColor: "#ff5722",
         yAxisID: "y"
       }
     ];
@@ -151,12 +151,12 @@ class ClimateChartEngine {
     const scalesConfig = {
       x: {
         grid: {
-          color: "rgba(255, 255, 255, 0.05)",
+          color: "rgba(255, 255, 255, 0.04)",
           drawBorder: false
         },
         ticks: {
-          color: "#94a3b8",
-          font: { family: "Inter, system-ui, sans-serif", size: 11 },
+          color: "rgba(255, 255, 255, 0.45)",
+          font: { family: "'JetBrains Mono', monospace", size: 10 },
           maxRotation: 0,
           autoSkip: false
         }
@@ -166,12 +166,12 @@ class ClimateChartEngine {
         display: true,
         position: "left",
         grid: {
-          color: "rgba(255, 255, 255, 0.07)",
+          color: "rgba(255, 255, 255, 0.04)",
           drawBorder: false
         },
         ticks: {
-          color: "#94a3b8",
-          font: { family: "Inter, system-ui, sans-serif", size: 11 },
+          color: "rgba(255, 255, 255, 0.45)",
+          font: { family: "'JetBrains Mono', monospace", size: 10 },
           callback: (val) => `${val} ${earthData.unit}`
         }
       }
@@ -214,17 +214,19 @@ class ClimateChartEngine {
             }
           },
           tooltip: {
-            backgroundColor: "rgba(15, 23, 42, 0.95)",
-            titleColor: "#94a3b8",
-            bodyColor: "#f8fafc",
-            borderColor: "rgba(56, 189, 248, 0.3)",
+            backgroundColor: "rgba(10, 10, 14, 0.95)",
+            titleColor: "#ff7043",
+            titleFont: { family: "'JetBrains Mono', monospace", size: 11 },
+            bodyColor: "#ffffff",
+            bodyFont: { family: "'JetBrains Mono', monospace", size: 12 },
+            borderColor: "rgba(255, 87, 34, 0.4)",
             borderWidth: 1,
             padding: 10,
             displayColors: true,
             callbacks: {
               title: (items) => {
                 const idx = items[0].dataIndex;
-                return `Date: ${earthData.dates[idx]}`;
+                return `UTC DATE: ${earthData.dates[idx]}`;
               }
             }
           }

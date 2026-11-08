@@ -3,320 +3,321 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Earth Information Jukebox | NASA Space Apps</title>
+  <title>NASA Science | The Earth Information Jukebox</title>
   
-  <!-- Fonts -->
+  <!-- Fonts: Space Grotesk, JetBrains Mono, Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Three.js for 3D Planetary Particle Sphere -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   
   <!-- Tone.js for Web Audio Synthesis -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
   
-  <!-- Chart.js for Interactive Climate Visualization -->
+  <!-- Chart.js for Timeline Visualization -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   
-  <!-- Leaflet for Interactive Earth Map Selection -->
+  <!-- Leaflet for Global Map Picker -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <!-- Ambient Cosmic Background Glows -->
-  <div class="cosmos-glow glow-1"></div>
-  <div class="cosmos-glow glow-2"></div>
+<body class="nasa-theme">
+  <!-- Cosmic Background Horizon Glow -->
+  <div class="space-backdrop">
+    <div class="nebula-glow glow-solar"></div>
+    <div class="nebula-glow glow-cyan"></div>
+    <div class="stardust-overlay"></div>
+  </div>
 
-  <div class="app-container">
-    <!-- Mission Header -->
-    <header class="mission-header">
-      <div class="branding">
-        <div class="nasa-insignia">
-          <span class="meatball-dot"></span>
-          <span class="agency-tag">NASA SPACE APPS CHALLENGE</span>
+  <div class="nasa-app-viewport">
+    <!-- Top Mission Control Navigation Bar (Matching NASA Reference Photo) -->
+    <header class="nasa-top-bar">
+      <div class="nav-left">
+        <!-- NASA Wordmark Logo -->
+        <div class="nasa-brand-group">
+          <svg class="nasa-logo-svg" viewBox="0 0 112 32" fill="currentColor" aria-label="NASA">
+            <path d="M7.4 30.5V1.5H1.6V30.5H7.4ZM23.8 30.5V8.8L12.4 30.5H8.3V1.5H14.1V23.2L25.5 1.5H29.6V30.5H23.8ZM39.6 30.5H33.8V1.5H39.6V30.5ZM53.6 1.5H41.6V7.3H53.6V1.5ZM53.6 13.1H41.6V18.9H53.6V13.1ZM53.6 24.7H41.6V30.5H53.6V24.7ZM71.2 1.5H57.2V30.5H63V18.9H71.2C76 18.9 79.8 15 79.8 10.2C79.8 5.4 76 1.5 71.2 1.5ZM71.2 13.1H63V7.3H71.2C72.8 7.3 74 8.6 74 10.2C74 11.8 72.8 13.1 71.2 13.1ZM99.8 1.5H85.8V30.5H91.6V18.9H99.8C104.6 18.9 108.4 15 108.4 10.2C108.4 5.4 104.6 1.5 99.8 1.5ZM99.8 13.1H91.6V7.3H99.8C101.4 7.3 102.6 8.6 102.6 10.2C102.6 11.8 101.4 13.1 99.8 13.1Z"/>
+          </svg>
         </div>
-        <h1 class="project-title">The Earth Information <span class="gradient-text">Jukebox</span></h1>
-        <p class="project-subtitle">Translating NASA Earth Observation satellite telemetry into dynamic music & living charts.</p>
+
+        <div class="mission-title-group">
+          <span class="mission-star">✦</span>
+          <div class="mission-text-stack">
+            <span class="agency-title">NASA SCIENCE</span>
+            <span class="mission-name">EARTH INFORMATION JUKEBOX</span>
+          </div>
+        </div>
       </div>
 
-      <div class="header-actions">
-        <button id="toggleMapBtn" class="pill-btn-outline" title="Open interactive Earth satellite map picker">
-          <span>🗺️</span> Global Map
+      <div class="nav-right">
+        <!-- Quick Station Menu Trigger -->
+        <button id="stationDropdownBtn" class="nav-pill-btn">
+          <span>STATIONS</span>
+          <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
         </button>
-        <button id="exportCsvBtn" class="pill-btn-outline" title="Export clean dataset as CSV for research">
-          <span>📥</span> Export CSV
+
+        <!-- World Map Toggle -->
+        <button id="toggleMapBtn" class="nav-icon-btn" title="Open Interactive Satellite Map">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
         </button>
-        <button id="recordAudioBtn" class="pill-btn-outline" title="Record and download this year's sonification track">
-          <span id="recordDot" class="record-dot"></span> <span id="recordText">Download Audio</span>
+
+        <!-- Data Export Button -->
+        <button id="exportCsvBtn" class="nav-icon-btn" title="Export Cleaned Research CSV">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>
-        <div class="telemetry-status">
-          <span class="status-indicator live"></span>
-          <span class="status-label">DATASTREAM LIVE</span>
-          <span class="mission-badge">POWER v2.0</span>
-        </div>
+
+        <!-- Audio Recording Button -->
+        <button id="recordAudioBtn" class="nav-record-btn" title="Record Sonified Web Audio Track (.webm)">
+          <span id="recordDot" class="record-pulse-dot"></span>
+          <span id="recordText">AUDIO</span>
+        </button>
+
+        <!-- Mission Control Drawer Toggle -->
+        <button id="toggleControlsBtn" class="nav-hamburger-btn" title="Toggle Controls Deck">
+          <span class="hamburger-bar"></span>
+          <span class="hamburger-bar"></span>
+        </button>
       </div>
     </header>
 
-    <!-- Global Earth Map Drawer (Collapsible) -->
-    <section id="mapDrawer" class="map-drawer card-surface hidden">
-      <div class="drawer-header">
-        <h3 class="drawer-title">🌍 NASA Earth Satellite Coordinate Picker</h3>
-        <button id="closeMapBtn" class="close-btn" title="Close Map">&times;</button>
-      </div>
-      <p class="drawer-desc">Click anywhere on the planet (Amazon, Sahara, Arctic, Himalayas) to drop an observation pin and stream real NASA climate telemetry.</p>
-      <div id="earthMap" class="leaflet-map-frame"></div>
-    </section>
+    <!-- Error Diagnostic Banner (100% Real, Honest Feedback) -->
+    <div id="errorBanner" class="nasa-error-banner hidden">
+      <span class="error-badge">TELEMETRY ERROR</span>
+      <span id="errorMessage" class="error-msg"></span>
+    </div>
 
-    <!-- Mission Control Bar: Selection & Parameters -->
-    <section class="control-deck">
-      <div id="errorBanner" class="error-banner hidden">
-        <span class="error-icon">⚠️</span>
-        <span id="errorMessage" class="error-text"></span>
+    <!-- Main Visual Stage (3D Planetary Particle Horizon matching Reference Image) -->
+    <main class="planetary-stage">
+      <!-- 3D WebGL Canvas Container -->
+      <div id="globeCanvasContainer" class="globe-canvas-frame"></div>
+
+      <!-- Station Telemetry Reticle Tag (Anchored to Horizon) -->
+      <div class="reticle-telemetry-hud">
+        <div class="reticle-label font-mono" id="heroReticleTag">STATION: KARACHI / 24.86°N 67.01°E</div>
+        <div class="reticle-sub font-mono" id="heroReticleSol">SOL 2024 • MSL 00:02:12:00</div>
       </div>
-      <div class="deck-row">
-        <!-- City Selector -->
-        <div class="control-group">
-          <label for="citySelect"><span class="label-icon">📍</span> TARGET LOCATION</label>
-          <select id="citySelect" class="styled-select">
-            <option value="Karachi" selected>Karachi (Pakistan)</option>
-            <option value="Lahore">Lahore (Pakistan)</option>
-            <option value="London">London (United Kingdom)</option>
-            <option value="New York">New York (United States)</option>
-            <option value="Dubai">Dubai (United Arab Emirates)</option>
-            <option value="Tokyo">Tokyo (Japan)</option>
-            <option value="Nairobi">Nairobi (Kenya)</option>
-            <option value="custom">⚡ Custom Coordinates...</option>
+
+      <!-- Floating Central Audio & Scrubber Transport Bar -->
+      <div class="hero-transport-dock">
+        <button id="restartBtn" class="transport-circle-btn" title="Restart (Jan 1)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        </button>
+
+        <button id="playBtn" class="transport-main-play" title="Play Sonification">
+          <span class="play-icon-shape">▶</span>
+          <span class="play-text font-mono">PLAY</span>
+        </button>
+
+        <button id="pauseBtn" class="transport-circle-btn" title="Pause">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </button>
+
+        <div class="speed-pill-group">
+          <span class="speed-label font-mono">TEMPO</span>
+          <select id="speedRange" class="speed-select font-mono">
+            <option value="0.5">0.5x</option>
+            <option value="1.0" selected>1.0x</option>
+            <option value="1.5">1.5x</option>
+            <option value="2.0">2.0x</option>
+            <option value="2.5">2.5x</option>
           </select>
         </div>
 
-        <!-- Custom Coordinates Bar (Collapsible) -->
-        <div id="customCoordInputs" class="custom-coord-panel hidden">
-          <div class="input-pair">
-            <label>Lat:</label>
-            <input type="number" id="customLat" placeholder="24.86" step="0.01" min="-90" max="90">
-          </div>
-          <div class="input-pair">
-            <label>Lon:</label>
-            <input type="number" id="customLon" placeholder="67.01" step="0.01" min="-180" max="180">
-          </div>
-          <button id="applyCoordsBtn" class="pill-btn">Apply</button>
-        </div>
-
-        <!-- Metric Toggle Pills -->
-        <div class="control-group">
-          <label><span class="label-icon">📡</span> CLIMATE METRIC</label>
-          <div class="pill-toggle-group">
-            <button class="metric-pill active" data-metric="temperature">🌡️ Temp (°C)</button>
-            <button class="metric-pill" data-metric="rainfall">🌧️ Rain (mm)</button>
-            <button class="metric-pill" data-metric="wind">💨 Wind (m/s)</button>
-          </div>
-        </div>
-
-        <!-- Year Selector -->
-        <div class="control-group">
-          <label for="yearSelect"><span class="label-icon">📅</span> OBSERVATION YEAR</label>
-          <select id="yearSelect" class="styled-select">
-            <option value="2024" selected>2024</option>
-            <option value="2023">2023</option>
-            <option value="2022">2022</option>
-            <option value="2021">2021</option>
-            <option value="2020">2020</option>
-            <option value="2015">2015</option>
-            <option value="2010">2010</option>
-            <option value="2000">2000</option>
+        <div class="pitch-mode-pill">
+          <select id="pitchModeSelect" class="pitch-select font-mono" title="Toggle Absolute vs Local Contrast">
+            <option value="planetary" selected>TRUE °C (PLANETARY)</option>
+            <option value="seasonal">SEASONAL CONTRAST</option>
           </select>
         </div>
-
-        <!-- Action / Fetch Button -->
-        <div class="control-group btn-align">
-          <button id="fetchDataBtn" class="action-btn glow-btn">
-            <span class="btn-icon">⚡</span> Ingest Telemetry
-          </button>
-        </div>
       </div>
 
-      <!-- Audio Synthesizer Settings Toolbar -->
-      <div class="deck-row audio-settings-deck">
-        <div class="audio-setting-item">
-          <label for="scaleSelect">Musical Scale:</label>
-          <select id="scaleSelect" class="mini-select">
-            <option value="pentatonic_major" selected>C Major Pentatonic (Luminous)</option>
-            <option value="lydian_celestial">Lydian Celestial (Space Ambient)</option>
-            <option value="minor_pentatonic">Minor Pentatonic (Atmospheric)</option>
-            <option value="akebono_meditative">Akebono (Meditative)</option>
-          </select>
-        </div>
-
-        <div class="audio-setting-item">
-          <label for="instrumentSelect">Timbre:</label>
-          <select id="instrumentSelect" class="mini-select">
-            <option value="space_synth" selected>Space PolySynth</option>
-            <option value="marimba">Acoustic Marimba</option>
-            <option value="ambient_pad">Warm Atmospheric Pad</option>
-          </select>
-        </div>
-
-        <div class="audio-setting-item">
-          <label for="pitchModeSelect">Pitch Mode:</label>
-          <select id="pitchModeSelect" class="mini-select" title="Switch between absolute planetary scale (true comparative °C) and local seasonal contrast">
-            <option value="planetary" selected>Planetary Scale (True Absolute °C)</option>
-            <option value="seasonal">Local Contrast (City Min/Max)</option>
-          </select>
-        </div>
-
-        <!-- Dual Track Toggle -->
-        <div class="audio-setting-item checkbox-item">
-          <label class="switch-label">
-            <input type="checkbox" id="dualTrackToggle" checked>
-            <span class="switch-custom"></span>
-            <span>Dual-Track (Layer Rain Beat)</span>
-          </label>
-        </div>
-
-        <div class="audio-setting-item">
-          <label for="speedRange">Tempo: <span id="speedDisplay">1.0x</span></label>
-          <input type="range" id="speedRange" min="0.5" max="2.5" step="0.25" value="1.0" class="styled-range">
-        </div>
-
-        <div class="audio-setting-item">
-          <label for="volumeRange">Volume: <span id="volumeDisplay">-3 dB</span></label>
-          <input type="range" id="volumeRange" min="-25" max="3" step="1" value="-3" class="styled-range">
-        </div>
-      </div>
-    </section>
-
-    <!-- Live Telemetry HUD Bar -->
-    <section class="telemetry-hud">
-      <div class="hud-card">
-        <span class="hud-label">CALENDAR DATE</span>
-        <div class="hud-value-group">
-          <span id="hudDate" class="hud-value font-mono">2024-01-01</span>
-          <span id="hudDayOfYear" class="hud-sub">Day 1 / 366</span>
-        </div>
-      </div>
-
-      <div class="hud-card highlight-card">
-        <span class="hud-label">TELEMETRY MEASUREMENT</span>
-        <div class="hud-value-group">
-          <span id="hudValue" class="hud-value font-mono">--</span>
-          <span id="hudUnit" class="hud-unit">°C</span>
-        </div>
-      </div>
-
-      <div class="hud-card">
-        <span class="hud-label">SYNTHESIZED NOTE</span>
-        <div class="hud-value-group">
-          <span id="hudNote" class="hud-value font-mono accent-note">--</span>
-          <span id="hudFreq" class="hud-sub">0 Hz</span>
-        </div>
-      </div>
-
-      <div class="hud-card visualizer-card">
-        <span class="hud-label">RESONANCE VISUALIZER</span>
-        <canvas id="audioVisualizer" class="orbit-visualizer" width="160" height="48"></canvas>
-      </div>
-    </section>
-
-    <!-- Main Chart & Timeline Scrubbing Viewport -->
-    <main class="chart-viewport card-surface">
-      <div class="viewport-header">
-        <div class="chart-title-area">
-          <h2 id="chartHeading" class="viewport-title">Karachi — Daily Air Temperature (2024)</h2>
-          <span id="climateTag" class="climate-badge">Arid / Subtropical Coastal</span>
-        </div>
-
-        <!-- Master Transport Audio Controls -->
-        <div class="transport-controls">
-          <button id="playBtn" class="transport-btn primary-play" title="Play Sonification">
-            <span class="transport-icon">▶</span> <span class="play-text">PLAY</span>
-          </button>
-          <button id="pauseBtn" class="transport-btn" title="Pause">
-            <span class="transport-icon">⏸</span>
-          </button>
-          <button id="restartBtn" class="transport-btn" title="Restart to January 1">
-            <span class="transport-icon">⏮</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Chart.js Canvas -->
-      <div class="canvas-wrapper">
+      <!-- Minimalist Synchronized Timeline Waveform (Chart.js) -->
+      <div class="hero-chart-container">
         <canvas id="climateChart"></canvas>
-      </div>
-
-      <!-- Instruction Hint -->
-      <div class="chart-footer-hint">
-        <span>💡 Click anywhere on the chart timeline to scrub audio and inspect specific calendar dates.</span>
-        <span id="cacheBadge" class="cached-indicator">⚡ Cached NASA POWER Telemetry</span>
       </div>
     </main>
 
-    <!-- Climate Intelligence & Analytical Storyboard -->
-    <section class="intelligence-grid">
-      <!-- Analytical Summary Card -->
-      <div class="intel-card card-surface">
-        <h3 class="intel-title"><span class="intel-icon">📊</span> Telemetry Statistics</h3>
-        <div class="stats-grid">
-          <div class="stat-box">
-            <span class="stat-name">Annual Mean</span>
-            <span id="statMean" class="stat-num font-mono">--</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-name">Maximum Peak</span>
-            <span id="statMax" class="stat-num font-mono text-warm">--</span>
-            <span id="statMaxDate" class="stat-sub">--</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-name">Minimum Trough</span>
-            <span id="statMin" class="stat-num font-mono text-cool">--</span>
-            <span id="statMinDate" class="stat-sub">--</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-name">Total Swing Range</span>
-            <span id="statRange" class="stat-num font-mono">--</span>
-          </div>
-        </div>
+    <!-- Bottom Telemetry HUD Bar (EXACT Match to the 5 Columns in the NASA Reference Image) -->
+    <footer class="nasa-bottom-telemetry-hud">
+      <!-- Column 1: Season -->
+      <div class="telemetry-col">
+        <div class="col-header font-mono">SEASON</div>
+        <div id="hudSeason" class="col-value">Spring / Solstice</div>
+        <div id="hudDayOfYear" class="col-sub font-mono">SOL 2024 • DAY 1 OF 366</div>
       </div>
 
-      <!-- Climate Story / AI Narrative Card -->
-      <div class="intel-card card-surface narrative-card">
-        <div class="intel-card-header">
-          <h3 class="intel-title"><span class="intel-icon">🧠</span> Climate Intelligence Story</h3>
-          <button id="generateAiBriefBtn" class="pill-btn-ai" title="Generate AI science breakdown">
-            <span>✨</span> Generate AI Brief
-          </button>
+      <!-- Column 2: Weather Today -->
+      <div class="telemetry-col">
+        <div class="col-header font-mono">WEATHER TODAY [°C]</div>
+        <div class="col-value-spread">
+          <span id="hudValue" class="col-value text-glow-amber">21.4°</span>
+          <span class="col-peak-trough font-mono" id="hudPeakTrough">33.5° <span class="sub-dim">HIGH</span>  16.1° <span class="sub-dim">LOW</span></span>
         </div>
-        <p id="narrativeText" class="narrative-content">
-          Loading NASA Earth Observation data... Select a city and click "Play" to listen to annual climate shifts.
-        </p>
-        <div id="aiBriefContainer" class="ai-brief-box hidden">
-          <div class="ai-source-badge font-mono" id="aiSourceBadge">NASA Earth Science AI</div>
-          <p id="aiBriefText" class="ai-text"></p>
-        </div>
-        <div class="sonification-explanation">
-          <strong>Sonification Key:</strong>
-          <span>High Notes = High Temperature / High Wind</span> •
-          <span>Drum Impacts = Rainfall Events</span> •
-          <span>Sub-bass pulses mark the 1st of each month.</span>
-        </div>
+        <div id="hudDate" class="col-sub font-mono">2024-01-01</div>
       </div>
-    </section>
 
-    <!-- Footer & Official NASA Attribution -->
-    <footer class="mission-footer">
-      <div class="attribution-text">
-        These data were obtained from the <strong>NASA Langley Research Center POWER Project</strong> funded through the NASA Earth Science Directorate Applied Science Program.
+      <!-- Column 3: Acoustic Note / Pitch -->
+      <div class="telemetry-col">
+        <div class="col-header font-mono">ACOUSTIC NOTE / HZ</div>
+        <div class="col-value-spread">
+          <span id="hudNote" class="col-value text-cyan">A4</span>
+          <span id="hudFreq" class="col-value-dim font-mono">440 Hz</span>
+        </div>
+        <div class="col-sub font-mono" id="hudScaleTag">PENTATONIC MAJOR • SPACE SYNTH</div>
       </div>
-      <div class="footer-links">
-        <span>NASA Space Apps Challenge</span> •
-        <span>Audio Engine: Tone.js</span> •
-        <span>Charts: Chart.js</span> •
-        <span>Backend: FastAPI</span>
+
+      <!-- Column 4: Atmosphere / Rain -->
+      <div class="telemetry-col">
+        <div class="col-header font-mono">ATMOSPHERE / RAINFALL</div>
+        <div id="hudAtmosphere" class="col-value">DRY CONDITIONS</div>
+        <div id="hudRainDays" class="col-sub font-mono">0.0 mm/day • 69 RAIN DAYS</div>
+      </div>
+
+      <!-- Column 5: Telemetry Integrity -->
+      <div class="telemetry-col">
+        <div class="col-header font-mono">DATASTREAM INTEGRITY</div>
+        <div id="hudStatus" class="col-value status-live">100% NASA POWER</div>
+        <div id="cacheBadge" class="col-sub font-mono">AUTHENTIC SATELLITE TELEMETRY</div>
       </div>
     </footer>
+
+    <!-- Slide-Out Mission Control Drawer (Controls, Settings, AI Science Brief) -->
+    <aside id="controlsDrawer" class="nasa-drawer hidden">
+      <div class="drawer-inner">
+        <div class="drawer-top">
+          <div class="drawer-title font-mono">MISSION TELEMETRY CONTROLS</div>
+          <button id="closeDrawerBtn" class="drawer-close-btn">&times;</button>
+        </div>
+
+        <!-- Section A: Target Location -->
+        <div class="drawer-section">
+          <label class="section-label font-mono">TARGET OBSERVATION POINT</label>
+          <select id="citySelect" class="nasa-select font-mono">
+            <option value="Karachi" selected>Karachi (Pakistan) • 24.86°N 67.01°E</option>
+            <option value="Lahore">Lahore (Pakistan) • 31.52°N 74.36°E</option>
+            <option value="London">London (United Kingdom) • 51.51°N 0.13°W</option>
+            <option value="New York">New York (United States) • 40.71°N 74.01°W</option>
+            <option value="Dubai">Dubai (United Arab Emirates) • 25.20°N 55.27°E</option>
+            <option value="Tokyo">Tokyo (Japan) • 35.68°N 139.69°E</option>
+            <option value="Nairobi">Nairobi (Kenya) • 1.29°S 36.82°E</option>
+            <option value="custom">⚡ Custom Geodetic Coordinates...</option>
+          </select>
+
+          <div id="customCoordInputs" class="custom-coord-row hidden">
+            <input type="number" id="customLat" placeholder="Lat (24.86)" step="0.01" min="-90" max="90" class="coord-input font-mono">
+            <input type="number" id="customLon" placeholder="Lon (67.01)" step="0.01" min="-180" max="180" class="coord-input font-mono">
+            <button id="applyCoordsBtn" class="nasa-btn font-mono">APPLY</button>
+          </div>
+        </div>
+
+        <!-- Section B: Parameters & Year -->
+        <div class="drawer-section">
+          <label class="section-label font-mono">CLIMATE PARAMETER</label>
+          <div class="metric-switch-grid">
+            <button class="metric-pill active" data-metric="temperature">TEMP (°C)</button>
+            <button class="metric-pill" data-metric="rainfall">RAIN (mm)</button>
+            <button class="metric-pill" data-metric="wind">WIND (m/s)</button>
+          </div>
+
+          <label class="section-label font-mono mt-3">OBSERVATION YEAR</label>
+          <div class="year-action-row">
+            <select id="yearSelect" class="nasa-select font-mono">
+              <option value="2024" selected>2024</option>
+              <option value="2023">2023</option>
+              <option value="2022">2022</option>
+              <option value="2021">2021</option>
+              <option value="2020">2020</option>
+              <option value="2015">2015</option>
+              <option value="2010">2010</option>
+              <option value="2000">2000</option>
+            </select>
+            <button id="fetchDataBtn" class="nasa-btn-primary font-mono">INGEST</button>
+          </div>
+        </div>
+
+        <!-- Section C: Audio Synthesizer Engine -->
+        <div class="drawer-section">
+          <label class="section-label font-mono">SONIFICATION SOUNDSCAPE</label>
+          
+          <div class="sound-control-grid">
+            <div class="control-pair">
+              <span class="sub-label font-mono">Scale</span>
+              <select id="scaleSelect" class="nasa-select font-mono">
+                <option value="pentatonic_major" selected>Major Pentatonic</option>
+                <option value="lydian_celestial">Lydian Celestial</option>
+                <option value="minor_pentatonic">Minor Pentatonic</option>
+                <option value="akebono_meditative">Akebono (Japan)</option>
+              </select>
+            </div>
+
+            <div class="control-pair">
+              <span class="sub-label font-mono">Timbre</span>
+              <select id="instrumentSelect" class="nasa-select font-mono">
+                <option value="space_synth" selected>Space PolySynth</option>
+                <option value="marimba">Acoustic Marimba</option>
+                <option value="ambient_pad">Atmospheric Pad</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="toggle-row mt-3">
+            <label class="custom-toggle-label">
+              <input type="checkbox" id="dualTrackToggle" checked>
+              <span class="toggle-track"></span>
+              <span class="toggle-text font-mono">Dual-Track (Layer Rain Percussion)</span>
+            </label>
+          </div>
+
+          <div class="volume-slider-row mt-2">
+            <span class="sub-label font-mono">Volume</span>
+            <input type="range" id="volumeRange" min="-25" max="3" step="1" value="-3" class="nasa-slider">
+            <span id="volumeDisplay" class="slider-val font-mono">-3 dB</span>
+          </div>
+        </div>
+
+        <!-- Section D: Climatological Intelligence & AI Brief -->
+        <div class="drawer-section">
+          <div class="section-header-split">
+            <label class="section-label font-mono">METEOROLOGICAL ANALYSIS</label>
+            <button id="generateAiBriefBtn" class="ai-brief-trigger font-mono">✨ ANALYZE</button>
+          </div>
+
+          <p id="narrativeText" class="narrative-body font-mono">
+            Loading NASA Earth telemetry... Select a target and press Play to initiate real-time audio-visual sonification.
+          </p>
+
+          <div id="aiBriefContainer" class="ai-analysis-box hidden">
+            <span id="aiSourceBadge" class="ai-engine-tag font-mono">NASA POWER ENGINE</span>
+            <p id="aiBriefText" class="ai-brief-body font-mono"></p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Collapsible Satellite World Map Modal -->
+    <div id="mapDrawer" class="map-modal-backdrop hidden">
+      <div class="map-modal-window">
+        <div class="map-modal-header">
+          <span class="font-mono text-cyan">GLOBAL GEODETIC COORDINATE PICKER</span>
+          <button id="closeMapBtn" class="drawer-close-btn">&times;</button>
+        </div>
+        <div id="earthMap" class="leaflet-map-frame"></div>
+        <div class="map-modal-footer font-mono">
+          Click anywhere on Earth to drop an observation pin and stream real NASA telemetry.
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Application Logic Modules -->
+  <!-- Audio Visualizer Hidden Canvas Helper for Engine -->
+  <canvas id="audioVisualizer" style="display:none;" width="10" height="10"></canvas>
+
+  <!-- Application Modules -->
+  <script src="globe.js"></script>
   <script src="audio.js"></script>
   <script src="chart.js"></script>
   <script src="app.js"></script>

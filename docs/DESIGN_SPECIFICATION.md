@@ -142,3 +142,4 @@ The UI is inspired by modern space control consoles (NASA Goddard, James Webb Sp
   * `R`: Reset to January 1st.
   * `M`: Toggle Global Map.
 * **High-Contrast Ratio:** Text on glass card exceeds $7:1$ contrast against dark void background.
+
