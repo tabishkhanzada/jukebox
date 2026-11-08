@@ -322,6 +322,11 @@ body.nasa-theme {
   width: 100%;
   height: 100%;
   z-index: 1;
+  cursor: grab;
+}
+
+.globe-canvas-frame:active {
+  cursor: grabbing;
 }
 
 /* Station Reticle HUD (Matching `SOL 3039 MSL / 00:02:12:00` in the photo) */
