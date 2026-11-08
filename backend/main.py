@@ -75,6 +75,7 @@ class EarthDataResponse(BaseModel):
     dates: List[str]
     values: List[float]
     normalized: List[float]
+    normalized_planetary: Optional[List[float]] = None
     insights: dict
     narrative: str
     data_source: str

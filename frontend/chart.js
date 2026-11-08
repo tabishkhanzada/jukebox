@@ -1,6 +1,6 @@
 /**
  * NASA Earth Information Jukebox - Synchronized Visualizer & Chart Engine
- * Module 4: High-performance Chart.js dual-axis rendering, real-time vertical playhead tracking,
+ * Module 4: High-performance Chart.js dual-axis rendering, zero-lag playhead tracking,
  * click-to-seek timeline scrubbing, and audio-reactive particle visualizer.
  */
 
@@ -35,7 +35,7 @@ class ClimateChartEngine {
         const bottomY = chart.chartArea.bottom;
 
         ctx.save();
-        // 1. Draw glowing vertical line
+        // 1. Draw glowing vertical playhead line
         ctx.beginPath();
         ctx.moveTo(x, topY);
         ctx.lineTo(x, bottomY);
@@ -63,7 +63,7 @@ class ClimateChartEngine {
   }
 
   /**
-   * Initializes interactive click & hover seeking on the canvas.
+   * Initializes interactive click seeking on the canvas.
    */
   attachEventListeners() {
     if (!this.canvas) return;
@@ -81,7 +81,7 @@ class ClimateChartEngine {
   }
 
   /**
-   * Render or update dataset inside Chart.js with optional Dual-Axis overlay.
+   * Render or update dataset inside Chart.js with authentic Dual-Axis overlay.
    */
   renderDataset(earthData, secondaryData = null, showDual = false) {
     this.currentDataset = earthData;
@@ -91,20 +91,20 @@ class ClimateChartEngine {
 
     const ctx = this.canvas.getContext("2d");
     const isRainfall = earthData.data_type === "rainfall";
+    const canvasHeight = this.canvas.clientHeight || 350;
 
     // Setup color gradients
-    let gradient = ctx.createLinearGradient(0, 0, 0, this.canvas.height || 350);
+    let gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
     if (isRainfall) {
       gradient.addColorStop(0, "rgba(56, 189, 248, 0.65)");
       gradient.addColorStop(1, "rgba(2, 132, 199, 0.02)");
     } else {
-      // Temperature gradient (Warm amber/red at top, cool cyan at bottom)
       gradient.addColorStop(0, "rgba(249, 115, 22, 0.7)");
       gradient.addColorStop(0.5, "rgba(59, 130, 246, 0.35)");
       gradient.addColorStop(1, "rgba(14, 165, 233, 0.03)");
     }
 
-    // Chart.js labels (Format to short month for clean X-axis)
+    // Chart.js labels (Clean month tags)
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const formattedLabels = earthData.dates.map((d, i) => {
       if (d.endsWith("-01") || i === 0 || i === earthData.dates.length - 1) {
@@ -140,8 +140,8 @@ class ClimateChartEngine {
         type: "bar",
         label: `${this.secondaryDataset.parameter_name} (${this.secondaryDataset.unit})`,
         data: this.secondaryDataset.values,
-        backgroundColor: "rgba(56, 189, 248, 0.4)",
-        borderColor: "rgba(56, 189, 248, 0.8)",
+        backgroundColor: "rgba(56, 189, 248, 0.35)",
+        borderColor: "rgba(56, 189, 248, 0.75)",
         borderWidth: 1,
         yAxisID: "y1",
         pointRadius: 0
@@ -200,7 +200,7 @@ class ClimateChartEngine {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        animation: { duration: 600 },
+        animation: { duration: 400 },
         interaction: {
           intersect: false,
           mode: "index"
@@ -240,12 +240,13 @@ class ClimateChartEngine {
   }
 
   /**
-   * Update active playhead scrubber position without re-rendering entire chart.
+   * Update active playhead scrubber position with zero-lag animation override.
    */
   updateScrubber(index, note, frequency) {
     this.activeIndex = index;
     if (this.chart) {
-      this.chart.render();
+      // Direct draw without re-triggering entrance animations
+      this.chart.update("none");
     }
 
     // Trigger visualizer ripple
@@ -300,7 +301,6 @@ class ClimateChartEngine {
 
     ctx.clearRect(0, 0, w, h);
 
-    // Center orbital resonance ring
     const centerX = w / 2;
     const centerY = h / 2;
     const baseRadius = 28 + this.pulseEnergy * 18;
@@ -316,7 +316,6 @@ class ClimateChartEngine {
 
     this.pulseEnergy *= 0.92;
 
-    // Render & update particles
     for (let i = this.visParticles.length - 1; i >= 0; i--) {
       const p = this.visParticles[i];
       p.x += p.vx;

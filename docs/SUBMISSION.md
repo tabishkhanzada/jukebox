@@ -65,3 +65,4 @@ The Earth Information Jukebox bridges science and music through a 5-module decou
 - **Audio & Sonification Specialist:** Tone.js harmonic scales, synthesis design, Web Audio MediaRecorder.
 - **Frontend & Visualization Developer:** Chart.js synchronized scrubber, Leaflet map, mission control HUD.
 - **UI/UX & Accessibility Designer:** Obsidian space observatory theme, contrast accessibility, responsive layouts.
+

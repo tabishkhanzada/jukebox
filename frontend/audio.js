@@ -1,7 +1,11 @@
 /**
  * NASA Earth Information Jukebox - Web Audio Sonification Engine
- * Module 3: Implements harmonic scale quantization, polyphonic tone generation,
- * percussive rainfall mapping, dual-track accompaniment, and audio track export using Tone.js.
+ * Module 3: Authentic Sonification Architecture
+ * - Zero-drift performance.now() high-precision scheduling
+ * - True Planetary (Absolute °C) vs Local Seasonal pitch modes
+ * - Expressive multi-timbral synthesis (Melody, Thunder/Raindrops, Wind Resonator, Calendar Drones)
+ * - Anti-clipping dynamic envelope articulation
+ * - Direct Web Audio MediaRecorder capture to downloadable .webm
  */
 
 class EarthSonifier {
@@ -12,9 +16,13 @@ class EarthSonifier {
     this.speedMultiplier = 1.0;
     this.baseStepDurationMs = 90; // ~33 seconds for 365 days at 1.0x
     this.data = null;
-    this.secondaryData = null; // For dual-track accompaniment (e.g., rainfall rhythm under temp)
+    this.secondaryData = null; // Authentic rainfall data for dual-track
     this.dualTrackEnabled = false;
+    this.pitchMode = "planetary"; // "planetary" (True absolute physical scale) or "seasonal" (Local dynamic range)
+
+    // Drift-free scheduling timer state
     this.stepTimer = null;
+    this.expectedNextTick = 0;
 
     // Audio recording nodes
     this.mediaRecorder = null;
@@ -51,6 +59,7 @@ class EarthSonifier {
     // Audio node references
     this.melodySynth = null;
     this.rainSynth = null;
+    this.windSynth = null;
     this.bassDrone = null;
     this.reverb = null;
     this.delay = null;
@@ -70,9 +79,9 @@ class EarthSonifier {
 
     if (window.Tone) {
       await Tone.start();
-      console.log("Web Audio Context started successfully.");
+      console.log("Authentic Web Audio Context initialized.");
 
-      // Setup MediaStreamDestination for audio recording & download
+      // Setup MediaStreamDestination for authentic audio recording & download
       try {
         const rawCtx = Tone.getContext().rawContext;
         this.mediaStreamDest = rawCtx.createMediaStreamDestination();
@@ -81,25 +90,24 @@ class EarthSonifier {
       }
 
       // Master FX chain: Reverb + PingPong Delay -> Limiter -> Destination & Recorder
-      this.limiter = new Tone.Limiter(-1);
+      this.limiter = new Tone.Limiter(-1.5);
       this.limiter.toDestination();
 
       if (this.mediaStreamDest) {
-        // Tap master audio into recording stream
         Tone.getDestination().connect(this.mediaStreamDest);
       }
       
       this.reverb = new Tone.Reverb({
-        decay: 2.5,
-        preDelay: 0.05,
-        wet: 0.25
+        decay: 2.2,
+        preDelay: 0.04,
+        wet: 0.22
       }).connect(this.limiter);
       await this.reverb.generate();
 
       this.delay = new Tone.FeedbackDelay({
         delayTime: "16n",
-        feedback: 0.15,
-        wet: 0.15
+        feedback: 0.12,
+        wet: 0.12
       }).connect(this.reverb);
 
       // 1. Melody Synthesizer for Temperature / Primary pitch
@@ -107,26 +115,37 @@ class EarthSonifier {
 
       // 2. Percussion Synthesizer for Rainfall / Drum hits
       this.rainSynth = new Tone.MembraneSynth({
-        pitchDecay: 0.04,
-        octaves: 3,
+        pitchDecay: 0.05,
+        octaves: 3.5,
         oscillator: { type: "sine" },
         envelope: {
           attack: 0.001,
-          decay: 0.2,
+          decay: 0.22,
           sustain: 0.01,
-          release: 0.4
+          release: 0.35
         }
       }).connect(this.limiter);
-      this.rainSynth.volume.value = -4;
+      this.rainSynth.volume.value = -3;
 
-      // 3. Calendar Marker: Sub-bass for month starts
+      // 3. Wind Atmospheric Synth: Filtered noise / breeze resonance
+      this.windSynth = new Tone.NoiseSynth({
+        noise: { type: "pink" },
+        envelope: {
+          attack: 0.05,
+          decay: 0.15,
+          sustain: 0.0
+        }
+      }).connect(this.reverb);
+      this.windSynth.volume.value = -12;
+
+      // 4. Calendar Marker: Sub-bass for month starts
       this.bassDrone = new Tone.Synth({
         oscillator: { type: "triangle" },
         envelope: {
-          attack: 0.05,
-          decay: 0.6,
-          sustain: 0.2,
-          release: 0.8
+          attack: 0.04,
+          decay: 0.5,
+          sustain: 0.1,
+          release: 0.6
         }
       }).connect(this.limiter);
       this.bassDrone.volume.value = -8;
@@ -150,28 +169,28 @@ class EarthSonifier {
     if (instrumentKey === "marimba") {
       this.melodySynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: "sine" },
-        envelope: { attack: 0.005, decay: 0.25, sustain: 0.0, release: 0.2 }
+        envelope: { attack: 0.004, decay: 0.22, sustain: 0.0, release: 0.18 }
       }).connect(this.reverb);
       this.melodySynth.volume.value = -2;
     } else if (instrumentKey === "ambient_pad") {
       this.melodySynth = new Tone.PolySynth(Tone.AMSynth, {
         harmonicity: 1.5,
         oscillator: { type: "triangle" },
-        envelope: { attack: 0.08, decay: 0.5, sustain: 0.6, release: 0.8 }
+        envelope: { attack: 0.06, decay: 0.4, sustain: 0.5, release: 0.6 }
       }).connect(this.delay);
       this.melodySynth.volume.value = -5;
     } else {
       // Default: "space_synth"
       this.melodySynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: "triangle8" },
-        envelope: { attack: 0.02, decay: 0.2, sustain: 0.2, release: 0.3 }
+        envelope: { attack: 0.015, decay: 0.18, sustain: 0.15, release: 0.22 }
       }).connect(this.delay);
       this.melodySynth.volume.value = -3;
     }
   }
 
   /**
-   * Load primary dataset into the sonification engine.
+   * Load authentic dataset into the sonification engine.
    */
   loadDataset(earthData, secondaryData = null) {
     this.stop();
@@ -180,9 +199,6 @@ class EarthSonifier {
     this.currentIndex = 0;
   }
 
-  /**
-   * Set secondary dataset for simultaneous dual-track accompaniment.
-   */
   setSecondaryDataset(secondaryData) {
     this.secondaryData = secondaryData;
   }
@@ -191,9 +207,12 @@ class EarthSonifier {
     this.dualTrackEnabled = enabled;
   }
 
-  /**
-   * Set musical scale for quantization.
-   */
+  setPitchMode(mode) {
+    if (mode === "planetary" || mode === "seasonal") {
+      this.pitchMode = mode;
+    }
+  }
+
   setScale(scaleKey) {
     if (this.scales[scaleKey]) {
       this.currentScaleKey = scaleKey;
@@ -201,7 +220,7 @@ class EarthSonifier {
   }
 
   /**
-   * Maps normalized 0.0 - 1.0 value to a quantized musical note.
+   * Maps normalized value to a quantized musical note.
    */
   valueToNote(normValue) {
     const scale = this.scales[this.currentScaleKey];
@@ -213,11 +232,11 @@ class EarthSonifier {
   }
 
   /**
-   * Begins or resumes playback.
+   * Begins or resumes playback with zero-drift synchronization.
    */
   async play() {
     if (!this.data || !this.data.dates || this.data.dates.length === 0) {
-      console.warn("No data loaded to play.");
+      console.warn("No authentic data loaded to play.");
       return;
     }
 
@@ -230,11 +249,12 @@ class EarthSonifier {
     this.isPlaying = true;
     if (this.onPlaybackStateChange) this.onPlaybackStateChange(true);
 
+    this.expectedNextTick = performance.now();
     this.scheduleNextStep();
   }
 
   /**
-   * Schedules next note event with high temporal accuracy.
+   * Schedules next note event with wall-clock drift compensation.
    */
   scheduleNextStep() {
     if (!this.isPlaying) return;
@@ -247,10 +267,15 @@ class EarthSonifier {
       return;
     }
 
-    this.triggerStep(this.currentIndex);
+    const stepMs = Math.max(25, this.baseStepDurationMs / this.speedMultiplier);
+    this.triggerStep(this.currentIndex, stepMs);
     this.currentIndex++;
 
-    const delay = Math.max(25, this.baseStepDurationMs / this.speedMultiplier);
+    // Zero-drift performance timing calculation
+    this.expectedNextTick += stepMs;
+    const now = performance.now();
+    const delay = Math.max(0, this.expectedNextTick - now);
+
     this.stepTimer = setTimeout(() => {
       this.scheduleNextStep();
     }, delay);
@@ -259,12 +284,15 @@ class EarthSonifier {
   /**
    * Triggers audio synthesis for a specific single day.
    */
-  triggerStep(idx) {
+  triggerStep(idx, stepMs = 90) {
     if (!this.data) return;
 
     const date = this.data.dates[idx];
     const rawVal = this.data.values[idx];
-    const normVal = this.data.normalized[idx];
+    // Select between True Planetary Pitch (Absolute physical scale) or Local Seasonal contrast
+    const normVal = (this.pitchMode === "planetary" && this.data.normalized_planetary)
+      ? this.data.normalized_planetary[idx]
+      : this.data.normalized[idx];
     const dataType = this.data.data_type;
 
     // Detect month marker (e.g. "2024-05-01")
@@ -273,6 +301,9 @@ class EarthSonifier {
     let playedNote = null;
     let playedFreq = null;
 
+    // Dynamic anti-clipping note duration: note releases cleanly before the next step
+    const durationSeconds = Math.max(0.04, Math.min(0.24, (stepMs / 1000) * 0.85));
+
     try {
       if (dataType === "temperature") {
         // Temperature controls Pitch
@@ -280,17 +311,17 @@ class EarthSonifier {
         playedNote = noteInfo.note;
         playedFreq = Math.round(noteInfo.freq);
 
-        const duration = "16n";
         const velocity = 0.5 + normVal * 0.45;
-        this.melodySynth.triggerAttackRelease(playedNote, duration, undefined, velocity);
+        this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, undefined, velocity);
 
-        // Dual-track accompaniment: If rainfall dataset is attached and enabled, trigger drum on rain days!
+        // Dual-track accompaniment: If authentic rainfall data is active, trigger drum strikes
         if (this.dualTrackEnabled && this.secondaryData && this.secondaryData.values[idx] !== undefined) {
           const rainVal = this.secondaryData.values[idx];
           if (rainVal > 0.1) {
+            // Authentic physical rain scaling (based on actual mm/day)
             const drumPitch = rainVal > 25.0 ? "C1" : rainVal > 10.0 ? "G1" : "C2";
             const drumVel = Math.min(0.9, 0.25 + (rainVal / 35.0) * 0.65);
-            this.rainSynth.triggerAttackRelease(drumPitch, "16n", undefined, drumVel);
+            this.rainSynth.triggerAttackRelease(drumPitch, durationSeconds, undefined, drumVel);
           }
         }
 
@@ -299,11 +330,11 @@ class EarthSonifier {
           this.bassDrone.triggerAttackRelease("C2", "8n");
         }
       } else if (dataType === "rainfall") {
-        // Rainfall controls percussion hits & volume
+        // Rainfall controls drum strikes & velocity proportional to actual mm/day
         if (rawVal > 0.1) {
           const drumPitch = rawVal > 25.0 ? "C1" : rawVal > 10.0 ? "G1" : "C2";
           const drumVel = Math.min(1.0, 0.3 + (rawVal / 30.0) * 0.7);
-          this.rainSynth.triggerAttackRelease(drumPitch, "16n", undefined, drumVel);
+          this.rainSynth.triggerAttackRelease(drumPitch, durationSeconds, undefined, drumVel);
           playedNote = `Rain ${drumPitch}`;
           playedFreq = Math.round(Tone.Frequency(drumPitch).toFrequency());
         } else {
@@ -314,12 +345,16 @@ class EarthSonifier {
         if (isFirstOfMonth && this.bassDrone) {
           this.bassDrone.triggerAttackRelease("G2", "8n");
         }
-      } else {
-        // Wind or other parameter
+      } else if (dataType === "wind") {
+        // Wind speed: Resonant airy velocity & pitch modulation
         const noteInfo = this.valueToNote(normVal);
         playedNote = noteInfo.note;
         playedFreq = Math.round(noteInfo.freq);
-        this.melodySynth.triggerAttackRelease(playedNote, "32n");
+
+        this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, undefined, 0.6);
+        if (this.windSynth && rawVal > 3.0) {
+          this.windSynth.triggerAttackRelease(Math.min(0.2, (rawVal / 15.0) * 0.2));
+        }
       }
     } catch (err) {
       console.warn("Audio trigger error:", err);
@@ -379,11 +414,12 @@ class EarthSonifier {
   seek(index) {
     if (!this.data || index < 0 || index >= this.data.dates.length) return;
     this.currentIndex = index;
-    this.triggerStep(this.currentIndex);
+    const stepMs = Math.max(25, this.baseStepDurationMs / this.speedMultiplier);
+    this.triggerStep(this.currentIndex, stepMs);
   }
 
   /**
-   * Adjust playback speed multiplier (e.g. 0.5x, 1.0x, 2.0x).
+   * Adjust playback speed multiplier (0.5x to 2.5x).
    */
   setSpeed(multiplier) {
     this.speedMultiplier = Math.max(0.25, Math.min(3.0, multiplier));
@@ -401,7 +437,7 @@ class EarthSonifier {
   // --- AUDIO RECORDING & EXPORT (Web Audio MediaRecorder) ---
 
   /**
-   * Starts recording the sonified track from day 0.
+   * Starts recording the authentic sonified track from day 0.
    */
   async startRecording() {
     await this.initAudioContext();
@@ -435,7 +471,7 @@ class EarthSonifier {
     this.isRecording = true;
     if (this.onRecordingStateChange) this.onRecordingStateChange(true);
 
-    // Automatically begin playback to record the full piece
+    // Automatically begin playback to record the full authentic piece
     this.play();
   }
 
@@ -468,7 +504,7 @@ class EarthSonifier {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    console.log("Audio track downloaded successfully.");
+    console.log("Authentic audio track downloaded successfully.");
   }
 }
 

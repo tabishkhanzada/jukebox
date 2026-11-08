@@ -47,6 +47,7 @@ class EarthJukeboxApp {
       recordText: document.getElementById("recordText"),
 
       // Audio controls
+      pitchModeSelect: document.getElementById("pitchModeSelect"),
       scaleSelect: document.getElementById("scaleSelect"),
       instrumentSelect: document.getElementById("instrumentSelect"),
       dualTrackToggle: document.getElementById("dualTrackToggle"),
@@ -255,6 +256,13 @@ class EarthJukeboxApp {
         if (this.currentData) {
           this.chartEngine.renderDataset(this.currentData, this.secondaryData, this.isDualTrackActive);
         }
+      });
+    }
+
+    // Pitch Mode Toggle (Planetary vs Local Seasonal)
+    if (this.dom.pitchModeSelect) {
+      this.dom.pitchModeSelect.addEventListener("change", (e) => {
+        this.sonifier.setPitchMode(e.target.value);
       });
     }
 

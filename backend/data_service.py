@@ -127,13 +127,27 @@ def clean_and_normalize_data(df: pd.DataFrame, param_code: str) -> Tuple[pd.Data
     vmean = float(df["value"].mean())
     vstd = float(df["value"].std()) if len(df) > 1 else 0.0
 
-    # Min-max normalization for sonification
+    # 1. Local dynamic normalization (Relative to city's own annual contrast)
     if vmax > vmin:
         df["normalized"] = (df["value"] - vmin) / (vmax - vmin)
     else:
         df["normalized"] = 0.5
-
     df["normalized"] = df["normalized"].clip(0.0, 1.0).round(4)
+
+    # 2. Planetary Absolute Normalization (True global scale across Earth)
+    # Allows comparing London vs Karachi vs Dubai with identical pitch meaning
+    if param_code == "T2M":
+        # Planetary bounds: -20°C (Siberian/Arctic cold) to +48°C (Desert extreme heat)
+        df["normalized_planetary"] = ((df["value"] - (-20.0)) / (48.0 - (-20.0))).clip(0.0, 1.0).round(4)
+    elif param_code == "PRECTOTCORR":
+        # Planetary bounds: 0 mm (Dry) to 60 mm/day (Severe monsoon storm)
+        df["normalized_planetary"] = (df["value"] / 60.0).clip(0.0, 1.0).round(4)
+    elif param_code == "WS2M":
+        # Planetary bounds: 0 m/s (Calm) to 25 m/s (Severe gale storm)
+        df["normalized_planetary"] = (df["value"] / 25.0).clip(0.0, 1.0).round(4)
+    else:
+        df["normalized_planetary"] = df["normalized"]
+
     df["value"] = df["value"].round(2)
 
     # Compute climate intelligence insights
@@ -170,6 +184,9 @@ def clean_and_normalize_data(df: pd.DataFrame, param_code: str) -> Tuple[pd.Data
         insights["days_above_35c"] = int(len(df[df["value"] > 35.0]))
         insights["days_below_0c"] = int(len(df[df["value"] < 0.0]))
         insights["temp_range"] = round(vmax - vmin, 2)
+        # Real Heating Degree Days (HDD) and Cooling Degree Days (CDD) base 18°C
+        insights["cooling_degree_days"] = round(float(df["value"].apply(lambda v: max(0.0, v - 18.0)).sum()), 1)
+        insights["heating_degree_days"] = round(float(df["value"].apply(lambda v: max(0.0, 18.0 - v)).sum()), 1)
     elif param_code == "WS2M":
         insights["windy_days_above_8ms"] = int(len(df[df["value"] > 8.0]))
         insights["calm_days_below_2ms"] = int(len(df[df["value"] < 2.0]))
@@ -305,9 +322,14 @@ def get_earth_data(
         "value": list(raw_dict.values())
     })
 
-    # Format dates to YYYY-MM-DD
+    # Format dates to YYYY-MM-DD and reindex against full calendar year to guarantee zero missing days
     df["date"] = pd.to_datetime(df["date_str"], format="%Y%m%d", errors="coerce").dt.strftime("%Y-%m-%d")
     df = df.dropna(subset=["date"])
+
+    full_date_range = pd.date_range(start=f"{year}-01-01", end=f"{year}-12-31", freq="D").strftime("%Y-%m-%d")
+    df = df.set_index("date").reindex(full_date_range)
+    df.index.name = "date"
+    df = df.reset_index()
 
     # 6. Clean, interpolate, normalize
     df, insights = clean_and_normalize_data(df, param_code)
@@ -328,6 +350,7 @@ def get_earth_data(
         "dates": df["date"].tolist(),
         "values": df["value"].tolist(),
         "normalized": df["normalized"].tolist(),
+        "normalized_planetary": df["normalized_planetary"].tolist(),
         "insights": insights,
         "narrative": narrative,
         "data_source": "NASA Langley Research Center POWER Project",

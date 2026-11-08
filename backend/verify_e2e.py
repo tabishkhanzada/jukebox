@@ -27,7 +27,11 @@ payload = r_data.json()
 assert len(payload["dates"]) == 366
 assert len(payload["values"]) == 366
 assert len(payload["normalized"]) == 366
-print(f"✓ Temperature Data OK: {payload['city']} {payload['year']} ({len(payload['dates'])} days, Peak: {payload['insights']['max']}°C)")
+if "normalized_planetary" in payload and payload["normalized_planetary"]:
+    assert len(payload["normalized_planetary"]) == 366
+    for val in payload["normalized_planetary"]:
+        assert 0.0 <= val <= 1.0, f"Planetary value out of range: {val}"
+print(f"✓ Temperature Data OK: {payload['city']} {payload['year']} ({len(payload['dates'])} days, Peak: {payload['insights']['max']}°C, Planetary bounds checked)")
 
 # 5. API data check (Rainfall)
 r_rain = client.get("/api/data?city=Karachi&type=rainfall&year=2024")
