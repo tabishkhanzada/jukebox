@@ -104,7 +104,7 @@ body.nasa-theme {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.25rem 2rem;
+  padding: 0.75rem 2rem;
   border-bottom: 1px solid var(--border-hairline);
   background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(12px);
@@ -364,21 +364,21 @@ body.nasa-theme {
 .hero-transport-dock {
   position: relative;
   z-index: 5;
-  margin: 0 auto 0.4rem;
+  margin: 0 auto 0.35rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  background: rgba(10, 14, 26, 0.8);
+  gap: 0.65rem;
+  background: rgba(10, 14, 26, 0.85);
   backdrop-filter: blur(20px);
   border: 1px solid var(--border-hairline);
-  padding: 0.45rem 1rem;
+  padding: 0.32rem 0.9rem;
   border-radius: 999px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65);
 }
 
 .transport-circle-btn {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-hairline);
@@ -400,15 +400,15 @@ body.nasa-theme {
   background: linear-gradient(135deg, var(--accent-solar), #ea580c);
   border: none;
   color: #ffffff;
-  padding: 0.55rem 1.45rem;
+  padding: 0.45rem 1.25rem;
   border-radius: 999px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.15em;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.4rem;
   transition: all 0.25s var(--ease-nasa);
   box-shadow: 0 0 20px rgba(255, 87, 34, 0.45);
 }
@@ -458,9 +458,9 @@ body.nasa-theme {
   z-index: 4;
   width: calc(100% - 3.5rem);
   max-width: 1400px;
-  margin: 0 auto 0.65rem;
-  height: 140px;
-  padding: 0.5rem 1.25rem 0.35rem;
+  margin: 0 auto 0.35rem;
+  height: 115px;
+  padding: 0.35rem 1.25rem 0.25rem;
   background: rgba(8, 12, 22, 0.72);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -477,24 +477,24 @@ body.nasa-theme {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 16px rgba(56, 189, 248, 0.15);
 }
 
-/* 3. BOTTOM TELEMETRY HUD BAR (EXACT MATCH TO REFERENCE PHOTO'S 5 COLUMNS) */
+/* 3. BOTTOM TELEMETRY HUD BAR (EXACT MATCH TO REFERENCE PHOTO'S 5 COLUMNS - COMPACT) */
 .nasa-bottom-telemetry-hud {
   position: relative;
   z-index: 10;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  padding: 1rem 2rem 1.25rem;
+  padding: 0.55rem 2rem 0.65rem;
   border-top: 1px solid var(--border-hairline);
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(4, 7, 14, 0.85);
   backdrop-filter: blur(20px);
 }
 
 .telemetry-col {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.12rem;
   border-left: 1px solid var(--border-hairline);
-  padding-left: 1.25rem;
+  padding-left: 1.15rem;
 }
 
 .telemetry-col:first-child {
@@ -503,8 +503,8 @@ body.nasa-theme {
 }
 
 .col-header {
-  font-size: 0.65rem;
-  letter-spacing: 0.18em;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
   color: var(--text-muted);
   font-weight: 500;
   text-transform: uppercase;
@@ -512,40 +512,41 @@ body.nasa-theme {
 
 .col-value {
   font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--text-white);
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .col-value-spread {
   display: flex;
   align-items: baseline;
-  gap: 0.6rem;
+  gap: 0.45rem;
 }
 
 .col-peak-trough {
-  font-size: 0.85rem;
+  font-size: 0.72rem;
   color: var(--text-primary);
   font-weight: 500;
 }
 
 .sub-dim {
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   color: var(--text-muted);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
 }
 
 .col-value-dim {
-  font-size: 0.85rem;
+  font-size: 0.72rem;
   color: var(--text-dim);
 }
 
 .col-sub {
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
   color: var(--text-dim);
+  line-height: 1.1;
 }
 
 .text-glow-amber {

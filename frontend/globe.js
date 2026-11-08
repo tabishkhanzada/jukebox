@@ -32,10 +32,10 @@ class PlanetaryParticleGlobe {
     this.orbitAngle = 0.4;
     this.orbitSpeed = 0.009;
 
-    this.globeRadius = 2.20;
-    this.orbitRadius = 3.10;
+    this.globeRadius = 2.10;
+    this.orbitRadius = 2.75;
     this.orbitInclination = 51.6 * (Math.PI / 180); // 51.6° ISS / NASA Earth Science Orbit
-    this.globeCenterY = 0.85; // Lifted into upper-middle stage to guarantee zero overlap with transport dock and chart
+    this.globeCenterY = 0.22; // Upper-stage positioning with guaranteed clearance top & bottom
 
     this.pulseEnergy = 0;
 
@@ -54,8 +54,8 @@ class PlanetaryParticleGlobe {
     this.lastAmbientShockwave = 0;
 
     // Camera dolly
-    this.baseCameraZ = 8.5;
-    this.targetCameraZ = 8.5;
+    this.baseCameraZ = 8.6;
+    this.targetCameraZ = 8.6;
 
     // Mouse drag interaction
     this.isDragging = false;
@@ -147,23 +147,30 @@ class PlanetaryParticleGlobe {
     const dotTexture = new THREE.CanvasTexture(canvas);
 
     if (dotsData && dotsData.land && dotsData.land.length > 0) {
-      // 1. Land Points (Bright, Crisp, Radiant Solar Orange Continents)
-      const landGeo = new THREE.BufferGeometry();
-      landGeo.setAttribute("position", new THREE.Float32BufferAttribute(dotsData.land, 3));
+      const scaleFactor = this.globeRadius / 2.85;
 
+      // 1. Land Points (Bright, Crisp, Radiant Solar Orange Continents)
+      const scaledLand = new Float32Array(dotsData.land.length);
       const landColors = [];
       const colorLandPrimary = new THREE.Color(0xff6a3d); // Warm sunrise orange
       const colorLandPeak = new THREE.Color(0xff9800);    // Solar amber peak
 
       for (let i = 0; i < dotsData.land.length; i += 3) {
-        const y = dotsData.land[i + 1];
-        const col = (y > 0.8) ? colorLandPeak : colorLandPrimary;
+        scaledLand[i] = dotsData.land[i] * scaleFactor;
+        scaledLand[i + 1] = dotsData.land[i + 1] * scaleFactor;
+        scaledLand[i + 2] = dotsData.land[i + 2] * scaleFactor;
+
+        const y = scaledLand[i + 1];
+        const col = (y > 0.6) ? colorLandPeak : colorLandPrimary;
         landColors.push(col.r, col.g, col.b);
       }
+
+      const landGeo = new THREE.BufferGeometry();
+      landGeo.setAttribute("position", new THREE.BufferAttribute(scaledLand, 3));
       landGeo.setAttribute("color", new THREE.Float32BufferAttribute(landColors, 3));
 
       const landMat = new THREE.PointsMaterial({
-        size: 0.082,
+        size: 0.075,
         map: dotTexture,
         vertexColors: true,
         transparent: true,
@@ -176,11 +183,16 @@ class PlanetaryParticleGlobe {
 
       // 2. Ocean Points (Subtle, Translucent Twilight Amber Grid Structure)
       if (dotsData.ocean && dotsData.ocean.length > 0) {
+        const scaledOcean = new Float32Array(dotsData.ocean.length);
+        for (let i = 0; i < dotsData.ocean.length; i++) {
+          scaledOcean[i] = dotsData.ocean[i] * scaleFactor;
+        }
+
         const oceanGeo = new THREE.BufferGeometry();
-        oceanGeo.setAttribute("position", new THREE.Float32BufferAttribute(dotsData.ocean, 3));
+        oceanGeo.setAttribute("position", new THREE.BufferAttribute(scaledOcean, 3));
 
         const oceanMat = new THREE.PointsMaterial({
-          size: 0.045,
+          size: 0.042,
           color: 0x4a180a,
           map: dotTexture,
           transparent: true,
