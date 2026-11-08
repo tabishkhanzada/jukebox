@@ -25,6 +25,11 @@ class PlanetaryParticleGlobe {
     this.activeLon = 67.01;
     this.rimColor = new THREE.Color(0xff5722); // Solar amber default
 
+    // Holographic Sonic Shockwave Radar System
+    this.shockwaves = [];
+    this.lastShockwaveTime = 0;
+    this.shockwaveGroup = null;
+
     this.init();
   }
 
@@ -197,6 +202,10 @@ class PlanetaryParticleGlobe {
     this.pulseRing = new THREE.Mesh(outerGeo, outerMat);
     this.reticleGroup.add(this.pulseRing);
 
+    // 4. Dedicated Holographic Shockwave Container
+    this.shockwaveGroup = new THREE.Group();
+    this.reticleGroup.add(this.shockwaveGroup);
+
     this.reticleGroup.position.set(1.4, 1.1, 3.6);
     this.scene.add(this.reticleGroup);
   }
@@ -215,10 +224,20 @@ class PlanetaryParticleGlobe {
     this.targetRotationY = -radLon;
     this.targetRotationX = 0.25 + (radLat * 0.2);
 
-    // Update targeting HUD tag
+    // Update targeting HUD tag with holographic decrypt scramble
     const solTag = document.getElementById("heroReticleTag");
     if (solTag) {
-      solTag.textContent = `STATION: ${cityName.toUpperCase() || 'TARGET'} / ${lat >= 0 ? lat.toFixed(2) + '°N' : Math.abs(lat).toFixed(2) + '°S'} ${lon >= 0 ? lon.toFixed(2) + '°E' : Math.abs(lon).toFixed(2) + '°W'}`;
+      const tagText = `STATION: ${cityName.toUpperCase() || 'TARGET'} / ${lat >= 0 ? lat.toFixed(2) + '°N' : Math.abs(lat).toFixed(2) + '°S'} ${lon >= 0 ? lon.toFixed(2) + '°E' : Math.abs(lon).toFixed(2) + '°W'}`;
+      if (window.TelemetryScrambler) {
+        window.TelemetryScrambler.scramble(solTag, tagText, 420);
+      } else {
+        solTag.textContent = tagText;
+      }
+    }
+
+    const solSub = document.getElementById("heroReticleSol");
+    if (solSub && window.TelemetryScrambler) {
+      window.TelemetryScrambler.scramble(solSub, "SOL 2024 • MSL 00:02:12:00", 460);
     }
   }
 
@@ -237,10 +256,53 @@ class PlanetaryParticleGlobe {
   }
 
   /**
-   * Pulses particle sphere and reticle in sync with Web Audio note.
+   * Pulses particle sphere and triggers holographic radar shockwaves.
    */
   triggerAudioPulse(frequency) {
     this.pulseEnergy = Math.min(1.0, this.pulseEnergy + 0.45);
+
+    const now = performance.now();
+    // Smooth 90ms throttle ensures rhythmic, clean, uncluttered visual ripples
+    if (now - this.lastShockwaveTime > 90 && this.shockwaveGroup) {
+      this.lastShockwaveTime = now;
+      this.spawnShockwave(frequency);
+    }
+  }
+
+  /**
+   * Spawns an ultra-crisp concentric holographic shockwave ripple.
+   */
+  spawnShockwave(frequency) {
+    const geo = new THREE.RingGeometry(0.18, 0.20, 48);
+    const isHighFreq = frequency > 520;
+    const color = isHighFreq ? 0xff7043 : 0x38bdf8;
+    const mat = new THREE.MeshBasicMaterial({
+      color: color,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.65,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const ring = new THREE.Mesh(geo, mat);
+    this.shockwaveGroup.add(ring);
+
+    this.shockwaves.push({
+      mesh: ring,
+      material: mat,
+      scale: 1.0,
+      maxScale: 3.6,
+      growthRate: 0.055,
+      initialOpacity: 0.65
+    });
+
+    // Cap active shockwaves at 4 for ultra-clean, lightweight 60fps rendering
+    if (this.shockwaves.length > 4) {
+      const oldest = this.shockwaves.shift();
+      this.shockwaveGroup.remove(oldest.mesh);
+      oldest.mesh.geometry.dispose();
+      oldest.material.dispose();
+    }
   }
 
   bindEvents() {
@@ -285,6 +347,24 @@ class PlanetaryParticleGlobe {
       const ringScale = 1.0 + this.pulseEnergy * 0.6;
       this.pulseRing.scale.set(ringScale, ringScale, 1);
       this.pulseRing.material.opacity = 0.2 + this.pulseEnergy * 0.6;
+    }
+
+    // Smoothly expand and fade active shockwave rings
+    for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+      const sw = this.shockwaves[i];
+      sw.scale += sw.growthRate;
+      sw.mesh.scale.set(sw.scale, sw.scale, 1);
+
+      const progress = (sw.scale - 1.0) / (sw.maxScale - 1.0);
+      // Smooth quadratic ease-out opacity curve
+      sw.material.opacity = Math.max(0, sw.initialOpacity * (1.0 - progress * progress));
+
+      if (progress >= 1.0) {
+        this.shockwaveGroup.remove(sw.mesh);
+        sw.mesh.geometry.dispose();
+        sw.material.dispose();
+        this.shockwaves.splice(i, 1);
+      }
     }
 
     // Energy dissipation

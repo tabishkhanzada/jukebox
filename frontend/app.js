@@ -9,6 +9,63 @@ const API_BASE_URL = window.location.origin.includes("localhost") || window.loca
   ? `${window.location.origin}/api`
   : "http://127.0.0.1:8000/api";
 
+/**
+ * High-performance Sci-Fi Telemetry Matrix Glyph Decrambler
+ * Delivers clean, Apple/NASA-grade character decryption on data ingest.
+ */
+class TelemetryScrambler {
+  static scramble(element, targetText, duration = 400) {
+    if (!element || !targetText) return;
+
+    // Crisp NASA hex digits, math operators, and space telemetry glyphs
+    const glyphs = "0123456789ABCDEF•°>∆∇µλ∑";
+    const startTime = performance.now();
+    const length = targetText.length;
+
+    if (element._scrambleRaf) {
+      cancelAnimationFrame(element._scrambleRaf);
+      element._scrambleRaf = null;
+    }
+
+    element.classList.add("telemetry-scrambling");
+
+    const update = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1.0, elapsed / duration);
+      // Smooth ease-out exponential curve
+      const resolvedCount = Math.floor(Math.pow(progress, 0.75) * length);
+
+      let output = "";
+      for (let i = 0; i < length; i++) {
+        const char = targetText[i];
+        if (char === " " || char === "\n" || char === "/" || char === "•") {
+          output += char;
+        } else if (i < resolvedCount) {
+          output += char;
+        } else {
+          output += glyphs[Math.floor(Math.random() * glyphs.length)];
+        }
+      }
+
+      element.textContent = output;
+
+      if (progress < 1.0) {
+        element._scrambleRaf = requestAnimationFrame(update);
+      } else {
+        element.textContent = targetText;
+        element._scrambleRaf = null;
+        element.classList.remove("telemetry-scrambling");
+        element.classList.add("telemetry-settled");
+        setTimeout(() => element.classList.remove("telemetry-settled"), 320);
+      }
+    };
+
+    element._scrambleRaf = requestAnimationFrame(update);
+  }
+}
+
+window.TelemetryScrambler = TelemetryScrambler;
+
 class EarthJukeboxApp {
   constructor() {
     this.currentData = null;
@@ -445,20 +502,25 @@ class EarthJukeboxApp {
     // 3. Render Minimalist Synchronized Timeline (Chart.js)
     this.chartEngine.renderDataset(data, this.secondaryData, this.isDualTrackActive);
 
-    // 4. Update HUD Statistics & 5 Columns
+    // 4. Update HUD Statistics & 5 Columns with Holographic Scramble Decryption
     const ins = data.insights;
     this.dom.hudPeakTrough.innerHTML = `${ins.max}° <span class="sub-dim">HIGH</span>  ${ins.min}° <span class="sub-dim">LOW</span>`;
     this.dom.cacheBadge.textContent = data.cached
       ? "AUTHENTIC SATELLITE TELEMETRY (CACHED)"
       : "LIVE INGESTED FROM NASA POWER API";
 
+    const atmosphereText = data.data_type === "rainfall"
+      ? `${ins.total_rainfall} mm TOTAL`
+      : (ins.days_above_35c > 0 ? "HEATWAVE ANOMALIES" : "TEMPERATE CONDITIONS");
+    TelemetryScrambler.scramble(this.dom.hudAtmosphere, atmosphereText, 450);
+
     if (data.data_type === "rainfall") {
-      this.dom.hudAtmosphere.textContent = `${ins.total_rainfall} mm TOTAL`;
       this.dom.hudRainDays.textContent = `PEAK: ${ins.peak_record.value} mm • ${ins.rain_days_count} RAIN DAYS`;
     } else {
-      this.dom.hudAtmosphere.textContent = ins.days_above_35c > 0 ? "HEATWAVE ANOMALIES" : "TEMPERATE CONDITIONS";
       this.dom.hudRainDays.textContent = `RANGE: ${ins.temp_range}°C • CDD: ${ins.cooling_degree_days || 0}`;
     }
+
+    TelemetryScrambler.scramble(this.dom.hudStatus, "100% NASA POWER", 380);
 
     // Narrative text
     this.dom.narrativeText.textContent = data.narrative;
@@ -466,14 +528,19 @@ class EarthJukeboxApp {
       this.dom.aiBriefContainer.classList.add("hidden");
     }
 
-    // Reset HUD to day 0
+    // Reset HUD to day 0 with Scramble Decryption
     if (data.dates.length > 0) {
       this.dom.hudDate.textContent = data.dates[0];
       this.dom.hudDayOfYear.textContent = `SOL ${data.year} • DAY 1 OF ${data.dates.length}`;
-      this.dom.hudValue.textContent = `${data.values[0]}${data.unit === '°C' ? '°' : ' ' + data.unit}`;
+      
+      const valStr = `${data.values[0]}${data.unit === '°C' ? '°' : ' ' + data.unit}`;
+      TelemetryScrambler.scramble(this.dom.hudValue, valStr, 400);
+
       this.dom.hudNote.textContent = "--";
       this.dom.hudFreq.textContent = "0 Hz";
-      this.dom.hudSeason.textContent = this.calculateSeason(data.dates[0], data.location.lat);
+
+      const seasonStr = this.calculateSeason(data.dates[0], data.location.lat);
+      TelemetryScrambler.scramble(this.dom.hudSeason, seasonStr, 460);
     }
   }
 
