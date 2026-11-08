@@ -1,7 +1,7 @@
 # 🛰️ Earth Information Jukebox: 5-Module Execution Roadmap
 
 **NASA Space Apps Challenge**  
-**Project Status:** Complete, Fully Integrated & Tested  
+**Project Status:** 100% Complete, Fully Integrated & Tested  
 **Architecture:** 5 Decoupled High-Level Engineering Modules  
 
 ---
@@ -30,6 +30,7 @@
 - [x] Endpoint `GET /api/data` supporting preset cities and custom lat/lon
 - [x] Endpoint `GET /api/compare` for dual-city comparative climate analysis
 - [x] Endpoint `GET /api/export` for downloading clean CSV / JSON climate datasets
+- [x] Endpoint `GET /api/explain` for AI / Rule-based atmospheric briefings
 - [x] Mount static frontend at root (`/`) with automatic `index.html` resolution
 
 ---
@@ -61,6 +62,8 @@
 - [x] Obsidian space observatory aesthetic (cosmic nebula glows, glassmorphism, responsive grid)
 - [x] Live Telemetry HUD (Active Date, Day of Year, Measurement with units, Musical Note, Frequency in Hz)
 - [x] Preset city selector + Custom Latitude/Longitude coordinate inputs
+- [x] **Interactive Global Map (Leaflet.js):** Click anywhere on Earth to drop a telemetry pin and stream climate data
+- [x] **AI Climate Brief Generator:** One-click scientific anomaly explanation (Groq LLM + Climatology Rules Engine)
 - [x] Climate Intelligence Storyboard with statistical summary cards
 - [x] Keyboard shortcuts (Space = Play/Pause, Arrow Keys = Seek ±5 days, R = Reset)
 - [x] 1-Click Launchers (`run.py` and `start.bat`)

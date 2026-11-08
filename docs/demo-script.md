@@ -35,3 +35,4 @@
 ### 1:20 – 1:30 | Closing & Impact
 - **Speaker:**
   > *"Built with FastAPI, Tone.js, and Chart.js, The Earth Information Jukebox bridges science, music, and accessibility — letting the world listen to the pulse of our living planet. Thank you!"*
+

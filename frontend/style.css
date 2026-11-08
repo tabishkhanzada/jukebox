@@ -311,6 +311,119 @@ body {
   box-shadow: var(--glow-cyan);
 }
 
+/* Map Drawer */
+.map-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-highlight);
+  border-radius: 14px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+}
+
+.map-drawer.hidden {
+  display: none;
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.drawer-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--accent-cyan);
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: #fff;
+}
+
+.drawer-desc {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.leaflet-map-frame {
+  width: 100%;
+  height: 320px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+/* AI Brief Styles */
+.intel-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pill-btn-ai {
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  color: #ffffff;
+  border: none;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.3);
+}
+
+.pill-btn-ai:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(124, 58, 237, 0.5);
+}
+
+.ai-brief-box {
+  background: rgba(30, 27, 75, 0.4);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  border-radius: 8px;
+  padding: 0.85rem;
+  margin-top: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ai-brief-box.hidden {
+  display: none;
+}
+
+.ai-source-badge {
+  font-size: 0.68rem;
+  color: #c084fc;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ai-text {
+  font-size: 0.88rem;
+  color: #f1f5f9;
+  line-height: 1.6;
+}
+
 /* Custom Coordinates Panel */
 .custom-coord-panel {
   display: flex;

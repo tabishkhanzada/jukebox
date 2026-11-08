@@ -20,6 +20,7 @@ from backend.data_service import (
     PARAMETERS_METADATA,
     CACHE_DIR
 )
+from backend.ai_service import generate_ai_climate_analysis
 
 app = FastAPI(
     title="NASA Earth Information Jukebox API",
@@ -214,6 +215,36 @@ def export_climate_dataset(
             )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+
+
+@app.get("/api/explain", tags=["AI & Climatology"])
+def get_climate_explanation(
+    city: str = Query("Karachi", description="City name"),
+    year: int = Query(2024, description="Year"),
+    type: str = Query("temperature", description="Parameter")
+):
+    """
+    Generate an intelligent AI / expert climatology anomaly briefing for the selected year and location.
+    """
+    try:
+        data = get_earth_data(city=city, data_type=type, year=year)
+        explanation = generate_ai_climate_analysis(
+            city=data["city"],
+            year=year,
+            data_type=type,
+            insights=data["insights"],
+            location_meta=data["location"]
+        )
+        return {
+            "status": "success",
+            "city": data["city"],
+            "year": year,
+            "data_type": type,
+            "explanation": explanation
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
 
 
 

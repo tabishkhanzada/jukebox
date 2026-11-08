@@ -16,6 +16,10 @@
   <!-- Chart.js for Interactive Climate Visualization -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   
+  <!-- Leaflet for Interactive Earth Map Selection -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -36,6 +40,9 @@
       </div>
 
       <div class="header-actions">
+        <button id="toggleMapBtn" class="pill-btn-outline" title="Open interactive Earth satellite map picker">
+          <span>🗺️</span> Global Map
+        </button>
         <button id="exportCsvBtn" class="pill-btn-outline" title="Export clean dataset as CSV for research">
           <span>📥</span> Export CSV
         </button>
@@ -49,6 +56,16 @@
         </div>
       </div>
     </header>
+
+    <!-- Global Earth Map Drawer (Collapsible) -->
+    <section id="mapDrawer" class="map-drawer card-surface hidden">
+      <div class="drawer-header">
+        <h3 class="drawer-title">🌍 NASA Earth Satellite Coordinate Picker</h3>
+        <button id="closeMapBtn" class="close-btn" title="Close Map">&times;</button>
+      </div>
+      <p class="drawer-desc">Click anywhere on the planet (Amazon, Sahara, Arctic, Himalayas) to drop an observation pin and stream real NASA climate telemetry.</p>
+      <div id="earthMap" class="leaflet-map-frame"></div>
+    </section>
 
     <!-- Mission Control Bar: Selection & Parameters -->
     <section class="control-deck">
@@ -251,10 +268,19 @@
 
       <!-- Climate Story / AI Narrative Card -->
       <div class="intel-card card-surface narrative-card">
-        <h3 class="intel-title"><span class="intel-icon">🧠</span> Climate Intelligence Story</h3>
+        <div class="intel-card-header">
+          <h3 class="intel-title"><span class="intel-icon">🧠</span> Climate Intelligence Story</h3>
+          <button id="generateAiBriefBtn" class="pill-btn-ai" title="Generate AI science breakdown">
+            <span>✨</span> Generate AI Brief
+          </button>
+        </div>
         <p id="narrativeText" class="narrative-content">
           Loading NASA Earth Observation data... Select a city and click "Play" to listen to annual climate shifts.
         </p>
+        <div id="aiBriefContainer" class="ai-brief-box hidden">
+          <div class="ai-source-badge font-mono" id="aiSourceBadge">NASA Earth Science AI</div>
+          <p id="aiBriefText" class="ai-text"></p>
+        </div>
         <div class="sonification-explanation">
           <strong>Sonification Key:</strong>
           <span>High Notes = High Temperature / High Wind</span> •

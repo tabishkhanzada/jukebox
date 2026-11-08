@@ -1,10 +1,9 @@
 /**
  * NASA Earth Information Jukebox - Mission Orchestrator
  * Module 5: Connects API telemetry, Sonification Engine (Tone.js),
- * Dynamic Chart Engine (Chart.js), Dual-Track Audio, and Audio/Data Export.
+ * Dynamic Chart Engine (Chart.js), Interactive Leaflet Map, and AI Intelligence Briefs.
  */
 
-// Determine API base URL (works seamlessly when served from FastAPI or opened standalone)
 const API_BASE_URL = window.location.origin.includes("localhost") || window.location.origin.includes("127.0.0.1")
   ? `${window.location.origin}/api`
   : "http://127.0.0.1:8000/api";
@@ -19,9 +18,11 @@ class EarthJukeboxApp {
     this.customCoords = null;
     this.isDualTrackActive = true;
 
-    // Subsystem instances
+    // Subsystems
     this.chartEngine = null;
     this.sonifier = window.earthSonifier;
+    this.leafletMap = null;
+    this.mapMarker = null;
 
     // DOM Elements cache
     this.dom = {
@@ -34,7 +35,10 @@ class EarthJukeboxApp {
       fetchBtn: document.getElementById("fetchDataBtn"),
       metricPills: document.querySelectorAll(".metric-pill"),
       
-      // Export & Recording buttons
+      // Header & Map Actions
+      toggleMapBtn: document.getElementById("toggleMapBtn"),
+      mapDrawer: document.getElementById("mapDrawer"),
+      closeMapBtn: document.getElementById("closeMapBtn"),
       exportCsvBtn: document.getElementById("exportCsvBtn"),
       recordAudioBtn: document.getElementById("recordAudioBtn"),
       recordDot: document.getElementById("recordDot"),
@@ -68,6 +72,12 @@ class EarthJukeboxApp {
       cacheBadge: document.getElementById("cacheBadge"),
       narrativeText: document.getElementById("narrativeText"),
 
+      // AI Brief Box
+      generateAiBriefBtn: document.getElementById("generateAiBriefBtn"),
+      aiBriefContainer: document.getElementById("aiBriefContainer"),
+      aiSourceBadge: document.getElementById("aiSourceBadge"),
+      aiBriefText: document.getElementById("aiBriefText"),
+
       // Stats
       statMean: document.getElementById("statMean"),
       statMax: document.getElementById("statMax"),
@@ -91,14 +101,106 @@ class EarthJukeboxApp {
     this.sonifier.onPlaybackStateChange = (isPlaying) => this.handlePlaybackChange(isPlaying);
     this.sonifier.onRecordingStateChange = (isRec) => this.handleRecordingChange(isRec);
 
-    // 3. Setup UI Listeners (Module 5)
+    // 3. Setup UI Listeners & Interactive Map
     this.bindEvents();
+    this.initGlobalMap();
 
     // 4. Initial Telemetry Ingestion
     await this.loadTelemetry();
   }
 
+  initGlobalMap() {
+    if (!window.L || !document.getElementById("earthMap")) return;
+
+    try {
+      this.leafletMap = L.map("earthMap", {
+        center: [24.86, 67.01],
+        zoom: 2.5,
+        minZoom: 1.5,
+        maxZoom: 9
+      });
+
+      // Dark CartoDB basemap matching obsidian theme
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+        attribution: '&copy; <a href="https://carto.com/">CARTO</a> | NASA POWER',
+        subdomains: "abcd",
+        maxZoom: 19
+      }).addTo(this.leafletMap);
+
+      // Add preset city markers
+      const presetCoords = [
+        { name: "Karachi", lat: 24.86, lon: 67.01 },
+        { name: "Lahore", lat: 31.52, lon: 74.36 },
+        { name: "London", lat: 51.51, lon: -0.13 },
+        { name: "New York", lat: 40.71, lon: -74.01 },
+        { name: "Dubai", lat: 25.20, lon: 55.27 },
+        { name: "Tokyo", lat: 35.68, lon: 139.69 },
+        { name: "Nairobi", lat: -1.29, lon: 36.82 }
+      ];
+
+      presetCoords.forEach((p) => {
+        const marker = L.circleMarker([p.lat, p.lon], {
+          radius: 6,
+          fillColor: "#38bdf8",
+          color: "#ffffff",
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.8
+        }).addTo(this.leafletMap);
+
+        marker.bindPopup(`<b>${p.name}</b><br>NASA Observation Station`);
+        marker.on("click", () => {
+          this.dom.citySelect.value = p.name;
+          this.activeCity = p.name;
+          this.customCoords = null;
+          this.dom.customCoordInputs.classList.add("hidden");
+          this.loadTelemetry();
+        });
+      });
+
+      // Click anywhere to pick custom coordinate
+      this.leafletMap.on("click", (e) => {
+        const lat = parseFloat(e.latlng.lat.toFixed(2));
+        const lon = parseFloat(e.latlng.lng.toFixed(2));
+
+        if (this.mapMarker) {
+          this.mapMarker.setLatLng(e.latlng);
+        } else {
+          this.mapMarker = L.marker(e.latlng).addTo(this.leafletMap);
+        }
+        this.mapMarker.bindPopup(`<b>Telemetry Pin</b><br>Lat: ${lat}, Lon: ${lon}`).openPopup();
+
+        this.customCoords = { lat, lon };
+        this.activeCity = null;
+        this.dom.citySelect.value = "custom";
+        this.dom.customCoordInputs.classList.remove("hidden");
+        this.dom.customLat.value = lat;
+        this.dom.customLon.value = lon;
+
+        this.loadTelemetry();
+      });
+    } catch (err) {
+      console.warn("Leaflet map initialization error:", err);
+    }
+  }
+
   bindEvents() {
+    // Map drawer toggle
+    if (this.dom.toggleMapBtn && this.dom.mapDrawer) {
+      this.dom.toggleMapBtn.addEventListener("click", () => {
+        const isHidden = this.dom.mapDrawer.classList.toggle("hidden");
+        if (!isHidden && this.leafletMap) {
+          setTimeout(() => this.leafletMap.invalidateSize(), 200);
+        }
+      });
+    }
+
+    if (this.dom.closeMapBtn && this.dom.mapDrawer) {
+      this.dom.closeMapBtn.addEventListener("click", () => {
+        this.dom.mapDrawer.classList.add("hidden");
+      });
+    }
+
     // City selection
     this.dom.citySelect.addEventListener("change", (e) => {
       if (e.target.value === "custom") {
@@ -175,7 +277,7 @@ class EarthJukeboxApp {
       this.sonifier.setMasterVolume(db);
     });
 
-    // Master Transport Controls
+    // Transport Controls
     this.dom.playBtn.addEventListener("click", () => {
       if (this.sonifier.isPlaying) {
         this.sonifier.pause();
@@ -207,6 +309,13 @@ class EarthJukeboxApp {
         } else {
           this.sonifier.startRecording();
         }
+      });
+    }
+
+    // AI Brief Generator Button
+    if (this.dom.generateAiBriefBtn) {
+      this.dom.generateAiBriefBtn.addEventListener("click", () => {
+        this.fetchAiBrief();
       });
     }
 
@@ -282,6 +391,11 @@ class EarthJukeboxApp {
   processDataSuccess(data) {
     this.currentData = data;
 
+    // Hide previous AI brief on new city load
+    if (this.dom.aiBriefContainer) {
+      this.dom.aiBriefContainer.classList.add("hidden");
+    }
+
     // 1. Configure Tone.js Sonifier
     this.sonifier.loadDataset(data, this.secondaryData);
     this.sonifier.setDualTrack(this.isDualTrackActive);
@@ -319,6 +433,35 @@ class EarthJukeboxApp {
       this.dom.hudValue.textContent = data.values[0];
       this.dom.hudNote.textContent = "--";
       this.dom.hudFreq.textContent = "0 Hz";
+    }
+  }
+
+  /**
+   * Fetch AI Climate Intelligence Briefing
+   */
+  async fetchAiBrief() {
+    if (!this.currentData) return;
+    this.dom.generateAiBriefBtn.innerHTML = "<span>⏳</span> Analyzing...";
+    this.dom.generateAiBriefBtn.disabled = true;
+
+    const city = this.activeCity || this.currentData.city;
+    const year = this.activeYear;
+    const type = this.activeMetric;
+
+    try {
+      const url = `${API_BASE_URL}/explain?city=${encodeURIComponent(city)}&year=${year}&type=${type}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const payload = await res.json();
+        this.dom.aiSourceBadge.textContent = payload.explanation.source;
+        this.dom.aiBriefText.textContent = payload.explanation.summary;
+        this.dom.aiBriefContainer.classList.remove("hidden");
+      }
+    } catch (e) {
+      console.warn("AI brief fetch failed:", e);
+    } finally {
+      this.dom.generateAiBriefBtn.innerHTML = "<span>✨</span> Generate AI Brief";
+      this.dom.generateAiBriefBtn.disabled = false;
     }
   }
 
@@ -373,8 +516,6 @@ class EarthJukeboxApp {
     const city = this.activeCity || "Location";
     const year = this.activeYear;
     const exportUrl = `${API_BASE_URL}/export?city=${encodeURIComponent(city)}&year=${year}&format=csv`;
-
-    // Attempt direct download from backend
     window.open(exportUrl, "_blank");
   }
 

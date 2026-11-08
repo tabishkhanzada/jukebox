@@ -35,4 +35,16 @@ assert r_rain.status_code == 200
 payload_rain = r_rain.json()
 print(f"✓ Rainfall Data OK: Total {payload_rain['insights']['total_rainfall']} mm over {payload_rain['insights']['rain_days_count']} rain days")
 
+# 6. API export check
+r_csv = client.get("/api/export?city=Karachi&year=2024&format=csv")
+assert r_csv.status_code == 200
+assert "Temperature_C" in r_csv.text
+print(f"✓ CSV Export OK: {len(r_csv.text.splitlines())} lines")
+
+# 7. API AI explain check
+r_explain = client.get("/api/explain?city=Karachi&year=2024&type=temperature")
+assert r_explain.status_code == 200
+exp = r_explain.json()["explanation"]
+print(f"✓ AI Climate Brief OK ({exp['source']}): {exp['summary'][:60]}...")
+
 print("\n🚀 ALL 5 MODULES FULL-STACK INTEGRATION TEST PASSED PERFECTLY!")
