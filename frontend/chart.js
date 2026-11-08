@@ -207,11 +207,7 @@ class ClimateChartEngine {
         },
         plugins: {
           legend: {
-            display: this.dualAxisEnabled,
-            labels: {
-              color: "#94a3b8",
-              font: { family: "Inter, sans-serif", size: 12 }
-            }
+            display: false
           },
           tooltip: {
             backgroundColor: "rgba(10, 10, 14, 0.95)",

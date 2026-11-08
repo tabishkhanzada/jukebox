@@ -34,7 +34,11 @@ class PlanetaryParticleGlobe {
     this.orbitRadius = 3.65;
     this.orbitInclination = 51.6 * (Math.PI / 180); // 51.6° ISS / NASA Earth Science Orbit
 
-    this.globeRadius = 2.85;
+    this.globeRadius = 2.45;
+    this.orbitRadius = 3.25;
+    this.orbitInclination = 51.6 * (Math.PI / 180); // 51.6° ISS / NASA Earth Science Orbit
+    this.globeCenterY = 0.95; // Lifted into upper-middle stage to guarantee zero overlap with transport dock
+
     this.pulseEnergy = 0;
 
     // Spherical orientation (Euler angles)
@@ -52,8 +56,8 @@ class PlanetaryParticleGlobe {
     this.lastAmbientShockwave = 0;
 
     // Camera dolly
-    this.baseCameraZ = 8.0;
-    this.targetCameraZ = 8.0;
+    this.baseCameraZ = 8.5;
+    this.targetCameraZ = 8.5;
 
     // Mouse drag interaction
     this.isDragging = false;
@@ -69,8 +73,8 @@ class PlanetaryParticleGlobe {
     // 1. Scene & Centered Perspective Camera
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    this.camera.position.set(0, 0.35, this.baseCameraZ);
-    this.camera.lookAt(0, 0.35, 0);
+    this.camera.position.set(0, this.globeCenterY, this.baseCameraZ);
+    this.camera.lookAt(0, this.globeCenterY, 0);
 
     // 2. High-performance WebGL Renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -78,9 +82,9 @@ class PlanetaryParticleGlobe {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.container.appendChild(this.renderer.domElement);
 
-    // 3. Central Master Globe Group
+    // 3. Central Master Globe Group (Lifted into Upper Space)
     this.globeGroup = new THREE.Group();
-    this.globeGroup.position.set(0, 0.35, 0);
+    this.globeGroup.position.set(0, this.globeCenterY, 0);
     this.scene.add(this.globeGroup);
 
     // 4. Solid Inner Cosmic Sphere (Prevents backside dots from bleeding through)
@@ -294,7 +298,7 @@ class PlanetaryParticleGlobe {
     for (let i = 0; i <= 128; i++) {
       const a = (i / 128) * Math.PI * 2;
       const ox = R_orbit * Math.cos(a);
-      const oy = R_orbit * Math.sin(a) * Math.sin(inc) + 0.35;
+      const oy = R_orbit * Math.sin(a) * Math.sin(inc) + this.globeCenterY;
       const oz = R_orbit * Math.sin(a) * Math.cos(inc);
       orbitPoints.push(new THREE.Vector3(ox, oy, oz));
     }
@@ -473,13 +477,13 @@ class PlanetaryParticleGlobe {
     const R_orbit = this.orbitRadius;
     const inc = this.orbitInclination;
     const satX = R_orbit * Math.cos(this.orbitAngle);
-    const satY = R_orbit * Math.sin(this.orbitAngle) * Math.sin(inc) + 0.35;
+    const satY = R_orbit * Math.sin(this.orbitAngle) * Math.sin(inc) + this.globeCenterY;
     const satZ = R_orbit * Math.sin(this.orbitAngle) * Math.cos(inc);
 
     if (this.satelliteGroup) {
       this.satelliteGroup.position.set(satX, satY, satZ);
       // Nadir-pointing: Instruments continuously face straight toward the Earth's center
-      this.satelliteGroup.lookAt(0, 0.35, 0);
+      this.satelliteGroup.lookAt(0, this.globeCenterY, 0);
 
       // Subtle solar wing oscillation
       this.satelliteGroup.rotateZ(Math.sin(this.orbitAngle * 2) * 0.06);
@@ -549,6 +553,7 @@ class PlanetaryParticleGlobe {
     // 6. Camera dolly easing
     if (this.camera) {
       this.camera.position.z += (this.targetCameraZ - this.camera.position.z) * 0.06;
+      this.camera.lookAt(0, this.globeCenterY, 0);
     }
 
     // 7. Ambient radar pulse when paused
