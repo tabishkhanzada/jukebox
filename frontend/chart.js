@@ -148,14 +148,19 @@ class ClimateChartEngine {
       });
     }
 
+    const minVal = Math.min(...earthData.values);
+    const maxVal = Math.max(...earthData.values);
+    const valRange = Math.max(5, maxVal - minVal);
+    const padding = valRange * 0.15;
+
     const scalesConfig = {
       x: {
         grid: {
-          color: "rgba(255, 255, 255, 0.04)",
+          color: "rgba(255, 255, 255, 0.05)",
           drawBorder: false
         },
         ticks: {
-          color: "rgba(255, 255, 255, 0.45)",
+          color: "rgba(255, 255, 255, 0.6)",
           font: { family: "'JetBrains Mono', monospace", size: 10 },
           maxRotation: 0,
           autoSkip: false
@@ -165,14 +170,17 @@ class ClimateChartEngine {
         type: "linear",
         display: true,
         position: "left",
+        suggestedMin: Math.floor(minVal - padding),
+        suggestedMax: Math.ceil(maxVal + padding),
         grid: {
-          color: "rgba(255, 255, 255, 0.04)",
+          color: "rgba(255, 255, 255, 0.05)",
           drawBorder: false
         },
         ticks: {
-          color: "rgba(255, 255, 255, 0.45)",
+          color: "rgba(255, 255, 255, 0.7)",
           font: { family: "'JetBrains Mono', monospace", size: 10 },
-          callback: (val) => `${val} ${earthData.unit}`
+          maxTicksLimit: 6,
+          callback: (val) => `${val}${earthData.unit === '°C' ? '°' : ' ' + earthData.unit}`
         }
       }
     };
@@ -185,7 +193,8 @@ class ClimateChartEngine {
         grid: { drawOnChartArea: false },
         ticks: {
           color: "#38bdf8",
-          font: { family: "Inter, system-ui, sans-serif", size: 11 },
+          font: { family: "'JetBrains Mono', monospace", size: 10 },
+          maxTicksLimit: 6,
           callback: (val) => `${val} mm`
         }
       };

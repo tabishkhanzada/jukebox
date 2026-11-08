@@ -31,13 +31,11 @@ class PlanetaryParticleGlobe {
     this.strobeLight = null;
     this.orbitAngle = 0.4;
     this.orbitSpeed = 0.009;
-    this.orbitRadius = 3.65;
-    this.orbitInclination = 51.6 * (Math.PI / 180); // 51.6° ISS / NASA Earth Science Orbit
 
-    this.globeRadius = 2.45;
-    this.orbitRadius = 3.25;
+    this.globeRadius = 2.20;
+    this.orbitRadius = 3.10;
     this.orbitInclination = 51.6 * (Math.PI / 180); // 51.6° ISS / NASA Earth Science Orbit
-    this.globeCenterY = 0.95; // Lifted into upper-middle stage to guarantee zero overlap with transport dock
+    this.globeCenterY = 0.85; // Lifted into upper-middle stage to guarantee zero overlap with transport dock and chart
 
     this.pulseEnergy = 0;
 
@@ -70,11 +68,11 @@ class PlanetaryParticleGlobe {
     const width = this.container.clientWidth || window.innerWidth;
     const height = this.container.clientHeight || 560;
 
-    // 1. Scene & Centered Perspective Camera
+    // 1. Scene & Centered Perspective Camera (Framing upper-stage Earth horizon)
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    this.camera.position.set(0, this.globeCenterY, this.baseCameraZ);
-    this.camera.lookAt(0, this.globeCenterY, 0);
+    this.camera.position.set(0, 0, this.baseCameraZ);
+    this.camera.lookAt(0, 0, 0);
 
     // 2. High-performance WebGL Renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -553,7 +551,7 @@ class PlanetaryParticleGlobe {
     // 6. Camera dolly easing
     if (this.camera) {
       this.camera.position.z += (this.targetCameraZ - this.camera.position.z) * 0.06;
-      this.camera.lookAt(0, this.globeCenterY, 0);
+      this.camera.lookAt(0, 0, 0);
     }
 
     // 7. Ambient radar pulse when paused
