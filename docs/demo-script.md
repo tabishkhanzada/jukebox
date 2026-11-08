@@ -16,9 +16,9 @@
 ### 0:15 – 0:40 | The Solution & Live Playback (Karachi Heatwave)
 - **Action:** Select **Karachi (2024)**, **Temperature**, and click the large glowing **PLAY** button.
 - **Audio:** The melody starts in low, serene notes in winter (January), gently rises into spring, and reaches high, sparkling frequencies during the June heatwave peak (33.5°C), while soft monthly sub-bass pulses mark calendar progression.
-- **Visual:** The vertical cyan playhead needle glides in real-time across the line chart, and the center orbital resonance ring pulses with the note frequency.
+- **Visual:** The full 3D glowing orange Earth sphere rotates in space, emitting holographic radar shockwaves outward from the station reticle across the continents with every musical beat. The 5-column telemetry HUD decrypts live weather, acoustic pitch, and season data.
 - **Speaker:**
-  > *"Meet The Earth Information Jukebox. Here, daily satellite temperatures from the NASA Langley POWER Project are quantized into a harmonious C-Major pentatonic scale. Listen as we move from winter into summer — the higher temperatures naturally transpose the melody upward, making extreme weather visceral and intuitive."*
+  > *"Meet The Earth Information Jukebox. Here, daily satellite telemetry from the NASA Langley POWER Project is quantized into harmonious pentatonic scales. Watch our 3D solar Earth sphere: as daily temperatures modulate upward during the summer heatwave, the melody transposes higher and holographic acoustic shockwaves ripple outward from the station pin, making extreme climate anomalies instantly intuitive."*
 
 ### 0:40 – 1:05 | Dual-Track Accompaniment (Adding Rainfall Drums)
 - **Action:** Toggle on the **"Dual-Track (Layer Rain Beat)"** switch.
