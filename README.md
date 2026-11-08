@@ -29,8 +29,8 @@ The project is architected into 5 decoupled, high-grade modules:
 | **Module 1** | **NASA Data Ingestion & Sanitization Engine** | Python 3.10, Pandas, NumPy, Requests | Ingests NASA Langley POWER API daily telemetry, handles missing values (`-999` sentinel interpolation), scales values `[0, 1]` for audio velocity/pitch, generates climate intelligence statistics, and manages local disk caching. |
 | **Module 2** | **FastAPI RESTful Microservice** | FastAPI, Uvicorn, Pydantic, CORS | Asynchronous REST API providing `/api/data`, `/api/cities`, `/api/compare`, and `/api/health` with OpenAPI/Swagger docs (`/docs`) and static asset hosting. |
 | **Module 3** | **Advanced Web Audio Sonification Engine** | Tone.js (Web Audio API) | Multi-timbral synthesizer with harmonic scale quantization (C Major Pentatonic, Lydian Celestial, Minor Pentatonic, Akebono), percussion layering, timekeeping bass drone, and precise transport scheduling. |
-| **Module 4** | **Synchronized Visualizer & Chart Engine** | Chart.js, HTML5 Canvas | Responsive curved line/bar chart with real-time glowing playhead needle, interactive click-to-seek scrub, and audio-reactive particle visualizer. |
-| **Module 5** | **Mission Control UI/UX & Climate Intelligence** | HTML5, CSS3, ES6 JavaScript | Space observatory dark theme with glassmorphic cards, live telemetry HUD (Date, Temp, Note, Hz, Day of Year), climate narrative storyboards, and one-click launch scripts. |
+| **Module 4** | **Synchronized Visualizer & Chart Engine** | Three.js, Chart.js, HTML5 Canvas | Interactive 3D particle sphere globe with 12,000+ points and solar rim lighting, zero-lag glowing playhead scrubber needle, and audio-reactive particle pulse. |
+| **Module 5** | **Mission Control UI/UX & Climate Intelligence** | HTML5, CSS3, ES6 JavaScript, Leaflet | Authentic NASA mission control aesthetic matching deep-space telemetry terminals, 5-column live telemetry HUD (Season, Weather, Acoustic Note, Atmosphere, Datastream), slide-out controls drawer, interactive satellite world map, and AI climate briefings. |
 
 ---
 
@@ -69,9 +69,14 @@ To ensure sonification sounds melodious rather than abrasive noise:
 
 ## 🧪 Testing & Verification
 
-Run the automated test suite verifying data sanitization, `-999` sentinel interpolation, and boundary normalizations:
+Run the automated test suite verifying data sanitization, sentinel interpolation, and boundary normalizations:
 ```bash
-py -3.10 -m unittest backend/test_service.py
+py -3.10 -m unittest backend.test_service
+```
+
+Run full-stack End-to-End integration verification (all routes, static assets, 3D globe, and APIs):
+```bash
+py -3.10 -m backend.verify_e2e
 ```
 
 ---
