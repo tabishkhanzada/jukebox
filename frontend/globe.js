@@ -28,7 +28,12 @@ class PlanetaryParticleGlobe {
     // Holographic Sonic Shockwave Radar System
     this.shockwaves = [];
     this.lastShockwaveTime = 0;
+    this.lastAmbientShockwave = 0;
     this.shockwaveGroup = null;
+
+    // Smooth Orbital Camera Dolly Dynamics
+    this.baseCameraZ = 9.5;
+    this.targetCameraZ = 9.5;
 
     this.init();
   }
@@ -224,6 +229,13 @@ class PlanetaryParticleGlobe {
     this.targetRotationY = -radLon;
     this.targetRotationX = 0.25 + (radLat * 0.2);
 
+    // Cinematic Orbital Camera Dolly: gently pull back during transit, then lock in
+    this.targetCameraZ = 10.35;
+    if (this._dollyTimeout) clearTimeout(this._dollyTimeout);
+    this._dollyTimeout = setTimeout(() => {
+      this.targetCameraZ = this.baseCameraZ;
+    }, 450);
+
     // Update targeting HUD tag with holographic decrypt scramble
     const solTag = document.getElementById("heroReticleTag");
     if (solTag) {
@@ -272,15 +284,19 @@ class PlanetaryParticleGlobe {
   /**
    * Spawns an ultra-crisp concentric holographic shockwave ripple.
    */
-  spawnShockwave(frequency) {
-    const geo = new THREE.RingGeometry(0.18, 0.20, 48);
+  spawnShockwave(frequency = 440, isAmbient = false) {
+    if (!this.shockwaveGroup) return;
+
+    // High-visibility luminous holographic ring (0.07 thickness)
+    const geo = new THREE.RingGeometry(0.20, 0.27, 48);
     const isHighFreq = frequency > 520;
     const color = isHighFreq ? 0xff7043 : 0x38bdf8;
+    const initialOpacity = isAmbient ? 0.45 : 0.8;
     const mat = new THREE.MeshBasicMaterial({
       color: color,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.65,
+      opacity: initialOpacity,
       blending: THREE.AdditiveBlending,
       depthWrite: false
     });
@@ -291,9 +307,9 @@ class PlanetaryParticleGlobe {
       mesh: ring,
       material: mat,
       scale: 1.0,
-      maxScale: 3.6,
-      growthRate: 0.055,
-      initialOpacity: 0.65
+      maxScale: isAmbient ? 3.8 : 3.5,
+      growthRate: isAmbient ? 0.04 : 0.055,
+      initialOpacity: initialOpacity
     });
 
     // Cap active shockwaves at 4 for ultra-clean, lightweight 60fps rendering
@@ -365,6 +381,13 @@ class PlanetaryParticleGlobe {
         sw.material.dispose();
         this.shockwaves.splice(i, 1);
       }
+    }
+
+    // Ambient idle radar pulse when paused (every 2.4s)
+    const now = performance.now();
+    if (now - this.lastShockwaveTime > 2400 && now - this.lastAmbientShockwave > 2400) {
+      this.lastAmbientShockwave = now;
+      this.spawnShockwave(440, true);
     }
 
     // Energy dissipation
