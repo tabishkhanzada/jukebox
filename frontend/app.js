@@ -1,7 +1,7 @@
 /**
  * NASA Earth Information Jukebox - Mission Orchestrator
  * Module 5: Connects API telemetry, Sonification Engine (Tone.js),
- * Dynamic Chart Engine (Chart.js), and Mission Control UI telemetry.
+ * Dynamic Chart Engine (Chart.js), Dual-Track Audio, and Audio/Data Export.
  */
 
 // Determine API base URL (works seamlessly when served from FastAPI or opened standalone)
@@ -12,10 +12,12 @@ const API_BASE_URL = window.location.origin.includes("localhost") || window.loca
 class EarthJukeboxApp {
   constructor() {
     this.currentData = null;
+    this.secondaryData = null; // Rainfall dataset for dual-track
     this.activeMetric = "temperature";
     this.activeCity = "Karachi";
     this.activeYear = 2024;
     this.customCoords = null;
+    this.isDualTrackActive = true;
 
     // Subsystem instances
     this.chartEngine = null;
@@ -32,9 +34,16 @@ class EarthJukeboxApp {
       fetchBtn: document.getElementById("fetchDataBtn"),
       metricPills: document.querySelectorAll(".metric-pill"),
       
+      // Export & Recording buttons
+      exportCsvBtn: document.getElementById("exportCsvBtn"),
+      recordAudioBtn: document.getElementById("recordAudioBtn"),
+      recordDot: document.getElementById("recordDot"),
+      recordText: document.getElementById("recordText"),
+
       // Audio controls
       scaleSelect: document.getElementById("scaleSelect"),
       instrumentSelect: document.getElementById("instrumentSelect"),
+      dualTrackToggle: document.getElementById("dualTrackToggle"),
       speedRange: document.getElementById("speedRange"),
       speedDisplay: document.getElementById("speedDisplay"),
       volumeRange: document.getElementById("volumeRange"),
@@ -80,6 +89,7 @@ class EarthJukeboxApp {
     // 2. Wire Sonification Engine Callbacks (Module 3)
     this.sonifier.onStepCallback = (stepInfo) => this.handleAudioStep(stepInfo);
     this.sonifier.onPlaybackStateChange = (isPlaying) => this.handlePlaybackChange(isPlaying);
+    this.sonifier.onRecordingStateChange = (isRec) => this.handleRecordingChange(isRec);
 
     // 3. Setup UI Listeners (Module 5)
     this.bindEvents();
@@ -133,6 +143,17 @@ class EarthJukeboxApp {
       this.loadTelemetry(true);
     });
 
+    // Dual-track toggle
+    if (this.dom.dualTrackToggle) {
+      this.dom.dualTrackToggle.addEventListener("change", (e) => {
+        this.isDualTrackActive = e.target.checked;
+        this.sonifier.setDualTrack(this.isDualTrackActive);
+        if (this.currentData) {
+          this.chartEngine.renderDataset(this.currentData, this.secondaryData, this.isDualTrackActive);
+        }
+      });
+    }
+
     // Audio Settings
     this.dom.scaleSelect.addEventListener("change", (e) => {
       this.sonifier.setScale(e.target.value);
@@ -171,6 +192,24 @@ class EarthJukeboxApp {
       this.sonifier.stop();
     });
 
+    // Data Export CSV Button
+    if (this.dom.exportCsvBtn) {
+      this.dom.exportCsvBtn.addEventListener("click", () => {
+        this.exportDataCsv();
+      });
+    }
+
+    // Audio Recording / Download Button
+    if (this.dom.recordAudioBtn) {
+      this.dom.recordAudioBtn.addEventListener("click", () => {
+        if (this.sonifier.isRecording) {
+          this.sonifier.stopRecordingAndDownload();
+        } else {
+          this.sonifier.startRecording();
+        }
+      });
+    }
+
     // Keyboard Shortcuts
     window.addEventListener("keydown", (e) => {
       if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
@@ -208,14 +247,27 @@ class EarthJukeboxApp {
 
     try {
       const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Server returned HTTP ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
+
+      // If metric is temperature and not custom coordinates, pre-fetch rainfall for dual-track
+      if (this.activeMetric === "temperature" && this.activeCity) {
+        try {
+          const rainUrl = `${API_BASE_URL}/data?city=${encodeURIComponent(this.activeCity)}&type=rainfall&year=${this.activeYear}`;
+          const rainRes = await fetch(rainUrl);
+          if (rainRes.ok) {
+            this.secondaryData = await rainRes.json();
+          }
+        } catch (e) {
+          console.warn("Secondary rainfall fetch skipped:", e);
+        }
+      } else {
+        this.secondaryData = null;
+      }
+
       this.processDataSuccess(data);
     } catch (err) {
       console.warn("Backend API request failed; activating client-side offline generator:", err);
-      // Generate client-side offline dataset so the application never breaks
       const fallbackData = this.generateClientOfflineData();
       this.processDataSuccess(fallbackData);
     } finally {
@@ -225,16 +277,17 @@ class EarthJukeboxApp {
   }
 
   /**
-   * Applies ingested NASA dataset across all 4 visual & audio subsystems.
+   * Applies ingested NASA dataset across all subsystems.
    */
   processDataSuccess(data) {
     this.currentData = data;
 
-    // 1. Load into Tone.js Sonifier
-    this.sonifier.loadDataset(data);
+    // 1. Configure Tone.js Sonifier
+    this.sonifier.loadDataset(data, this.secondaryData);
+    this.sonifier.setDualTrack(this.isDualTrackActive);
 
-    // 2. Render into Chart.js
-    this.chartEngine.renderDataset(data);
+    // 2. Render into Chart.js (with dual-axis if available)
+    this.chartEngine.renderDataset(data, this.secondaryData, this.isDualTrackActive);
 
     // 3. Update HUD Display
     this.dom.hudUnit.textContent = data.unit;
@@ -273,14 +326,12 @@ class EarthJukeboxApp {
    * Invoked on every tick/note generated by the Sonification Engine.
    */
   handleAudioStep(stepInfo) {
-    // 1. Update HUD Readouts
     this.dom.hudDate.textContent = stepInfo.date;
     this.dom.hudDayOfYear.textContent = `Day ${stepInfo.index + 1} / ${this.currentData.dates.length}`;
     this.dom.hudValue.textContent = stepInfo.value;
     this.dom.hudNote.textContent = stepInfo.note;
     this.dom.hudFreq.textContent = stepInfo.frequency > 0 ? `${stepInfo.frequency} Hz` : "--";
 
-    // 2. Sync Chart Scrubber Needle & Particle Ring
     this.chartEngine.updateScrubber(stepInfo.index, stepInfo.note, stepInfo.frequency);
   }
 
@@ -300,6 +351,31 @@ class EarthJukeboxApp {
       playText.textContent = "PLAY";
       playIcon.textContent = "▶";
     }
+  }
+
+  /**
+   * Updates audio recording status indicator.
+   */
+  handleRecordingChange(isRec) {
+    if (isRec) {
+      this.dom.recordDot.classList.add("recording");
+      this.dom.recordText.textContent = "Recording... (Click to Finish)";
+    } else {
+      this.dom.recordDot.classList.remove("recording");
+      this.dom.recordText.textContent = "Download Audio";
+    }
+  }
+
+  /**
+   * Exports dataset as CSV.
+   */
+  exportDataCsv() {
+    const city = this.activeCity || "Location";
+    const year = this.activeYear;
+    const exportUrl = `${API_BASE_URL}/export?city=${encodeURIComponent(city)}&year=${year}&format=csv`;
+
+    // Attempt direct download from backend
+    window.open(exportUrl, "_blank");
   }
 
   /**

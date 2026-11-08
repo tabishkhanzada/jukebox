@@ -408,3 +408,4 @@ if __name__ == "__main__":
     print(f"City: {sample['city']}, Year: {sample['year']}, Data points: {len(sample['dates'])}")
     print(f"Min: {sample['insights']['min']}°C, Max: {sample['insights']['max']}°C, Mean: {sample['insights']['mean']}°C")
     print("Narrative:", sample["narrative"])
+

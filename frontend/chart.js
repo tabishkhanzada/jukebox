@@ -1,6 +1,6 @@
 /**
  * NASA Earth Information Jukebox - Synchronized Visualizer & Chart Engine
- * Module 4: High-performance Chart.js rendering, real-time vertical playhead tracking,
+ * Module 4: High-performance Chart.js dual-axis rendering, real-time vertical playhead tracking,
  * click-to-seek timeline scrubbing, and audio-reactive particle visualizer.
  */
 
@@ -10,6 +10,8 @@ class ClimateChartEngine {
     this.chart = null;
     this.activeIndex = 0;
     this.currentDataset = null;
+    this.secondaryDataset = null;
+    this.dualAxisEnabled = false;
 
     // Ambient Audio Pulse Visualizer Canvas
     this.visCanvas = visualizerCanvasId ? document.getElementById(visualizerCanvasId) : null;
@@ -40,7 +42,7 @@ class ClimateChartEngine {
         ctx.lineWidth = 2.5;
         ctx.strokeStyle = "#38bdf8"; // Neon Sky Blue
         ctx.shadowColor = "#0ea5e9";
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 14;
         ctx.stroke();
 
         // 2. Draw glowing tracking ring at data point
@@ -79,10 +81,12 @@ class ClimateChartEngine {
   }
 
   /**
-   * Render or update dataset inside Chart.js.
+   * Render or update dataset inside Chart.js with optional Dual-Axis overlay.
    */
-  renderDataset(earthData) {
+  renderDataset(earthData, secondaryData = null, showDual = false) {
     this.currentDataset = earthData;
+    this.secondaryDataset = secondaryData;
+    this.dualAxisEnabled = showDual && secondaryData !== null;
     this.activeIndex = 0;
 
     const ctx = this.canvas.getContext("2d");
@@ -96,40 +100,102 @@ class ClimateChartEngine {
     } else {
       // Temperature gradient (Warm amber/red at top, cool cyan at bottom)
       gradient.addColorStop(0, "rgba(249, 115, 22, 0.7)");
-      gradient.addColorStop(0.5, "rgba(59, 130, 246, 0.4)");
-      gradient.addColorStop(1, "rgba(14, 165, 233, 0.05)");
+      gradient.addColorStop(0.5, "rgba(59, 130, 246, 0.35)");
+      gradient.addColorStop(1, "rgba(14, 165, 233, 0.03)");
     }
 
-    // Chart.js labels (Format to short month & day for clean X-axis)
+    // Chart.js labels (Format to short month for clean X-axis)
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const formattedLabels = earthData.dates.map((d, i) => {
       if (d.endsWith("-01") || i === 0 || i === earthData.dates.length - 1) {
         const parts = d.split("-");
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const mIdx = parseInt(parts[1], 10) - 1;
         return monthNames[mIdx] || parts[1];
       }
       return "";
     });
 
+    // Primary Dataset
+    const datasets = [
+      {
+        type: isRainfall ? "bar" : "line",
+        label: `${earthData.parameter_name} (${earthData.unit})`,
+        data: earthData.values,
+        borderColor: isRainfall ? "#38bdf8" : "#f59e0b",
+        borderWidth: isRainfall ? 1.5 : 2.5,
+        backgroundColor: gradient,
+        fill: true,
+        tension: 0.35,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: "#ffffff",
+        pointHoverBorderColor: "#38bdf8",
+        yAxisID: "y"
+      }
+    ];
+
+    // Optional Secondary Dataset (Dual-Axis)
+    if (this.dualAxisEnabled && this.secondaryDataset) {
+      datasets.push({
+        type: "bar",
+        label: `${this.secondaryDataset.parameter_name} (${this.secondaryDataset.unit})`,
+        data: this.secondaryDataset.values,
+        backgroundColor: "rgba(56, 189, 248, 0.4)",
+        borderColor: "rgba(56, 189, 248, 0.8)",
+        borderWidth: 1,
+        yAxisID: "y1",
+        pointRadius: 0
+      });
+    }
+
+    const scalesConfig = {
+      x: {
+        grid: {
+          color: "rgba(255, 255, 255, 0.05)",
+          drawBorder: false
+        },
+        ticks: {
+          color: "#94a3b8",
+          font: { family: "Inter, system-ui, sans-serif", size: 11 },
+          maxRotation: 0,
+          autoSkip: false
+        }
+      },
+      y: {
+        type: "linear",
+        display: true,
+        position: "left",
+        grid: {
+          color: "rgba(255, 255, 255, 0.07)",
+          drawBorder: false
+        },
+        ticks: {
+          color: "#94a3b8",
+          font: { family: "Inter, system-ui, sans-serif", size: 11 },
+          callback: (val) => `${val} ${earthData.unit}`
+        }
+      }
+    };
+
+    if (this.dualAxisEnabled && this.secondaryDataset) {
+      scalesConfig.y1 = {
+        type: "linear",
+        display: true,
+        position: "right",
+        grid: { drawOnChartArea: false },
+        ticks: {
+          color: "#38bdf8",
+          font: { family: "Inter, system-ui, sans-serif", size: 11 },
+          callback: (val) => `${val} mm`
+        }
+      };
+    }
+
     const chartConfig = {
       type: isRainfall ? "bar" : "line",
       data: {
         labels: formattedLabels,
-        datasets: [
-          {
-            label: `${earthData.city} - ${earthData.parameter_name} (${earthData.unit})`,
-            data: earthData.values,
-            borderColor: isRainfall ? "#38bdf8" : "#f59e0b",
-            borderWidth: isRainfall ? 1.5 : 2.5,
-            backgroundColor: gradient,
-            fill: true,
-            tension: 0.35,
-            pointRadius: 0,
-            pointHoverRadius: 5,
-            pointHoverBackgroundColor: "#ffffff",
-            pointHoverBorderColor: "#38bdf8"
-          }
-        ]
+        datasets: datasets
       },
       options: {
         responsive: true,
@@ -141,7 +207,11 @@ class ClimateChartEngine {
         },
         plugins: {
           legend: {
-            display: false
+            display: this.dualAxisEnabled,
+            labels: {
+              color: "#94a3b8",
+              font: { family: "Inter, sans-serif", size: 12 }
+            }
           },
           tooltip: {
             backgroundColor: "rgba(15, 23, 42, 0.95)",
@@ -150,43 +220,16 @@ class ClimateChartEngine {
             borderColor: "rgba(56, 189, 248, 0.3)",
             borderWidth: 1,
             padding: 10,
-            displayColors: false,
+            displayColors: true,
             callbacks: {
               title: (items) => {
                 const idx = items[0].dataIndex;
                 return `Date: ${earthData.dates[idx]}`;
-              },
-              label: (item) => {
-                return `${earthData.parameter_name}: ${item.formattedValue} ${earthData.unit}`;
               }
             }
           }
         },
-        scales: {
-          x: {
-            grid: {
-              color: "rgba(255, 255, 255, 0.05)",
-              drawBorder: false
-            },
-            ticks: {
-              color: "#94a3b8",
-              font: { family: "Inter, system-ui, sans-serif", size: 11 },
-              maxRotation: 0,
-              autoSkip: false
-            }
-          },
-          y: {
-            grid: {
-              color: "rgba(255, 255, 255, 0.07)",
-              drawBorder: false
-            },
-            ticks: {
-              color: "#94a3b8",
-              font: { family: "Inter, system-ui, sans-serif", size: 11 },
-              callback: (val) => `${val} ${earthData.unit}`
-            }
-          }
-        }
+        scales: scalesConfig
       }
     };
 
@@ -241,7 +284,7 @@ class ClimateChartEngine {
       vy: (Math.random() - 0.5) * 4,
       radius: Math.max(2, (freq / 600) * 8),
       alpha: 1.0,
-      hue: Math.floor((freq % 400) + 160) // Dynamic cosmic spectrum
+      hue: Math.floor((freq % 400) + 160)
     });
 
     if (this.visParticles.length > 50) {
@@ -257,7 +300,7 @@ class ClimateChartEngine {
 
     ctx.clearRect(0, 0, w, h);
 
-    // Glowing center orbital ring
+    // Center orbital resonance ring
     const centerX = w / 2;
     const centerY = h / 2;
     const baseRadius = 28 + this.pulseEnergy * 18;
@@ -271,7 +314,6 @@ class ClimateChartEngine {
     ctx.shadowBlur = 15;
     ctx.stroke();
 
-    // Pulse decay
     this.pulseEnergy *= 0.92;
 
     // Render & update particles

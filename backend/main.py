@@ -9,7 +9,9 @@ from typing import Optional, List
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
+import io
+import pandas as pd
 from pydantic import BaseModel, Field
 
 from backend.data_service import (
@@ -165,6 +167,54 @@ def compare_two_cities(
             "unit": data1["unit"]
         }
     }
+
+
+@app.get("/api/export", tags=["Data Export"])
+def export_climate_dataset(
+    city: str = Query("Karachi", description="City name"),
+    year: int = Query(2024, description="Year"),
+    format: str = Query("csv", description="Format: 'csv' or 'json'")
+):
+    """
+    Export unified, cleaned NASA climate observations (Temperature + Rainfall + Normalizations)
+    as a downloadable research CSV or JSON file.
+    """
+    try:
+        temp_data = get_earth_data(city=city, data_type="temperature", year=year)
+        rain_data = get_earth_data(city=city, data_type="rainfall", year=year)
+
+        df = pd.DataFrame({
+            "Date": temp_data["dates"],
+            "Temperature_C": temp_data["values"],
+            "Normalized_Temp": temp_data["normalized"],
+            "Rainfall_mm": rain_data["values"],
+            "Normalized_Rain": rain_data["normalized"]
+        })
+
+        filename = f"NASA_POWER_{city}_{year}_clean"
+
+        if format.lower() == "json":
+            json_str = df.to_json(orient="records", indent=2)
+            return Response(
+                content=json_str,
+                media_type="application/json",
+                headers={"Content-Disposition": f"attachment; filename={filename}.json"}
+            )
+        else:
+            # Default CSV
+            csv_buffer = io.StringIO()
+            # Add NASA metadata header comment
+            csv_buffer.write(f"# NASA POWER Project Climate Telemetry for {city} ({year})\n")
+            csv_buffer.write(f"# Exported via The Earth Information Jukebox\n")
+            df.to_csv(csv_buffer, index=False)
+            return Response(
+                content=csv_buffer.getvalue(),
+                media_type="text/csv",
+                headers={"Content-Disposition": f"attachment; filename={filename}.csv"}
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+
 
 
 # Static frontend hosting (if frontend directory exists)

@@ -147,6 +147,96 @@ body {
   font-size: 0.75rem;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pill-btn-outline {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+}
+
+.pill-btn-outline:hover {
+  border-color: var(--accent-cyan);
+  background: rgba(30, 41, 59, 0.9);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+}
+
+.record-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ef4444;
+}
+
+.record-dot.recording {
+  animation: pulse-red 1s infinite alternate;
+  box-shadow: 0 0 8px #ef4444;
+}
+
+@keyframes pulse-red {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.4); opacity: 1; }
+}
+
+/* Switch for dual-track */
+.switch-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+.switch-label input {
+  display: none;
+}
+
+.switch-custom {
+  width: 28px;
+  height: 16px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  position: relative;
+  transition: background-color 0.2s;
+}
+
+.switch-custom::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #fff;
+  transition: transform 0.2s;
+}
+
+.switch-label input:checked + .switch-custom {
+  background-color: var(--accent-cyan);
+}
+
+.switch-label input:checked + .switch-custom::after {
+  transform: translateX(12px);
+}
+
 .status-indicator {
   width: 8px;
   height: 8px;
@@ -621,3 +711,4 @@ body {
     height: 280px;
   }
 }
+

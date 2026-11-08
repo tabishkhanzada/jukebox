@@ -1,7 +1,7 @@
 /**
  * NASA Earth Information Jukebox - Web Audio Sonification Engine
  * Module 3: Implements harmonic scale quantization, polyphonic tone generation,
- * percussive rainfall mapping, and high-precision transport scheduling using Tone.js.
+ * percussive rainfall mapping, dual-track accompaniment, and audio track export using Tone.js.
  */
 
 class EarthSonifier {
@@ -12,7 +12,15 @@ class EarthSonifier {
     this.speedMultiplier = 1.0;
     this.baseStepDurationMs = 90; // ~33 seconds for 365 days at 1.0x
     this.data = null;
+    this.secondaryData = null; // For dual-track accompaniment (e.g., rainfall rhythm under temp)
+    this.dualTrackEnabled = false;
     this.stepTimer = null;
+
+    // Audio recording nodes
+    this.mediaRecorder = null;
+    this.recordedChunks = [];
+    this.isRecording = false;
+    this.mediaStreamDest = null;
 
     // Musical Scale Definitions across 3 octaves
     this.scales = {
@@ -51,6 +59,7 @@ class EarthSonifier {
     // Callbacks for UI and visualizer
     this.onStepCallback = null;
     this.onPlaybackStateChange = null;
+    this.onRecordingStateChange = null;
   }
 
   /**
@@ -63,8 +72,22 @@ class EarthSonifier {
       await Tone.start();
       console.log("Web Audio Context started successfully.");
 
-      // Master FX chain: Reverb + PingPong Delay -> Limiter -> Destination
-      this.limiter = new Tone.Limiter(-1).toDestination();
+      // Setup MediaStreamDestination for audio recording & download
+      try {
+        const rawCtx = Tone.getContext().rawContext;
+        this.mediaStreamDest = rawCtx.createMediaStreamDestination();
+      } catch (e) {
+        console.warn("MediaStreamDestination not supported:", e);
+      }
+
+      // Master FX chain: Reverb + PingPong Delay -> Limiter -> Destination & Recorder
+      this.limiter = new Tone.Limiter(-1);
+      this.limiter.toDestination();
+
+      if (this.mediaStreamDest) {
+        // Tap master audio into recording stream
+        Tone.getDestination().connect(this.mediaStreamDest);
+      }
       
       this.reverb = new Tone.Reverb({
         decay: 2.5,
@@ -148,12 +171,24 @@ class EarthSonifier {
   }
 
   /**
-   * Load dataset into the sonification engine.
+   * Load primary dataset into the sonification engine.
    */
-  loadDataset(earthData) {
+  loadDataset(earthData, secondaryData = null) {
     this.stop();
     this.data = earthData;
+    this.secondaryData = secondaryData;
     this.currentIndex = 0;
+  }
+
+  /**
+   * Set secondary dataset for simultaneous dual-track accompaniment.
+   */
+  setSecondaryDataset(secondaryData) {
+    this.secondaryData = secondaryData;
+  }
+
+  setDualTrack(enabled) {
+    this.dualTrackEnabled = enabled;
   }
 
   /**
@@ -206,6 +241,9 @@ class EarthSonifier {
 
     if (this.currentIndex >= this.data.dates.length) {
       this.stop();
+      if (this.isRecording) {
+        this.stopRecordingAndDownload();
+      }
       return;
     }
 
@@ -243,9 +281,18 @@ class EarthSonifier {
         playedFreq = Math.round(noteInfo.freq);
 
         const duration = "16n";
-        // Velocity scales slightly with temperature to give dynamic presence
         const velocity = 0.5 + normVal * 0.45;
         this.melodySynth.triggerAttackRelease(playedNote, duration, undefined, velocity);
+
+        // Dual-track accompaniment: If rainfall dataset is attached and enabled, trigger drum on rain days!
+        if (this.dualTrackEnabled && this.secondaryData && this.secondaryData.values[idx] !== undefined) {
+          const rainVal = this.secondaryData.values[idx];
+          if (rainVal > 0.1) {
+            const drumPitch = rainVal > 25.0 ? "C1" : rainVal > 10.0 ? "G1" : "C2";
+            const drumVel = Math.min(0.9, 0.25 + (rainVal / 35.0) * 0.65);
+            this.rainSynth.triggerAttackRelease(drumPitch, "16n", undefined, drumVel);
+          }
+        }
 
         // Soft calendar drone on 1st of month
         if (isFirstOfMonth && this.bassDrone) {
@@ -254,7 +301,6 @@ class EarthSonifier {
       } else if (dataType === "rainfall") {
         // Rainfall controls percussion hits & volume
         if (rawVal > 0.1) {
-          // Pitch changes from low thunder (heavy) to light tap (drizzle)
           const drumPitch = rawVal > 25.0 ? "C1" : rawVal > 10.0 ? "G1" : "C2";
           const drumVel = Math.min(1.0, 0.3 + (rawVal / 30.0) * 0.7);
           this.rainSynth.triggerAttackRelease(drumPitch, "16n", undefined, drumVel);
@@ -314,7 +360,6 @@ class EarthSonifier {
     this.currentIndex = 0;
     if (this.onPlaybackStateChange) this.onPlaybackStateChange(false);
     if (this.onStepCallback && this.data && this.data.dates.length > 0) {
-      // Trigger update at 0
       this.onStepCallback({
         index: 0,
         date: this.data.dates[0],
@@ -351,6 +396,79 @@ class EarthSonifier {
     if (Tone.getDestination()) {
       Tone.getDestination().volume.value = db;
     }
+  }
+
+  // --- AUDIO RECORDING & EXPORT (Web Audio MediaRecorder) ---
+
+  /**
+   * Starts recording the sonified track from day 0.
+   */
+  async startRecording() {
+    await this.initAudioContext();
+    if (!this.mediaStreamDest) {
+      alert("Audio recording is not supported in this browser version.");
+      return;
+    }
+
+    this.stop();
+    this.recordedChunks = [];
+
+    try {
+      this.mediaRecorder = new MediaRecorder(this.mediaStreamDest.stream, {
+        mimeType: "audio/webm;codecs=opus"
+      });
+    } catch (e) {
+      this.mediaRecorder = new MediaRecorder(this.mediaStreamDest.stream);
+    }
+
+    this.mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        this.recordedChunks.push(e.data);
+      }
+    };
+
+    this.mediaRecorder.onstop = () => {
+      this.saveRecordedAudioFile();
+    };
+
+    this.mediaRecorder.start();
+    this.isRecording = true;
+    if (this.onRecordingStateChange) this.onRecordingStateChange(true);
+
+    // Automatically begin playback to record the full piece
+    this.play();
+  }
+
+  /**
+   * Stops recording and triggers instant browser download.
+   */
+  stopRecordingAndDownload() {
+    if (this.mediaRecorder && this.mediaRecorder.state !== "inactive") {
+      this.mediaRecorder.stop();
+    }
+    this.isRecording = false;
+    if (this.onRecordingStateChange) this.onRecordingStateChange(false);
+  }
+
+  /**
+   * Creates a downloadable Blob URL and triggers download in browser.
+   */
+  saveRecordedAudioFile() {
+    if (this.recordedChunks.length === 0) return;
+    const blob = new Blob(this.recordedChunks, { type: "audio/webm" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const city = this.data ? this.data.city : "Earth";
+    const year = this.data ? this.data.year : "2024";
+    const type = this.data ? this.data.data_type : "climate";
+
+    a.href = url;
+    a.download = `NASA_Sonification_${city}_${year}_${type}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    console.log("Audio track downloaded successfully.");
   }
 }
 

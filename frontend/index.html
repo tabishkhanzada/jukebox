@@ -29,16 +29,24 @@
       <div class="branding">
         <div class="nasa-insignia">
           <span class="meatball-dot"></span>
-          <span class="agency-tag">NASA SPACE APPS</span>
+          <span class="agency-tag">NASA SPACE APPS CHALLENGE</span>
         </div>
         <h1 class="project-title">The Earth Information <span class="gradient-text">Jukebox</span></h1>
         <p class="project-subtitle">Translating NASA Earth Observation satellite telemetry into dynamic music & living charts.</p>
       </div>
 
-      <div class="telemetry-status">
-        <span class="status-indicator live"></span>
-        <span class="status-label">DATASTREAM LIVE</span>
-        <span class="mission-badge">POWER v2.0</span>
+      <div class="header-actions">
+        <button id="exportCsvBtn" class="pill-btn-outline" title="Export clean dataset as CSV for research">
+          <span>📥</span> Export CSV
+        </button>
+        <button id="recordAudioBtn" class="pill-btn-outline" title="Record and download this year's sonification track">
+          <span id="recordDot" class="record-dot"></span> <span id="recordText">Download Audio</span>
+        </button>
+        <div class="telemetry-status">
+          <span class="status-indicator live"></span>
+          <span class="status-label">DATASTREAM LIVE</span>
+          <span class="mission-badge">POWER v2.0</span>
+        </div>
       </div>
     </header>
 
@@ -125,6 +133,15 @@
             <option value="marimba">Acoustic Marimba</option>
             <option value="ambient_pad">Warm Atmospheric Pad</option>
           </select>
+        </div>
+
+        <!-- Dual Track Toggle -->
+        <div class="audio-setting-item checkbox-item">
+          <label class="switch-label">
+            <input type="checkbox" id="dualTrackToggle" checked>
+            <span class="switch-custom"></span>
+            <span>Dual-Track (Layer Rain Beat)</span>
+          </label>
         </div>
 
         <div class="audio-setting-item">
