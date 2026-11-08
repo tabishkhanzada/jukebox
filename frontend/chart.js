@@ -1,0 +1,299 @@
+/**
+ * NASA Earth Information Jukebox - Synchronized Visualizer & Chart Engine
+ * Module 4: High-performance Chart.js rendering, real-time vertical playhead tracking,
+ * click-to-seek timeline scrubbing, and audio-reactive particle visualizer.
+ */
+
+class ClimateChartEngine {
+  constructor(canvasId, visualizerCanvasId) {
+    this.canvas = document.getElementById(canvasId);
+    this.chart = null;
+    this.activeIndex = 0;
+    this.currentDataset = null;
+
+    // Ambient Audio Pulse Visualizer Canvas
+    this.visCanvas = visualizerCanvasId ? document.getElementById(visualizerCanvasId) : null;
+    this.visCtx = this.visCanvas ? this.visCanvas.getContext("2d") : null;
+    this.pulseEnergy = 0;
+    this.visParticles = [];
+    this.initVisualizer();
+
+    // Chart.js Custom Scrubber Plugin
+    this.scrubberPlugin = {
+      id: "verticalScrubber",
+      afterDraw: (chart) => {
+        if (this.activeIndex === null || this.activeIndex === undefined) return;
+        const meta = chart.getDatasetMeta(0);
+        if (!meta || !meta.data || !meta.data[this.activeIndex]) return;
+
+        const ctx = chart.ctx;
+        const point = meta.data[this.activeIndex];
+        const x = point.x;
+        const topY = chart.chartArea.top;
+        const bottomY = chart.chartArea.bottom;
+
+        ctx.save();
+        // 1. Draw glowing vertical line
+        ctx.beginPath();
+        ctx.moveTo(x, topY);
+        ctx.lineTo(x, bottomY);
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = "#38bdf8"; // Neon Sky Blue
+        ctx.shadowColor = "#0ea5e9";
+        ctx.shadowBlur = 12;
+        ctx.stroke();
+
+        // 2. Draw glowing tracking ring at data point
+        ctx.beginPath();
+        ctx.arc(x, point.y, 6.5, 0, 2 * Math.PI);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#38bdf8";
+        ctx.stroke();
+
+        ctx.restore();
+      }
+    };
+
+    Chart.register(this.scrubberPlugin);
+    this.attachEventListeners();
+  }
+
+  /**
+   * Initializes interactive click & hover seeking on the canvas.
+   */
+  attachEventListeners() {
+    if (!this.canvas) return;
+
+    this.canvas.addEventListener("click", (evt) => {
+      if (!this.chart || !this.currentDataset) return;
+      const points = this.chart.getElementsAtEventForMode(evt, "index", { intersect: false }, true);
+      if (points.length > 0) {
+        const targetIndex = points[0].index;
+        if (window.earthSonifier) {
+          window.earthSonifier.seek(targetIndex);
+        }
+      }
+    });
+  }
+
+  /**
+   * Render or update dataset inside Chart.js.
+   */
+  renderDataset(earthData) {
+    this.currentDataset = earthData;
+    this.activeIndex = 0;
+
+    const ctx = this.canvas.getContext("2d");
+    const isRainfall = earthData.data_type === "rainfall";
+
+    // Setup color gradients
+    let gradient = ctx.createLinearGradient(0, 0, 0, this.canvas.height || 350);
+    if (isRainfall) {
+      gradient.addColorStop(0, "rgba(56, 189, 248, 0.65)");
+      gradient.addColorStop(1, "rgba(2, 132, 199, 0.02)");
+    } else {
+      // Temperature gradient (Warm amber/red at top, cool cyan at bottom)
+      gradient.addColorStop(0, "rgba(249, 115, 22, 0.7)");
+      gradient.addColorStop(0.5, "rgba(59, 130, 246, 0.4)");
+      gradient.addColorStop(1, "rgba(14, 165, 233, 0.05)");
+    }
+
+    // Chart.js labels (Format to short month & day for clean X-axis)
+    const formattedLabels = earthData.dates.map((d, i) => {
+      if (d.endsWith("-01") || i === 0 || i === earthData.dates.length - 1) {
+        const parts = d.split("-");
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const mIdx = parseInt(parts[1], 10) - 1;
+        return monthNames[mIdx] || parts[1];
+      }
+      return "";
+    });
+
+    const chartConfig = {
+      type: isRainfall ? "bar" : "line",
+      data: {
+        labels: formattedLabels,
+        datasets: [
+          {
+            label: `${earthData.city} - ${earthData.parameter_name} (${earthData.unit})`,
+            data: earthData.values,
+            borderColor: isRainfall ? "#38bdf8" : "#f59e0b",
+            borderWidth: isRainfall ? 1.5 : 2.5,
+            backgroundColor: gradient,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: "#ffffff",
+            pointHoverBorderColor: "#38bdf8"
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 600 },
+        interaction: {
+          intersect: false,
+          mode: "index"
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: "rgba(15, 23, 42, 0.95)",
+            titleColor: "#94a3b8",
+            bodyColor: "#f8fafc",
+            borderColor: "rgba(56, 189, 248, 0.3)",
+            borderWidth: 1,
+            padding: 10,
+            displayColors: false,
+            callbacks: {
+              title: (items) => {
+                const idx = items[0].dataIndex;
+                return `Date: ${earthData.dates[idx]}`;
+              },
+              label: (item) => {
+                return `${earthData.parameter_name}: ${item.formattedValue} ${earthData.unit}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              color: "rgba(255, 255, 255, 0.05)",
+              drawBorder: false
+            },
+            ticks: {
+              color: "#94a3b8",
+              font: { family: "Inter, system-ui, sans-serif", size: 11 },
+              maxRotation: 0,
+              autoSkip: false
+            }
+          },
+          y: {
+            grid: {
+              color: "rgba(255, 255, 255, 0.07)",
+              drawBorder: false
+            },
+            ticks: {
+              color: "#94a3b8",
+              font: { family: "Inter, system-ui, sans-serif", size: 11 },
+              callback: (val) => `${val} ${earthData.unit}`
+            }
+          }
+        }
+      }
+    };
+
+    if (this.chart) {
+      this.chart.destroy();
+    }
+    this.chart = new Chart(ctx, chartConfig);
+  }
+
+  /**
+   * Update active playhead scrubber position without re-rendering entire chart.
+   */
+  updateScrubber(index, note, frequency) {
+    this.activeIndex = index;
+    if (this.chart) {
+      this.chart.render();
+    }
+
+    // Trigger visualizer ripple
+    if (frequency > 0) {
+      this.pulseEnergy = Math.min(1.0, this.pulseEnergy + 0.35);
+      this.emitParticle(frequency);
+    }
+  }
+
+  // --- Ambient Particle & Frequency Visualizer ---
+  initVisualizer() {
+    if (!this.visCanvas || !this.visCtx) return;
+
+    const resizeVis = () => {
+      this.visCanvas.width = this.visCanvas.offsetWidth * window.devicePixelRatio;
+      this.visCanvas.height = this.visCanvas.offsetHeight * window.devicePixelRatio;
+    };
+    window.addEventListener("resize", resizeVis);
+    resizeVis();
+
+    const animate = () => {
+      this.renderVisualizerFrame();
+      requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }
+
+  emitParticle(freq) {
+    if (!this.visCanvas) return;
+    const w = this.visCanvas.width;
+    const h = this.visCanvas.height;
+    this.visParticles.push({
+      x: w / 2 + (Math.random() - 0.5) * 40,
+      y: h / 2,
+      vx: (Math.random() - 0.5) * 4,
+      vy: (Math.random() - 0.5) * 4,
+      radius: Math.max(2, (freq / 600) * 8),
+      alpha: 1.0,
+      hue: Math.floor((freq % 400) + 160) // Dynamic cosmic spectrum
+    });
+
+    if (this.visParticles.length > 50) {
+      this.visParticles.shift();
+    }
+  }
+
+  renderVisualizerFrame() {
+    if (!this.visCanvas || !this.visCtx) return;
+    const ctx = this.visCtx;
+    const w = this.visCanvas.width;
+    const h = this.visCanvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Glowing center orbital ring
+    const centerX = w / 2;
+    const centerY = h / 2;
+    const baseRadius = 28 + this.pulseEnergy * 18;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, baseRadius, 0, 2 * Math.PI);
+    ctx.strokeStyle = `rgba(56, 189, 248, ${0.3 + this.pulseEnergy * 0.7})`;
+    ctx.lineWidth = 2 + this.pulseEnergy * 3;
+    ctx.shadowColor = "#38bdf8";
+    ctx.shadowBlur = 15;
+    ctx.stroke();
+
+    // Pulse decay
+    this.pulseEnergy *= 0.92;
+
+    // Render & update particles
+    for (let i = this.visParticles.length - 1; i >= 0; i--) {
+      const p = this.visParticles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.alpha *= 0.95;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI);
+      ctx.fillStyle = `hsla(${p.hue}, 90%, 65%, ${p.alpha})`;
+      ctx.shadowColor = `hsl(${p.hue}, 90%, 65%)`;
+      ctx.shadowBlur = 8;
+      ctx.fill();
+
+      if (p.alpha < 0.05) {
+        this.visParticles.splice(i, 1);
+      }
+    }
+    ctx.restore();
+  }
+}
+
+window.ClimateChartEngine = ClimateChartEngine;

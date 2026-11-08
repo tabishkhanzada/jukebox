@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Earth Information Jukebox | NASA Space Apps</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  
+  <!-- Tone.js for Web Audio Synthesis -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  
+  <!-- Chart.js for Interactive Climate Visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient Cosmic Background Glows -->
+  <div class="cosmos-glow glow-1"></div>
+  <div class="cosmos-glow glow-2"></div>
+
+  <div class="app-container">
+    <!-- Mission Header -->
+    <header class="mission-header">
+      <div class="branding">
+        <div class="nasa-insignia">
+          <span class="meatball-dot"></span>
+          <span class="agency-tag">NASA SPACE APPS</span>
+        </div>
+        <h1 class="project-title">The Earth Information <span class="gradient-text">Jukebox</span></h1>
+        <p class="project-subtitle">Translating NASA Earth Observation satellite telemetry into dynamic music & living charts.</p>
+      </div>
+
+      <div class="telemetry-status">
+        <span class="status-indicator live"></span>
+        <span class="status-label">DATASTREAM LIVE</span>
+        <span class="mission-badge">POWER v2.0</span>
+      </div>
+    </header>
+
+    <!-- Mission Control Bar: Selection & Parameters -->
+    <section class="control-deck">
+      <div class="deck-row">
+        <!-- City Selector -->
+        <div class="control-group">
+          <label for="citySelect"><span class="label-icon">📍</span> TARGET LOCATION</label>
+          <select id="citySelect" class="styled-select">
+            <option value="Karachi" selected>Karachi (Pakistan)</option>
+            <option value="Lahore">Lahore (Pakistan)</option>
+            <option value="London">London (United Kingdom)</option>
+            <option value="New York">New York (United States)</option>
+            <option value="Dubai">Dubai (United Arab Emirates)</option>
+            <option value="Tokyo">Tokyo (Japan)</option>
+            <option value="Nairobi">Nairobi (Kenya)</option>
+            <option value="custom">⚡ Custom Coordinates...</option>
+          </select>
+        </div>
+
+        <!-- Custom Coordinates Bar (Collapsible) -->
+        <div id="customCoordInputs" class="custom-coord-panel hidden">
+          <div class="input-pair">
+            <label>Lat:</label>
+            <input type="number" id="customLat" placeholder="24.86" step="0.01" min="-90" max="90">
+          </div>
+          <div class="input-pair">
+            <label>Lon:</label>
+            <input type="number" id="customLon" placeholder="67.01" step="0.01" min="-180" max="180">
+          </div>
+          <button id="applyCoordsBtn" class="pill-btn">Apply</button>
+        </div>
+
+        <!-- Metric Toggle Pills -->
+        <div class="control-group">
+          <label><span class="label-icon">📡</span> CLIMATE METRIC</label>
+          <div class="pill-toggle-group">
+            <button class="metric-pill active" data-metric="temperature">🌡️ Temp (°C)</button>
+            <button class="metric-pill" data-metric="rainfall">🌧️ Rain (mm)</button>
+            <button class="metric-pill" data-metric="wind">💨 Wind (m/s)</button>
+          </div>
+        </div>
+
+        <!-- Year Selector -->
+        <div class="control-group">
+          <label for="yearSelect"><span class="label-icon">📅</span> OBSERVATION YEAR</label>
+          <select id="yearSelect" class="styled-select">
+            <option value="2024" selected>2024</option>
+            <option value="2023">2023</option>
+            <option value="2022">2022</option>
+            <option value="2021">2021</option>
+            <option value="2020">2020</option>
+            <option value="2015">2015</option>
+            <option value="2010">2010</option>
+            <option value="2000">2000</option>
+          </select>
+        </div>
+
+        <!-- Action / Fetch Button -->
+        <div class="control-group btn-align">
+          <button id="fetchDataBtn" class="action-btn glow-btn">
+            <span class="btn-icon">⚡</span> Ingest Telemetry
+          </button>
+        </div>
+      </div>
+
+      <!-- Audio Synthesizer Settings Toolbar -->
+      <div class="deck-row audio-settings-deck">
+        <div class="audio-setting-item">
+          <label for="scaleSelect">Musical Scale:</label>
+          <select id="scaleSelect" class="mini-select">
+            <option value="pentatonic_major" selected>C Major Pentatonic (Luminous)</option>
+            <option value="lydian_celestial">Lydian Celestial (Space Ambient)</option>
+            <option value="minor_pentatonic">Minor Pentatonic (Atmospheric)</option>
+            <option value="akebono_meditative">Akebono (Meditative)</option>
+          </select>
+        </div>
+
+        <div class="audio-setting-item">
+          <label for="instrumentSelect">Timbre:</label>
+          <select id="instrumentSelect" class="mini-select">
+            <option value="space_synth" selected>Space PolySynth</option>
+            <option value="marimba">Acoustic Marimba</option>
+            <option value="ambient_pad">Warm Atmospheric Pad</option>
+          </select>
+        </div>
+
+        <div class="audio-setting-item">
+          <label for="speedRange">Tempo: <span id="speedDisplay">1.0x</span></label>
+          <input type="range" id="speedRange" min="0.5" max="2.5" step="0.25" value="1.0" class="styled-range">
+        </div>
+
+        <div class="audio-setting-item">
+          <label for="volumeRange">Volume: <span id="volumeDisplay">-3 dB</span></label>
+          <input type="range" id="volumeRange" min="-25" max="3" step="1" value="-3" class="styled-range">
+        </div>
+      </div>
+    </section>
+
+    <!-- Live Telemetry HUD Bar -->
+    <section class="telemetry-hud">
+      <div class="hud-card">
+        <span class="hud-label">CALENDAR DATE</span>
+        <div class="hud-value-group">
+          <span id="hudDate" class="hud-value font-mono">2024-01-01</span>
+          <span id="hudDayOfYear" class="hud-sub">Day 1 / 366</span>
+        </div>
+      </div>
+
+      <div class="hud-card highlight-card">
+        <span class="hud-label">TELEMETRY MEASUREMENT</span>
+        <div class="hud-value-group">
+          <span id="hudValue" class="hud-value font-mono">--</span>
+          <span id="hudUnit" class="hud-unit">°C</span>
+        </div>
+      </div>
+
+      <div class="hud-card">
+        <span class="hud-label">SYNTHESIZED NOTE</span>
+        <div class="hud-value-group">
+          <span id="hudNote" class="hud-value font-mono accent-note">--</span>
+          <span id="hudFreq" class="hud-sub">0 Hz</span>
+        </div>
+      </div>
+
+      <div class="hud-card visualizer-card">
+        <span class="hud-label">RESONANCE VISUALIZER</span>
+        <canvas id="audioVisualizer" class="orbit-visualizer" width="160" height="48"></canvas>
+      </div>
+    </section>
+
+    <!-- Main Chart & Timeline Scrubbing Viewport -->
+    <main class="chart-viewport card-surface">
+      <div class="viewport-header">
+        <div class="chart-title-area">
+          <h2 id="chartHeading" class="viewport-title">Karachi — Daily Air Temperature (2024)</h2>
+          <span id="climateTag" class="climate-badge">Arid / Subtropical Coastal</span>
+        </div>
+
+        <!-- Master Transport Audio Controls -->
+        <div class="transport-controls">
+          <button id="playBtn" class="transport-btn primary-play" title="Play Sonification">
+            <span class="transport-icon">▶</span> <span class="play-text">PLAY</span>
+          </button>
+          <button id="pauseBtn" class="transport-btn" title="Pause">
+            <span class="transport-icon">⏸</span>
+          </button>
+          <button id="restartBtn" class="transport-btn" title="Restart to January 1">
+            <span class="transport-icon">⏮</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Chart.js Canvas -->
+      <div class="canvas-wrapper">
+        <canvas id="climateChart"></canvas>
+      </div>
+
+      <!-- Instruction Hint -->
+      <div class="chart-footer-hint">
+        <span>💡 Click anywhere on the chart timeline to scrub audio and inspect specific calendar dates.</span>
+        <span id="cacheBadge" class="cached-indicator">⚡ Cached NASA POWER Telemetry</span>
+      </div>
+    </main>
+
+    <!-- Climate Intelligence & Analytical Storyboard -->
+    <section class="intelligence-grid">
+      <!-- Analytical Summary Card -->
+      <div class="intel-card card-surface">
+        <h3 class="intel-title"><span class="intel-icon">📊</span> Telemetry Statistics</h3>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span class="stat-name">Annual Mean</span>
+            <span id="statMean" class="stat-num font-mono">--</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-name">Maximum Peak</span>
+            <span id="statMax" class="stat-num font-mono text-warm">--</span>
+            <span id="statMaxDate" class="stat-sub">--</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-name">Minimum Trough</span>
+            <span id="statMin" class="stat-num font-mono text-cool">--</span>
+            <span id="statMinDate" class="stat-sub">--</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-name">Total Swing Range</span>
+            <span id="statRange" class="stat-num font-mono">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Climate Story / AI Narrative Card -->
+      <div class="intel-card card-surface narrative-card">
+        <h3 class="intel-title"><span class="intel-icon">🧠</span> Climate Intelligence Story</h3>
+        <p id="narrativeText" class="narrative-content">
+          Loading NASA Earth Observation data... Select a city and click "Play" to listen to annual climate shifts.
+        </p>
+        <div class="sonification-explanation">
+          <strong>Sonification Key:</strong>
+          <span>High Notes = High Temperature / High Wind</span> •
+          <span>Drum Impacts = Rainfall Events</span> •
+          <span>Sub-bass pulses mark the 1st of each month.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer & Official NASA Attribution -->
+    <footer class="mission-footer">
+      <div class="attribution-text">
+        These data were obtained from the <strong>NASA Langley Research Center POWER Project</strong> funded through the NASA Earth Science Directorate Applied Science Program.
+      </div>
+      <div class="footer-links">
+        <span>NASA Space Apps Challenge</span> •
+        <span>Audio Engine: Tone.js</span> •
+        <span>Charts: Chart.js</span> •
+        <span>Backend: FastAPI</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Application Logic Modules -->
+  <script src="audio.js"></script>
+  <script src="chart.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
