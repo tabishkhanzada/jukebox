@@ -52,16 +52,37 @@ class EarthSonifier {
         "C3", "D3", "Eb3", "G3", "Ab3",
         "C4", "D4", "Eb4", "G4", "Ab4",
         "C5", "D5", "Eb5", "G5", "Ab5", "C6"
+      ],
+      dorian_orbital: [
+        "D3", "E3", "F3", "G3", "A3", "B3", "C4",
+        "D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5"
       ]
     };
 
     this.currentScaleKey = "pentatonic_major";
-    this.currentInstrumentKey = "space_synth";
+    this.currentInstrumentKey = "crystal_celesta";
 
     // Audio node references
     this.melodySynth = null;
-    this.rainSynth = null;
-    this.windSynth = null;
+    this.compareSynth = null;
+
+    // Procedural Rain Synthesis Nodes (Ambient Sheet, Droplets, Thunder, Liquid Chimes)
+    this.rainNoise = null;
+    this.rainHighPass = null;
+    this.rainLowPass = null;
+    this.rainGain = null;
+    this.dropletSynth = null;
+    this.dropletFilter = null;
+    this.dropletGain = null;
+    this.thunderSynth = null;
+    this.waterChimeSynth = null;
+
+    // Procedural Wind Resonator Nodes
+    this.windNoise = null;
+    this.windFilter = null;
+    this.windGain = null;
+
+    // Master FX & Calendar Drone
     this.bassDrone = null;
     this.reverb = null;
     this.delay = null;
@@ -100,16 +121,16 @@ class EarthSonifier {
       }
       
       this.reverb = new Tone.Reverb({
-        decay: 2.2,
+        decay: 2.8,
         preDelay: 0.04,
-        wet: 0.22
+        wet: 0.25
       }).connect(this.limiter);
       await this.reverb.generate();
 
       this.delay = new Tone.FeedbackDelay({
         delayTime: "16n",
-        feedback: 0.12,
-        wet: 0.12
+        feedback: 0.14,
+        wet: 0.14
       }).connect(this.reverb);
 
       // 1. Melody Synthesizer for Temperature / Primary pitch
@@ -118,34 +139,72 @@ class EarthSonifier {
       // Comparative Synthesizer for Dual-City side-by-side sonification
       this.compareSynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: "sine" },
-        envelope: { attack: 0.02, decay: 0.22, sustain: 0.1, release: 0.25 }
+        envelope: { attack: 0.02, decay: 0.25, sustain: 0.1, release: 0.3 }
       }).connect(this.reverb);
       this.compareSynth.volume.value = -3.5;
 
-      // 2. Percussion Synthesizer for Rainfall / Drum hits
-      this.rainSynth = new Tone.MembraneSynth({
-        pitchDecay: 0.05,
-        octaves: 3.5,
+      // 2. Realistic Procedural Rain Acoustic Architecture:
+      // A. Ambient Continuous Rain Sheet (Filtered Pink Noise with dynamic lowpass sweep)
+      this.rainNoise = new Tone.Noise("pink");
+      this.rainHighPass = new Tone.Filter(320, "highpass");
+      this.rainLowPass = new Tone.Filter(1500, "lowpass");
+      this.rainGain = new Tone.Gain(0); // Starts silent
+
+      this.rainNoise.connect(this.rainHighPass);
+      this.rainHighPass.connect(this.rainLowPass);
+      this.rainLowPass.connect(this.rainGain);
+      this.rainGain.connect(this.reverb);
+
+      // B. Micro-Droplet Granular Resonator ("Pitter-Patter" water droplets)
+      this.dropletSynth = new Tone.MembraneSynth({
+        pitchDecay: 0.008,
+        octaves: 1.2,
         oscillator: { type: "sine" },
         envelope: {
           attack: 0.001,
-          decay: 0.22,
-          sustain: 0.01,
-          release: 0.35
+          decay: 0.035,
+          sustain: 0,
+          release: 0.02
+        }
+      });
+      this.dropletFilter = new Tone.Filter(2600, "bandpass");
+      this.dropletGain = new Tone.Gain(0.40);
+      this.dropletSynth.connect(this.dropletFilter);
+      this.dropletFilter.connect(this.dropletGain);
+      this.dropletGain.connect(this.reverb);
+
+      // C. Deep Rolling Thunder Synth (for deluge storm events > 20 mm/day)
+      this.thunderSynth = new Tone.MembraneSynth({
+        pitchDecay: 0.14,
+        octaves: 4.5,
+        oscillator: { type: "sine" },
+        envelope: {
+          attack: 0.02,
+          decay: 0.85,
+          sustain: 0.04,
+          release: 1.2
         }
       }).connect(this.limiter);
-      this.rainSynth.volume.value = -3;
+      this.thunderSynth.volume.value = -3;
 
-      // 3. Wind Atmospheric Synth: Filtered noise / breeze resonance
-      this.windSynth = new Tone.NoiseSynth({
-        noise: { type: "pink" },
-        envelope: {
-          attack: 0.05,
-          decay: 0.15,
-          sustain: 0.0
-        }
-      }).connect(this.reverb);
-      this.windSynth.volume.value = -12;
+      // D. Liquid Crystal Water Chime (Harmonic musical accompaniment in rain mode)
+      this.waterChimeSynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.003, decay: 0.35, sustain: 0.02, release: 0.4 }
+      }).connect(this.delay);
+      this.waterChimeSynth.volume.value = -6;
+
+      // 3. Realistic Procedural Wind Resonator (Resonant Bandpass Noise)
+      this.windNoise = new Tone.Noise("pink");
+      this.windFilter = new Tone.Filter({
+        frequency: 450,
+        type: "bandpass",
+        Q: 3.5
+      });
+      this.windGain = new Tone.Gain(0);
+      this.windNoise.connect(this.windFilter);
+      this.windFilter.connect(this.windGain);
+      this.windGain.connect(this.reverb);
 
       // 4. Calendar Marker: Sub-bass for month starts
       this.bassDrone = new Tone.Synth({
@@ -175,24 +234,44 @@ class EarthSonifier {
 
     this.currentInstrumentKey = instrumentKey;
 
-    if (instrumentKey === "marimba") {
-      this.melodySynth = new Tone.PolySynth(Tone.Synth, {
+    if (instrumentKey === "crystal_celesta" || instrumentKey === "space_synth") {
+      // 1. Crystal Celestial Chimes: Ethereal FM chime with shimmering high crystal overtones
+      this.melodySynth = new Tone.PolySynth(Tone.FMSynth, {
+        harmonicity: 2.01,
+        modulationIndex: 1.8,
         oscillator: { type: "sine" },
-        envelope: { attack: 0.004, decay: 0.22, sustain: 0.0, release: 0.18 }
+        modulation: { type: "triangle" },
+        envelope: { attack: 0.005, decay: 0.35, sustain: 0.08, release: 0.45 },
+        modulationEnvelope: { attack: 0.002, decay: 0.2, sustain: 0.0, release: 0.2 }
+      }).connect(this.delay);
+      this.melodySynth.volume.value = -4;
+    } else if (instrumentKey === "acoustic_piano") {
+      // 2. Grand Ambient Piano / Harp: Warm acoustic triangle/sine hybrid with gentle attack & natural decay
+      this.melodySynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "triangle" },
+        envelope: { attack: 0.005, decay: 0.45, sustain: 0.05, release: 0.4 }
       }).connect(this.reverb);
       this.melodySynth.volume.value = -2;
-    } else if (instrumentKey === "ambient_pad") {
+    } else if (instrumentKey === "analog_warm_pad" || instrumentKey === "ambient_pad") {
+      // 3. Cinematic Ambient Pad: Warm atmospheric dual-oscillator sweep
       this.melodySynth = new Tone.PolySynth(Tone.AMSynth, {
         harmonicity: 1.5,
-        oscillator: { type: "triangle" },
-        envelope: { attack: 0.06, decay: 0.4, sustain: 0.5, release: 0.6 }
+        oscillator: { type: "sawtooth" },
+        envelope: { attack: 0.06, decay: 0.45, sustain: 0.45, release: 0.65 }
       }).connect(this.delay);
       this.melodySynth.volume.value = -5;
+    } else if (instrumentKey === "organic_marimba" || instrumentKey === "marimba") {
+      // 4. Acoustic Wooden Marimba / Kalimba: Snappy mallet strike with wooden resonance
+      this.melodySynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.002, decay: 0.2, sustain: 0.0, release: 0.16 }
+      }).connect(this.reverb);
+      this.melodySynth.volume.value = -1.5;
     } else {
-      // Default: "space_synth"
+      // Default: Resonant Hologram Synth
       this.melodySynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: "triangle8" },
-        envelope: { attack: 0.015, decay: 0.18, sustain: 0.15, release: 0.22 }
+        envelope: { attack: 0.015, decay: 0.22, sustain: 0.12, release: 0.25 }
       }).connect(this.delay);
       this.melodySynth.volume.value = -3;
     }
@@ -255,6 +334,14 @@ class EarthSonifier {
     }
 
     await this.initAudioContext();
+
+    // Start background noise generators safely
+    if (this.rainNoise && this.rainNoise.state !== "started") {
+      try { this.rainNoise.start(); } catch (e) {}
+    }
+    if (this.windNoise && this.windNoise.state !== "started") {
+      try { this.windNoise.start(); } catch (e) {}
+    }
 
     if (this.currentIndex >= this.data.dates.length) {
       this.currentIndex = 0;
@@ -320,7 +407,7 @@ class EarthSonifier {
 
     try {
       if (dataType === "temperature") {
-        // Temperature controls Pitch
+        // Temperature controls Pitch & Harmonics
         const noteInfo = this.valueToNote(normVal);
         playedNote = noteInfo.note;
         playedFreq = Math.round(noteInfo.freq);
@@ -328,15 +415,36 @@ class EarthSonifier {
         const velocity = 0.5 + normVal * 0.45;
         this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, undefined, velocity);
 
-        // Dual-track accompaniment: If authentic rainfall data is active, trigger drum strikes
+        // Dual-track accompaniment: If authentic rainfall data is active, layer real rain acoustics
         if (this.dualTrackEnabled && this.secondaryData && this.secondaryData.values[idx] !== undefined) {
           const rainVal = this.secondaryData.values[idx];
           if (rainVal > 0.1) {
-            // Authentic physical rain scaling (based on actual mm/day)
-            const drumPitch = rainVal > 25.0 ? "C1" : rainVal > 10.0 ? "G1" : "C2";
-            const drumVel = Math.min(0.9, 0.25 + (rainVal / 35.0) * 0.65);
-            this.rainSynth.triggerAttackRelease(drumPitch, durationSeconds, undefined, drumVel);
+            // Realistic ambient rain hiss proportional to mm/day
+            const rainVol = Math.min(0.32, 0.05 + (rainVal / 25.0) * 0.25);
+            const cutoff = Math.min(4200, 1100 + (rainVal / 25.0) * 2000);
+            if (this.rainLowPass) this.rainLowPass.frequency.rampTo(cutoff, 0.06);
+            if (this.rainGain) this.rainGain.gain.rampTo(rainVol, 0.06);
+
+            // Micro-droplet pitter-patter
+            const numDrops = rainVal > 15.0 ? 3 : rainVal > 3.0 ? 2 : 1;
+            const now = Tone.now();
+            const dropPitches = ["E6", "A6", "C7"];
+            for (let d = 0; d < numDrops; d++) {
+              const p = dropPitches[d % dropPitches.length];
+              if (this.dropletSynth) {
+                this.dropletSynth.triggerAttackRelease(p, 0.015, now + d * 0.025, 0.35);
+              }
+            }
+
+            // Distant rolling thunder if extreme storm (> 20 mm)
+            if (rainVal > 20.0 && this.thunderSynth) {
+              this.thunderSynth.triggerAttackRelease("C1", 0.5, undefined, 0.45);
+            }
+          } else {
+            if (this.rainGain) this.rainGain.gain.rampTo(0, 0.08);
           }
+        } else {
+          if (this.rainGain) this.rainGain.gain.rampTo(0, 0.08);
         }
 
         // Soft calendar drone on 1st of month
@@ -344,15 +452,65 @@ class EarthSonifier {
           this.bassDrone.triggerAttackRelease("C2", "8n");
         }
       } else if (dataType === "rainfall") {
-        // Rainfall controls drum strikes & velocity proportional to actual mm/day
-        if (rawVal > 0.1) {
-          const drumPitch = rawVal > 25.0 ? "C1" : rawVal > 10.0 ? "G1" : "C2";
-          const drumVel = Math.min(1.0, 0.3 + (rawVal / 30.0) * 0.7);
-          this.rainSynth.triggerAttackRelease(drumPitch, durationSeconds, undefined, drumVel);
-          playedNote = `Rain ${drumPitch}`;
-          playedFreq = Math.round(Tone.Frequency(drumPitch).toFrequency());
+        // PURE PROCEDURAL RAIN ENGINE (Low to High realistic physical sound)
+        if (rawVal > 0.05) {
+          let rainVol = 0;
+          let filterCutoff = 1200;
+          let rainDesc = "";
+
+          if (rawVal <= 3.0) {
+            // Light drizzle: Soft cozy rustle + delicate droplet taps
+            rainVol = 0.08 + (rawVal / 3.0) * 0.08; // 0.08 - 0.16
+            filterCutoff = 1100 + (rawVal / 3.0) * 400; // 1100 - 1500 Hz
+            rainDesc = "DRIZZLE";
+          } else if (rawVal <= 15.0) {
+            // Moderate steady rain: Rich open shower hiss + frequent drops
+            rainVol = 0.18 + ((rawVal - 3.0) / 12.0) * 0.18; // 0.18 - 0.36
+            filterCutoff = 1600 + ((rawVal - 3.0) / 12.0) * 1200; // 1600 - 2800 Hz
+            rainDesc = "SHOWER";
+          } else {
+            // Heavy monsoon storm / deluge: Wide stereo rush + rolling thunder
+            rainVol = Math.min(0.70, 0.38 + ((rawVal - 15.0) / 50.0) * 0.32); // 0.38 - 0.70
+            filterCutoff = Math.min(5000, 3000 + ((rawVal - 15.0) / 50.0) * 2000); // 3000 - 5000 Hz
+            rainDesc = "DELUGE";
+          }
+
+          // Smoothly ramp the continuous rain sound
+          if (this.rainLowPass) this.rainLowPass.frequency.rampTo(filterCutoff, 0.06);
+          if (this.rainGain) this.rainGain.gain.rampTo(rainVol, 0.06);
+
+          // Pitter-patter droplet burst
+          const dropletCount = rawVal <= 3.0 ? 2 : rawVal <= 15.0 ? 4 : 7;
+          const dropPitches = ["C5", "E5", "G5", "B5", "D6", "G6", "A6"];
+          const now = Tone.now();
+
+          for (let d = 0; d < dropletCount; d++) {
+            const timeOffset = d * (stepMs / 1000 / (dropletCount + 1)) + (Math.random() * 0.015);
+            const dropPitch = dropPitches[Math.floor(Math.random() * dropPitches.length)];
+            const dropVel = Math.min(0.9, 0.25 + (rawVal / 30.0) * 0.65);
+            if (this.dropletSynth) {
+              this.dropletSynth.triggerAttackRelease(dropPitch, 0.02, now + timeOffset, dropVel);
+            }
+          }
+
+          // Deep rolling thunder for heavy deluge (> 20mm, e.g. Dubai, Karachi, Tokyo floods)
+          if (rawVal > 20.0 && this.thunderSynth) {
+            const thunderPitch = rawVal > 60.0 ? "C1" : "E1";
+            const thunderVel = Math.min(1.0, 0.45 + (rawVal / 80.0) * 0.55);
+            this.thunderSynth.triggerAttackRelease(thunderPitch, 0.65, undefined, thunderVel);
+          }
+
+          // Liquid glass musical chime
+          const noteInfo = this.valueToNote(normVal);
+          playedNote = `${rainDesc} • ${noteInfo.note}`;
+          playedFreq = Math.round(noteInfo.freq);
+          if (this.waterChimeSynth) {
+            this.waterChimeSynth.triggerAttackRelease(noteInfo.note, durationSeconds, undefined, 0.5);
+          }
         } else {
-          playedNote = "Dry (Rest)";
+          // Dry day / Rest
+          if (this.rainGain) this.rainGain.gain.rampTo(0, 0.08);
+          playedNote = "DRY REST";
           playedFreq = 0;
         }
 
@@ -360,14 +518,22 @@ class EarthSonifier {
           this.bassDrone.triggerAttackRelease("G2", "8n");
         }
       } else if (dataType === "wind") {
-        // Wind speed: Resonant airy velocity & pitch modulation
+        // Wind speed: Resonant airy velocity & howling wind filter sweep
         const noteInfo = this.valueToNote(normVal);
         playedNote = noteInfo.note;
         playedFreq = Math.round(noteInfo.freq);
 
         this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, undefined, 0.6);
-        if (this.windSynth && rawVal > 3.0) {
-          this.windSynth.triggerAttackRelease(Math.min(0.2, (rawVal / 15.0) * 0.2));
+
+        if (this.windFilter && this.windGain) {
+          if (rawVal > 1.0) {
+            const windCutoff = Math.min(1800, 300 + (rawVal / 15.0) * 1200);
+            const windVol = Math.min(0.35, 0.05 + (rawVal / 15.0) * 0.3);
+            this.windFilter.frequency.rampTo(windCutoff, 0.06);
+            this.windGain.gain.rampTo(windVol, 0.06);
+          } else {
+            this.windGain.gain.rampTo(0, 0.08);
+          }
         }
       }
     } catch (err) {
@@ -397,6 +563,12 @@ class EarthSonifier {
     if (this.stepTimer) {
       clearTimeout(this.stepTimer);
       this.stepTimer = null;
+    }
+    if (this.rainGain) {
+      this.rainGain.gain.rampTo(0, 0.05);
+    }
+    if (this.windGain) {
+      this.windGain.gain.rampTo(0, 0.05);
     }
     if (this.onPlaybackStateChange) this.onPlaybackStateChange(false);
   }
