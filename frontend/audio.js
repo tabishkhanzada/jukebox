@@ -62,11 +62,24 @@ class EarthSonifier {
     this.currentScaleKey = "pentatonic_major";
     this.currentInstrumentKey = "acoustic_chimes";
 
+    // 3-Category Thermal Sonification State
+    this.lastCategory = null;
+    this.activeCategory = null;
+
     // Audio node references
     this.melodySynth = null;
     this.compareSynth = null;
     this.sampler = null;
     this.isSamplerLoaded = false;
+
+    // Category-specific acoustic signal processors
+    this.coldFilter = null;
+    this.coldGain = null;
+    this.coldSubSynth = null;
+    this.hotFilter = null;
+    this.hotGain = null;
+    this.heatShimmerSynth = null;
+    this.transitionSynth = null;
 
     // Real Rain Player & Procedural Synthesis Nodes
     this.rainPlayer = null;
@@ -184,6 +197,41 @@ class EarthSonifier {
 
       // 3. Melody Synthesizer for Temperature / Primary pitch (Synthesizer Engine & Fallback)
       this.buildMelodySynth(this.currentInstrumentKey);
+
+      // 3-Category Thermal Signal Architecture (Cold Chill, Moderate Comfort, Solar Shimmer)
+      // A. Cold Frost Resonator & Deep Sub-Bass
+      this.coldFilter = new Tone.Filter(850, "lowpass");
+      this.coldGain = new Tone.Gain(0.9);
+      this.coldFilter.connect(this.coldGain);
+      this.coldGain.connect(this.reverb);
+
+      this.coldSubSynth = new Tone.Synth({
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.04, decay: 0.38, sustain: 0.05, release: 0.45 }
+      }).connect(this.limiter);
+      this.coldSubSynth.volume.value = -9;
+
+      // B. Solar Heat Shimmer & High-Frequency Shimmer Exciter
+      this.hotFilter = new Tone.Filter(3200, "highpass");
+      this.hotGain = new Tone.Gain(0.75);
+      this.hotFilter.connect(this.hotGain);
+      this.hotGain.connect(this.delay);
+
+      this.heatShimmerSynth = new Tone.PolySynth(Tone.FMSynth, {
+        harmonicity: 3.01,
+        modulationIndex: 2.5,
+        oscillator: { type: "sine" },
+        modulation: { type: "triangle" },
+        envelope: { attack: 0.003, decay: 0.22, sustain: 0.02, release: 0.25 }
+      }).connect(this.delay);
+      this.heatShimmerSynth.volume.value = -9.5;
+
+      // C. Distinct Category Boundary Transition Flourish Synth
+      this.transitionSynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "triangle" },
+        envelope: { attack: 0.01, decay: 0.35, sustain: 0.08, release: 0.4 }
+      }).connect(this.reverb);
+      this.transitionSynth.volume.value = -6;
 
       // Comparative Synthesizer for Dual-City side-by-side sonification
       this.compareSynth = new Tone.PolySynth(Tone.Synth, {
@@ -373,6 +421,83 @@ class EarthSonifier {
   }
 
   /**
+   * 3-Zone Thermal Classification matching authentic reference video:
+   * 1. Cold / Sardi: <= 20.0°C (Deep blue, chilled low acoustic register C3-A3 + frost sub-bass)
+   * 2. Moderate / Theek: 20.1°C - 26.0°C (Lush green, comfortable mid register C4-A4, warm plate reverb)
+   * 3. Hot / Garmi: > 26.0°C (Solar red, shimmering high register C5-C6 + solar sizzle exciter)
+   */
+  getTemperatureCategory(tempC) {
+    if (tempC <= 20.0) {
+      return {
+        key: "COLD",
+        label: "SARDI • COLD",
+        shortLabel: "SARDI",
+        urdu: "سردی",
+        range: "≤ 20°C",
+        color: "#38bdf8",
+        notes: ["C3", "D3", "E3", "G3", "A3"],
+        baseFreq: 130.8,
+        isExtreme: tempC <= 12.0
+      };
+    } else if (tempC <= 26.0) {
+      return {
+        key: "MODERATE",
+        label: "THEEK • MODERATE",
+        shortLabel: "THEEK",
+        urdu: "ٹھیک",
+        range: "21–26°C",
+        color: "#22c55e",
+        notes: ["C4", "D4", "E4", "G4", "A4"],
+        baseFreq: 261.6,
+        isExtreme: false
+      };
+    } else {
+      const isExtreme = tempC >= 33.0;
+      return {
+        key: "HOT",
+        label: isExtreme ? "GARMI • HEATWAVE" : "GARMI • HOT",
+        shortLabel: isExtreme ? "HEATWAVE" : "GARMI",
+        urdu: "گرمی",
+        range: "> 26°C",
+        color: isExtreme ? "#f43f5e" : "#ef4444",
+        notes: ["C5", "D5", "E5", "G5", "A5", "C6"],
+        baseFreq: 523.2,
+        isExtreme: isExtreme
+      };
+    }
+  }
+
+  /**
+   * Maps temperature into its category note with distinct intra-category pitch scaling,
+   * guaranteeing that both the macro thermal category AND day-to-day warming/cooling are crystal clear by ear!
+   */
+  categoryValueToNote(tempC) {
+    const cat = this.getTemperatureCategory(tempC);
+    let note = cat.notes[0];
+    let noteIndex = 0;
+
+    if (cat.key === "COLD") {
+      // Scale 8°C to 20°C across 5 cold notes
+      const ratio = Math.max(0, Math.min(1, (tempC - 8.0) / 12.0));
+      noteIndex = Math.min(Math.floor(ratio * cat.notes.length), cat.notes.length - 1);
+      note = cat.notes[noteIndex];
+    } else if (cat.key === "MODERATE") {
+      // Scale 20.1°C to 26.0°C across 5 moderate notes
+      const ratio = Math.max(0, Math.min(1, (tempC - 20.1) / 5.9));
+      noteIndex = Math.min(Math.floor(ratio * cat.notes.length), cat.notes.length - 1);
+      note = cat.notes[noteIndex];
+    } else {
+      // Scale 26.1°C to 42.0°C across 6 hot notes
+      const ratio = Math.max(0, Math.min(1, (tempC - 26.1) / 15.9));
+      noteIndex = Math.min(Math.floor(ratio * cat.notes.length), cat.notes.length - 1);
+      note = cat.notes[noteIndex];
+    }
+
+    const freq = Tone.Frequency(note).toFrequency();
+    return { note, freq, category: cat, noteIndex };
+  }
+
+  /**
    * Maps normalized value to a quantized musical note.
    */
   valueToNote(normValue) {
@@ -461,24 +586,84 @@ class EarthSonifier {
 
     let playedNote = null;
     let playedFreq = null;
+    let activeCat = null;
+    let transitionType = null;
 
     // Dynamic anti-clipping note duration: note releases cleanly before the next step
     const durationSeconds = Math.max(0.04, Math.min(0.24, (stepMs / 1000) * 0.85));
 
     try {
       if (dataType === "temperature") {
-        // Temperature controls Pitch & Harmonics
-        const noteInfo = this.valueToNote(normVal);
+        // Authentic 3-Zone Thermal Sonification Engine
+        const noteInfo = this.categoryValueToNote(rawVal);
+        activeCat = noteInfo.category;
         playedNote = noteInfo.note;
         playedFreq = Math.round(noteInfo.freq);
 
-        const velocity = 0.5 + normVal * 0.45;
+        // 1. Boundary Transition Audio Flourish: Detect macro thermal shifts
+        if (this.lastCategory && this.lastCategory !== activeCat.key) {
+          transitionType = `${this.lastCategory}_TO_${activeCat.key}`;
+          if (this.transitionSynth) {
+            if (transitionType === "COLD_TO_MODERATE") {
+              // Spring thaw / warming chime flourish
+              this.transitionSynth.triggerAttackRelease(["E3", "A4"], 0.20);
+            } else if (transitionType === "MODERATE_TO_HOT") {
+              // Summer heatwave entry sizzle
+              this.transitionSynth.triggerAttackRelease(["A4", "E5"], 0.16);
+            } else if (transitionType === "HOT_TO_MODERATE") {
+              // Autumn cool-down chime
+              this.transitionSynth.triggerAttackRelease(["E5", "A4"], 0.20);
+            } else if (transitionType === "MODERATE_TO_COLD") {
+              // Winter freeze drop chime
+              this.transitionSynth.triggerAttackRelease(["G4", "C3"], 0.26);
+            }
+          }
+        }
+        this.lastCategory = activeCat.key;
+        this.activeCategory = activeCat;
 
-        // Play authentic sampled crystal chimes when active and loaded, or synth fallback
-        if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
-          this.sampler.triggerAttackRelease(playedNote, durationSeconds, undefined, velocity);
+        // 2. Category-Specific Acoustic Profiling
+        if (activeCat.key === "COLD") {
+          // SARDI (Cold Zone <= 20°C): Deep, frosted, grounded acoustic chime + sub-bass
+          const coldVel = 0.50 + Math.min(0.20, noteInfo.noteIndex * 0.04);
+          if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
+            this.sampler.triggerAttackRelease(playedNote, durationSeconds * 1.25, undefined, coldVel);
+          } else {
+            this.melodySynth.triggerAttackRelease(playedNote, durationSeconds * 1.25, undefined, coldVel);
+          }
+
+          // Subtle frosty sub-bass body anchor
+          if (this.coldSubSynth) {
+            const subPitch = noteInfo.noteIndex <= 1 ? "C2" : "E2";
+            this.coldSubSynth.triggerAttackRelease(subPitch, 0.25, undefined, 0.45);
+          }
+        } else if (activeCat.key === "MODERATE") {
+          // THEEK (Moderate Zone 21-26°C): Melodious, pleasant, comfortable warm crystal chime
+          const modVel = 0.65 + Math.min(0.20, noteInfo.noteIndex * 0.04);
+          if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
+            this.sampler.triggerAttackRelease(playedNote, durationSeconds, undefined, modVel);
+          } else {
+            this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, undefined, modVel);
+          }
         } else {
-          this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, undefined, velocity);
+          // GARMI (Hot Zone > 26°C): High register, bright, energetic solar chimes + heatwave sizzle
+          const hotVel = 0.75 + Math.min(0.20, noteInfo.noteIndex * 0.035);
+          if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
+            this.sampler.triggerAttackRelease(playedNote, durationSeconds * 0.85, undefined, hotVel);
+          } else {
+            this.melodySynth.triggerAttackRelease(playedNote, durationSeconds * 0.85, undefined, hotVel);
+          }
+
+          // Solar heat shimmer exciter
+          if (this.heatShimmerSynth) {
+            this.heatShimmerSynth.triggerAttackRelease(playedNote, 0.14, undefined, 0.40);
+          }
+
+          // Extreme heatwave anomaly sparkle (> 33°C)
+          if (activeCat.isExtreme && this.melodySynth) {
+            const sparkleNote = rawVal >= 36.0 ? "E6" : "C6";
+            this.melodySynth.triggerAttackRelease(sparkleNote, 0.10, undefined, 0.35);
+          }
         }
 
         // Dual-track accompaniment: If authentic rainfall data is active, layer real rain acoustics
@@ -640,6 +825,15 @@ class EarthSonifier {
         unit: this.data.unit,
         note: playedNote || "--",
         frequency: playedFreq || 0,
+        category: activeCat ? activeCat.key : null,
+        categoryLabel: activeCat ? activeCat.label : null,
+        categoryShort: activeCat ? activeCat.shortLabel : null,
+        categoryUrdu: activeCat ? activeCat.urdu : null,
+        categoryColor: activeCat ? activeCat.color : null,
+        categoryRange: activeCat ? activeCat.range : null,
+        isExtreme: activeCat ? !!activeCat.isExtreme : false,
+        isTransition: transitionType !== null,
+        transitionType: transitionType,
         isFirstOfMonth: isFirstOfMonth
       });
     }
@@ -650,6 +844,7 @@ class EarthSonifier {
    */
   pause() {
     this.isPlaying = false;
+    this.lastCategory = null;
     if (this.stepTimer) {
       clearTimeout(this.stepTimer);
       this.stepTimer = null;
@@ -672,16 +867,28 @@ class EarthSonifier {
   stop() {
     this.pause();
     this.currentIndex = 0;
+    this.lastCategory = null;
     if (this.onPlaybackStateChange) this.onPlaybackStateChange(false);
     if (this.onStepCallback && this.data && this.data.dates.length > 0) {
+      const firstVal = this.data.values[0];
+      const firstCat = this.data.data_type === "temperature" ? this.getTemperatureCategory(firstVal) : null;
       this.onStepCallback({
         index: 0,
         date: this.data.dates[0],
-        value: this.data.values[0],
+        value: firstVal,
         normalized: this.data.normalized[0],
         unit: this.data.unit,
         note: "--",
         frequency: 0,
+        category: firstCat ? firstCat.key : null,
+        categoryLabel: firstCat ? firstCat.label : null,
+        categoryShort: firstCat ? firstCat.shortLabel : null,
+        categoryUrdu: firstCat ? firstCat.urdu : null,
+        categoryColor: firstCat ? firstCat.color : null,
+        categoryRange: firstCat ? firstCat.range : null,
+        isExtreme: firstCat ? !!firstCat.isExtreme : false,
+        isTransition: false,
+        transitionType: null,
         isFirstOfMonth: false
       });
     }

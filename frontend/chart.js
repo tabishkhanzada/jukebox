@@ -9,6 +9,7 @@ class ClimateChartEngine {
     this.canvas = document.getElementById(canvasId);
     this.chart = null;
     this.activeIndex = 0;
+    this.activeCategoryColor = "#ff5722";
     this.currentDataset = null;
     this.secondaryDataset = null;
     this.dualAxisEnabled = false;
@@ -24,15 +25,55 @@ class ClimateChartEngine {
     this.scrubberPlugin = {
       id: "verticalScrubber",
       afterDraw: (chart) => {
+        const ctx = chart.ctx;
+        const topY = chart.chartArea.top;
+        const bottomY = chart.chartArea.bottom;
+        const leftX = chart.chartArea.left;
+        const rightX = chart.chartArea.right;
+
+        // Draw 3-Zone Thermal Category Threshold Guides for Temperature
+        if (this.currentDataset && this.currentDataset.data_type === "temperature" && chart.scales.y) {
+          ctx.save();
+          ctx.setLineDash([4, 4]);
+          ctx.font = "9px 'JetBrains Mono', monospace";
+
+          // 20°C Line: Sardi (Cold) Boundary
+          const y20 = chart.scales.y.getPixelForValue(20);
+          if (y20 >= topY && y20 <= bottomY) {
+            ctx.beginPath();
+            ctx.moveTo(leftX, y20);
+            ctx.lineTo(rightX, y20);
+            ctx.strokeStyle = "rgba(56, 189, 248, 0.45)";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.fillStyle = "#38bdf8";
+            ctx.fillText("20°C SARDI", rightX - 65, y20 - 3);
+          }
+
+          // 26°C Line: Garmi (Hot) Boundary
+          const y26 = chart.scales.y.getPixelForValue(26);
+          if (y26 >= topY && y26 <= bottomY) {
+            ctx.beginPath();
+            ctx.moveTo(leftX, y26);
+            ctx.lineTo(rightX, y26);
+            ctx.strokeStyle = "rgba(239, 68, 68, 0.45)";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.fillStyle = "#ef4444";
+            ctx.fillText("26°C GARMI", rightX - 65, y26 - 3);
+          }
+          ctx.restore();
+        }
+
         if (this.activeIndex === null || this.activeIndex === undefined) return;
         const meta = chart.getDatasetMeta(0);
         if (!meta || !meta.data || !meta.data[this.activeIndex]) return;
 
-        const ctx = chart.ctx;
         const point = meta.data[this.activeIndex];
         const x = point.x;
-        const topY = chart.chartArea.top;
-        const bottomY = chart.chartArea.bottom;
+        const activeColor = this.activeCategoryColor || "#ff5722";
 
         ctx.save();
         // 1. Draw glowing vertical playhead line
@@ -40,8 +81,8 @@ class ClimateChartEngine {
         ctx.moveTo(x, topY);
         ctx.lineTo(x, bottomY);
         ctx.lineWidth = 2;
-        ctx.strokeStyle = "#ff5722"; // Mars Solar Orange Playhead
-        ctx.shadowColor = "#ff7043";
+        ctx.strokeStyle = activeColor;
+        ctx.shadowColor = activeColor;
         ctx.shadowBlur = 12;
         ctx.stroke();
 
@@ -51,7 +92,9 @@ class ClimateChartEngine {
         ctx.fillStyle = "#ffffff";
         ctx.fill();
         ctx.lineWidth = 2.5;
-        ctx.strokeStyle = "#ff5722";
+        ctx.strokeStyle = activeColor;
+        ctx.shadowColor = activeColor;
+        ctx.shadowBlur = 8;
         ctx.stroke();
 
         ctx.restore();
@@ -249,8 +292,11 @@ class ClimateChartEngine {
   /**
    * Update active playhead scrubber position with zero-lag animation override.
    */
-  updateScrubber(index, note, frequency) {
+  updateScrubber(index, note, frequency, categoryColor = null) {
     this.activeIndex = index;
+    if (categoryColor) {
+      this.activeCategoryColor = categoryColor;
+    }
     if (this.chart) {
       // Direct draw without re-triggering entrance animations
       this.chart.update("none");

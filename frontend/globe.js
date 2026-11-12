@@ -32,10 +32,10 @@ class PlanetaryParticleGlobe {
     this.orbitAngle = 0.4;
     this.orbitSpeed = 0.009;
 
-    this.globeRadius = 2.10;
-    this.orbitRadius = 2.75;
+    this.globeRadius = 2.05;
+    this.orbitRadius = 2.65;
     this.orbitInclination = 51.6 * (Math.PI / 180); // 51.6° ISS / NASA Earth Science Orbit
-    this.globeCenterY = 0.22; // Upper-stage positioning with guaranteed clearance top & bottom
+    this.globeCenterY = 0.12; // Perfectly centered upper stage with generous clearance top & bottom
 
     this.pulseEnergy = 0;
 
@@ -54,8 +54,8 @@ class PlanetaryParticleGlobe {
     this.lastAmbientShockwave = 0;
 
     // Camera dolly
-    this.baseCameraZ = 8.6;
-    this.targetCameraZ = 8.6;
+    this.baseCameraZ = 8.8;
+    this.targetCameraZ = 8.8;
 
     // Mouse drag interaction
     this.isDragging = false;
@@ -385,12 +385,34 @@ class PlanetaryParticleGlobe {
     }
   }
 
-  setThermalTone(normalizedTemp) {
+  setThermalTone(tempVal, normalizedTemp = 0.5) {
     if (!this.landMesh) return;
-    const cold = new THREE.Color(0x38bdf8);
-    const hot = new THREE.Color(0xff5722);
-    const tone = cold.clone().lerp(hot, normalizedTemp);
-    this.landMesh.material.color = tone;
+    let targetHex = 0x38bdf8; // Default Cold (Blue)
+
+    if (typeof tempVal === "number") {
+      if (tempVal <= 20.0) {
+        targetHex = 0x38bdf8; // SARDI <= 20°C (Ice Blue)
+      } else if (tempVal <= 26.0) {
+        targetHex = 0x22c55e; // THEEK 21-26°C (Lush Green)
+      } else {
+        targetHex = tempVal >= 33.0 ? 0xf43f5e : 0xef4444; // GARMI > 26°C (Solar Red / Heatwave)
+      }
+    } else if (typeof tempVal === "string") {
+      if (tempVal === "COLD") targetHex = 0x38bdf8;
+      else if (tempVal === "MODERATE") targetHex = 0x22c55e;
+      else targetHex = 0xef4444;
+    }
+
+    this.currentCategoryHex = targetHex;
+    const targetColor = new THREE.Color(targetHex);
+    this.landMesh.material.color.lerp(targetColor, 0.2);
+
+    if (this.downlinkBeam && this.downlinkBeam.material) {
+      this.downlinkBeam.material.color.lerp(targetColor, 0.25);
+    }
+    if (this.strobeLight) {
+      this.strobeLight.color.lerp(targetColor, 0.25);
+    }
   }
 
   triggerAudioPulse(frequency) {
@@ -408,8 +430,7 @@ class PlanetaryParticleGlobe {
 
     // Concentric radar ripple on ground beacon
     const geo = new THREE.RingGeometry(0.08, 0.11, 32);
-    const isHighFreq = frequency > 520;
-    const color = isHighFreq ? 0xff7043 : 0x38bdf8;
+    const color = this.currentCategoryHex || (frequency > 520 ? 0xef4444 : frequency > 300 ? 0x22c55e : 0x38bdf8);
     const initialOpacity = isAmbient ? 0.35 : 0.75;
 
     const mat = new THREE.MeshBasicMaterial({

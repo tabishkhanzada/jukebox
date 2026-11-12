@@ -133,6 +133,13 @@
             <option value="seasonal">SEASONAL CONTRAST</option>
           </select>
         </div>
+
+        <!-- 3-Category Thermal Legend Dock (Matching Reference Video Rang Scale) -->
+        <div class="thermal-legend-dock font-mono" id="thermalLegendDock" title="3 Authentic Thermal Categories: Cold (Sardi), Moderate (Theek), Hot (Garmi)">
+          <span class="legend-chip chip-red"><span class="chip-dot red"></span>GARMI &gt;26°C</span>
+          <span class="legend-chip chip-green"><span class="chip-dot green"></span>THEEK 21–26°C</span>
+          <span class="legend-chip chip-blue"><span class="chip-dot blue"></span>SARDI ≤20°C</span>
+        </div>
       </div>
 
       <!-- Minimalist Synchronized Timeline Waveform (Chart.js) -->
@@ -146,28 +153,31 @@
       <!-- Column 1: Season -->
       <div class="telemetry-col">
         <div class="col-header font-mono">SEASON</div>
-        <div id="hudSeason" class="col-value">Spring / Solstice</div>
+        <div id="hudSeason" class="col-value">Winter / Solstice</div>
         <div id="hudDayOfYear" class="col-sub font-mono">SOL 2024 • DAY 1 OF 366</div>
       </div>
 
-      <!-- Column 2: Weather Today -->
+      <!-- Column 2: Weather Today & Thermal Zone -->
       <div class="telemetry-col">
         <div class="col-header font-mono">WEATHER TODAY [°C]</div>
         <div class="col-value-spread">
           <span id="hudValue" class="col-value text-glow-amber">21.4°</span>
           <span class="col-peak-trough font-mono" id="hudPeakTrough">33.5° <span class="sub-dim">HIGH</span>  16.1° <span class="sub-dim">LOW</span></span>
         </div>
-        <div id="hudDate" class="col-sub font-mono">2024-01-01</div>
+        <div class="col-sub-row font-mono">
+          <span id="hudDate">2024-01-01</span>
+          <span id="hudThermalZone" class="thermal-zone-badge badge-moderate">🌱 THEEK [21.4°]</span>
+        </div>
       </div>
 
       <!-- Column 3: Acoustic Note / Pitch -->
       <div class="telemetry-col">
         <div class="col-header font-mono">ACOUSTIC NOTE / HZ</div>
         <div class="col-value-spread">
-          <span id="hudNote" class="col-value text-cyan">A4</span>
-          <span id="hudFreq" class="col-value-dim font-mono">440 Hz</span>
+          <span id="hudNote" class="col-value text-cyan">C4</span>
+          <span id="hudFreq" class="col-value-dim font-mono">262 Hz</span>
         </div>
-        <div class="col-sub font-mono" id="hudScaleTag">PENTATONIC MAJOR • ACOUSTIC CHIMES</div>
+        <div class="col-sub font-mono" id="hudScaleTag">3-ZONE THERMAL ENGINE • REAL SAMPLES</div>
       </div>
 
       <!-- Column 4: Atmosphere / Rain -->

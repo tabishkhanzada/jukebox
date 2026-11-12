@@ -113,6 +113,8 @@ class EarthJukeboxApp {
       hudValue: document.getElementById("hudValue"),
       hudPeakTrough: document.getElementById("hudPeakTrough"),
       hudDate: document.getElementById("hudDate"),
+      hudThermalZone: document.getElementById("hudThermalZone"),
+      thermalLegendDock: document.getElementById("thermalLegendDock"),
       hudNote: document.getElementById("hudNote"),
       hudFreq: document.getElementById("hudFreq"),
       hudScaleTag: document.getElementById("hudScaleTag"),
@@ -541,6 +543,60 @@ class EarthJukeboxApp {
 
       const seasonStr = this.calculateSeason(data.dates[0], data.location.lat);
       TelemetryScrambler.scramble(this.dom.hudSeason, seasonStr, 460);
+
+      // Initialize Thermal Category Badge
+      if (data.data_type === "temperature") {
+        this.updateThermalCategoryBadge(null, data.values[0]);
+      } else {
+        if (this.dom.hudThermalZone) this.dom.hudThermalZone.style.display = "none";
+        if (this.dom.thermalLegendDock) this.dom.thermalLegendDock.style.display = "none";
+      }
+    }
+  }
+
+  /**
+   * Updates HUD Thermal Category Badge (Sardi, Theek, Garmi) matching reference video
+   */
+  updateThermalCategoryBadge(category, tempVal, categoryColor = null, isExtreme = false) {
+    if (!this.dom.hudThermalZone) return;
+
+    if (this.currentData && this.currentData.data_type !== "temperature") {
+      this.dom.hudThermalZone.style.display = "none";
+      if (this.dom.thermalLegendDock) this.dom.thermalLegendDock.style.display = "none";
+      return;
+    }
+
+    this.dom.hudThermalZone.style.display = "inline-flex";
+    if (this.dom.thermalLegendDock) this.dom.thermalLegendDock.style.display = "flex";
+
+    let catKey = category;
+    if (!catKey && typeof tempVal === "number" && this.sonifier.getTemperatureCategory) {
+      const c = this.sonifier.getTemperatureCategory(tempVal);
+      catKey = c.key;
+      isExtreme = c.isExtreme;
+    }
+
+    // Reset chip active state in the legend
+    const chips = this.dom.thermalLegendDock ? this.dom.thermalLegendDock.querySelectorAll(".legend-chip") : [];
+    chips.forEach(c => c.classList.remove("active"));
+
+    if (catKey === "COLD") {
+      this.dom.hudThermalZone.className = "thermal-zone-badge badge-cold font-mono";
+      this.dom.hudThermalZone.textContent = `❄️ SARDI [${tempVal}°]`;
+      if (chips[2]) chips[2].classList.add("active");
+    } else if (catKey === "MODERATE") {
+      this.dom.hudThermalZone.className = "thermal-zone-badge badge-moderate font-mono";
+      this.dom.hudThermalZone.textContent = `🌱 THEEK [${tempVal}°]`;
+      if (chips[1]) chips[1].classList.add("active");
+    } else {
+      if (isExtreme) {
+        this.dom.hudThermalZone.className = "thermal-zone-badge badge-heatwave font-mono";
+        this.dom.hudThermalZone.textContent = `🚨 HEATWAVE [${tempVal}°]`;
+      } else {
+        this.dom.hudThermalZone.className = "thermal-zone-badge badge-hot font-mono";
+        this.dom.hudThermalZone.textContent = `🔥 GARMI [${tempVal}°]`;
+      }
+      if (chips[0]) chips[0].classList.add("active");
     }
   }
 
@@ -557,20 +613,25 @@ class EarthJukeboxApp {
     // Dynamic Season calculation
     this.dom.hudSeason.textContent = this.calculateSeason(stepInfo.date, this.currentData.location.lat);
 
+    // Dynamic 3-Category Thermal Badge & Rang Legend Sync
+    if (stepInfo.category) {
+      this.updateThermalCategoryBadge(stepInfo.category, stepInfo.value, stepInfo.categoryColor, stepInfo.isExtreme);
+    }
+
     // Reticle MSL counter update (matching photo's `SOL 3039 MSL / 00:02:12:00`)
     const sec = stepInfo.index % 60;
     const min = Math.floor((stepInfo.index / 60) % 60);
     const hr = Math.floor(stepInfo.index / 3600);
     this.dom.heroReticleSol.textContent = `SOL ${this.currentData.year} • MSL ${String(hr).padStart(2,'0')}:${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 
-    // Dynamic 3D Globe audio pulse & thermal tone
+    // Dynamic 3D Globe audio pulse & thermal category tone
     if (this.globe) {
       this.globe.triggerAudioPulse(stepInfo.frequency);
-      this.globe.setThermalTone(stepInfo.normalized);
+      this.globe.setThermalTone(stepInfo.value, stepInfo.normalized);
     }
 
-    // Update 60fps playhead scrubber
-    this.chartEngine.updateScrubber(stepInfo.index, stepInfo.note, stepInfo.frequency);
+    // Update 60fps playhead scrubber with category color
+    this.chartEngine.updateScrubber(stepInfo.index, stepInfo.note, stepInfo.frequency, stepInfo.categoryColor);
   }
 
   calculateSeason(dateStr, lat = 30) {

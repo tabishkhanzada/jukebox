@@ -452,6 +452,61 @@ body.nasa-theme {
   color: #fff;
 }
 
+/* 3-Category Thermal Legend Dock (Rang Scale matching reference video) */
+.thermal-legend-dock {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-left: 1px solid var(--border-hairline);
+  padding-left: 0.65rem;
+}
+
+.legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.26rem;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-dim);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.legend-chip.chip-red {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.08);
+}
+.legend-chip.chip-green {
+  color: #86efac;
+  border-color: rgba(34, 197, 94, 0.25);
+  background: rgba(34, 197, 94, 0.08);
+}
+.legend-chip.chip-blue {
+  color: #7dd3fc;
+  border-color: rgba(56, 189, 248, 0.25);
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.legend-chip.active {
+  box-shadow: 0 0 10px currentColor;
+  transform: scale(1.06);
+}
+
+.chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.chip-dot.red { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+.chip-dot.green { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+.chip-dot.blue { background: #38bdf8; box-shadow: 0 0 6px #38bdf8; }
+
 /* Hero Chart Waveform Container (Scientific Telemetry Timeline Console) */
 .hero-chart-container {
   position: relative;
@@ -547,6 +602,64 @@ body.nasa-theme {
   letter-spacing: 0.08em;
   color: var(--text-dim);
   line-height: 1.1;
+}
+
+.col-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  line-height: 1.1;
+  margin-top: 0.12rem;
+}
+
+.thermal-zone-badge {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.12rem 0.42rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.badge-cold {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.2);
+}
+
+.badge-moderate {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.2);
+}
+
+.badge-hot {
+  background: rgba(239, 68, 68, 0.18);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.25);
+}
+
+.badge-heatwave {
+  background: rgba(244, 63, 94, 0.22);
+  color: #f43f5e;
+  border: 1px solid rgba(244, 63, 94, 0.6);
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.45);
+  animation: heatwave-pulse 1.2s infinite alternate;
+}
+
+@keyframes heatwave-pulse {
+  0% { transform: scale(1); filter: brightness(1); }
+  100% { transform: scale(1.05); filter: brightness(1.25); }
 }
 
 .text-glow-amber {
