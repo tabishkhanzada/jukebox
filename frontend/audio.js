@@ -284,12 +284,16 @@ class EarthSonifier {
       }).connect(this.limiter);
       this.thunderSynth.volume.value = -3;
 
-      // D. Liquid Crystal Water Chime (Harmonic musical accompaniment in rain mode)
-      this.waterChimeSynth = new Tone.PolySynth(Tone.Synth, {
+      // D. Liquid Crystal Water Chime (Expressive FM acoustic water chime whose notes change with rain intensity)
+      this.waterChimeSynth = new Tone.PolySynth(Tone.FMSynth, {
+        harmonicity: 1.5,
+        modulationIndex: 1.4,
         oscillator: { type: "sine" },
-        envelope: { attack: 0.003, decay: 0.35, sustain: 0.02, release: 0.4 }
+        modulation: { type: "triangle" },
+        envelope: { attack: 0.004, decay: 0.38, sustain: 0.03, release: 0.35 },
+        modulationEnvelope: { attack: 0.002, decay: 0.18, sustain: 0.0, release: 0.15 }
       }).connect(this.delay);
-      this.waterChimeSynth.volume.value = -6;
+      this.waterChimeSynth.volume.value = -3.5;
 
       // 3. Realistic Procedural Wind Resonator (Resonant Bandpass Noise)
       this.windNoise = new Tone.Noise("pink");
@@ -498,6 +502,105 @@ class EarthSonifier {
   }
 
   /**
+   * Dynamic Rainfall Acoustic Note Architecture:
+   * Maps mm/day precipitation into evolving musical water notes that climb and descend
+   * precisely as rainfall increases and decreases:
+   * - 0.1 to 3.0 mm (Light Drizzle): Delicate crystal droplets climbing through octave 6 (C6, D6, E6, G6, A6, C7)
+   * - 3.1 to 15.0 mm (Steady Shower): Melodious liquid water chimes ascending through octave 5 (C5, D5, E5, G5, A5, C6)
+   * - 15.1 to 40.0 mm (Heavy Downpour): Deep aqueous bells in octave 4 (C4, D4, E4, G4, A4, C5) + rolling thunder (E1)
+   * - > 40.0 mm (Monsoon Deluge): Powerful multi-tone storm chords (Octave 3 & 4) + sub-bass thunder boom (C1)
+   */
+  getRainfallAcousticNotes(mm) {
+    if (mm <= 0.05) return null;
+
+    if (mm <= 3.0) {
+      // Drizzle / Light Rain (0.1 - 3.0 mm)
+      // Delicate, high-pitched crystal droplets that climb up as drizzle intensifies
+      const scale = ["C6", "D6", "E6", "G6", "A6", "C7"];
+      const ratio = Math.max(0, Math.min(1, (mm - 0.1) / 2.9));
+      const idx = Math.min(Math.floor(ratio * scale.length), scale.length - 1);
+      const primaryNote = scale[idx];
+      const secondNote = scale[Math.min(scale.length - 1, idx + 1)];
+
+      return {
+        tier: "DRIZZLE",
+        label: "LIGHT DRIZZLE",
+        mm: mm,
+        primaryNote: primaryNote,
+        dropletPitches: [primaryNote, secondNote],
+        dropCount: 2,
+        volume: 0.18 + ratio * 0.14,
+        filterCutoff: 1100 + ratio * 600,
+        isThunder: false
+      };
+    } else if (mm <= 15.0) {
+      // Moderate Steady Shower (3.1 - 15.0 mm)
+      // Flowing, melodious liquid water chimes that rise through octave 5
+      const scale = ["C5", "D5", "E5", "G5", "A5", "C6"];
+      const ratio = Math.max(0, Math.min(1, (mm - 3.0) / 12.0));
+      const idx = Math.min(Math.floor(ratio * scale.length), scale.length - 1);
+      const primaryNote = scale[idx];
+      const harmonyNote = scale[(idx + 2) % scale.length];
+      const dropletPitches = [primaryNote, harmonyNote, scale[(idx + 4) % scale.length]];
+
+      return {
+        tier: "SHOWER",
+        label: "STEADY SHOWER",
+        mm: mm,
+        primaryNote: primaryNote,
+        dropletPitches: dropletPitches,
+        dropCount: 4,
+        volume: 0.35 + ratio * 0.25,
+        filterCutoff: 1700 + ratio * 1300,
+        isThunder: false
+      };
+    } else if (mm <= 40.0) {
+      // Heavy Downpour (15.1 - 40.0 mm)
+      // Deep aqueous bells & storm cascade climbing through octave 4
+      const scale = ["C4", "D4", "E4", "G4", "A4", "C5"];
+      const ratio = Math.max(0, Math.min(1, (mm - 15.0) / 25.0));
+      const idx = Math.min(Math.floor(ratio * scale.length), scale.length - 1);
+      const primaryNote = scale[idx];
+      const harmonyNote = scale[(idx + 2) % scale.length];
+      const dropletPitches = [primaryNote, harmonyNote, "E5", "G5"];
+
+      return {
+        tier: "DOWNPOUR",
+        label: "HEAVY DOWNPOUR",
+        mm: mm,
+        primaryNote: primaryNote,
+        dropletPitches: dropletPitches,
+        dropCount: 6,
+        volume: 0.62 + ratio * 0.20,
+        filterCutoff: 3000 + ratio * 1500,
+        isThunder: mm > 20.0,
+        thunderPitch: "E1"
+      };
+    } else {
+      // Monsoon Deluge / Flood (> 40.0 mm)
+      // Deep resonant aqueous strikes, heavy chords & sub-bass thunder
+      const scale = ["A3", "C4", "D4", "E4", "G4", "C5"];
+      const ratio = Math.max(0, Math.min(1, (mm - 40.0) / 45.0));
+      const idx = Math.min(Math.floor(ratio * scale.length), scale.length - 1);
+      const primaryNote = scale[idx];
+      const dropletPitches = ["C3", primaryNote, "G4", "C5", "E5"];
+
+      return {
+        tier: "DELUGE",
+        label: "MONSOON DELUGE",
+        mm: mm,
+        primaryNote: primaryNote,
+        dropletPitches: dropletPitches,
+        dropCount: 8,
+        volume: 0.85,
+        filterCutoff: 4800,
+        isThunder: true,
+        thunderPitch: "C1"
+      };
+    }
+  }
+
+  /**
    * Maps normalized value to a quantized musical note.
    */
   valueToNote(normValue) {
@@ -588,6 +691,7 @@ class EarthSonifier {
     let playedFreq = null;
     let activeCat = null;
     let transitionType = null;
+    let activeRainInfo = null;
 
     // Dynamic anti-clipping note duration: note releases cleanly before the next step
     const durationSeconds = Math.max(0.04, Math.min(0.24, (stepMs / 1000) * 0.85));
@@ -666,39 +770,46 @@ class EarthSonifier {
           }
         }
 
-        // Dual-track accompaniment: If authentic rainfall data is active, layer real rain acoustics
+        // Dual-track accompaniment: If authentic rainfall data is active, layer real rain acoustics & changing rain notes
         if (this.dualTrackEnabled && this.secondaryData && this.secondaryData.values[idx] !== undefined) {
           const rainVal = this.secondaryData.values[idx];
           if (rainVal > 0.1) {
+            activeRainInfo = this.getRainfallAcousticNotes(rainVal);
+
             // Realistic ambient rain hiss proportional to mm/day
-            const rainVol = Math.min(0.35, 0.06 + (rainVal / 25.0) * 0.28);
-            const cutoff = Math.min(4200, 1100 + (rainVal / 25.0) * 2000);
-            if (this.rainLowPass) this.rainLowPass.frequency.rampTo(cutoff, 0.06);
-            if (this.rainGain) this.rainGain.gain.rampTo(rainVol, 0.06);
+            if (this.rainLowPass) this.rainLowPass.frequency.rampTo(activeRainInfo.filterCutoff, 0.06);
+            if (this.rainGain) this.rainGain.gain.rampTo(activeRainInfo.volume * 0.55, 0.06);
 
             // Layer authentic real rain recording
             if (this.rainPlayer && this.isRainPlayerLoaded) {
               if (this.rainPlayer.state !== "started") {
                 try { this.rainPlayer.start(); } catch (e) {}
               }
-              if (this.rainPlayerFilter) this.rainPlayerFilter.frequency.rampTo(cutoff, 0.06);
-              if (this.rainPlayerGain) this.rainPlayerGain.gain.rampTo(rainVol * 0.9, 0.06);
+              if (this.rainPlayerFilter) this.rainPlayerFilter.frequency.rampTo(activeRainInfo.filterCutoff, 0.06);
+              if (this.rainPlayerGain) this.rainPlayerGain.gain.rampTo(activeRainInfo.volume * 0.75, 0.06);
             }
 
-            // Micro-droplet pitter-patter
-            const numDrops = rainVal > 15.0 ? 3 : rainVal > 3.0 ? 2 : 1;
+            // Musical rain water chime that ascends/descends with rainfall intensity!
+            if (this.waterChimeSynth) {
+              const chimeVel = Math.min(0.85, 0.35 + (rainVal / 30.0) * 0.45);
+              this.waterChimeSynth.triggerAttackRelease(activeRainInfo.primaryNote, durationSeconds * 0.85, undefined, chimeVel);
+            }
+
+            // Micro-droplet notes that change with rain tier
             const now = Tone.now();
-            const dropPitches = ["E6", "A6", "C7"];
-            for (let d = 0; d < numDrops; d++) {
-              const p = dropPitches[d % dropPitches.length];
+            const drops = activeRainInfo.dropletPitches;
+            for (let d = 0; d < activeRainInfo.dropCount; d++) {
+              const timeOffset = d * (stepMs / 1000 / (activeRainInfo.dropCount + 1)) + (Math.random() * 0.012);
+              const dropPitch = drops[d % drops.length];
+              const dropVel = Math.min(0.85, 0.30 + (rainVal / 35.0) * 0.55);
               if (this.dropletSynth) {
-                this.dropletSynth.triggerAttackRelease(p, 0.015, now + d * 0.025, 0.35);
+                this.dropletSynth.triggerAttackRelease(dropPitch, 0.02, now + timeOffset, dropVel);
               }
             }
 
             // Distant rolling thunder if extreme storm (> 20 mm)
-            if (rainVal > 20.0 && this.thunderSynth) {
-              this.thunderSynth.triggerAttackRelease("C1", 0.5, undefined, 0.45);
+            if (activeRainInfo.isThunder && this.thunderSynth) {
+              this.thunderSynth.triggerAttackRelease(activeRainInfo.thunderPitch, 0.5, undefined, 0.45);
             }
           } else {
             if (this.rainGain) this.rainGain.gain.rampTo(0, 0.08);
@@ -714,72 +825,49 @@ class EarthSonifier {
           this.bassDrone.triggerAttackRelease("C2", "8n");
         }
       } else if (dataType === "rainfall") {
-        // PURE PROCEDURAL & AUTHENTIC REAL RAIN ENGINE (Low to High realistic physical sound)
+        // PURE PROCEDURAL & AUTHENTIC REAL RAIN ENGINE WITH NOTES CHANGING ON INCREASE/DECREASE
         if (rawVal > 0.05) {
-          let rainVol = 0;
-          let filterCutoff = 1200;
-          let rainDesc = "";
+          activeRainInfo = this.getRainfallAcousticNotes(rawVal);
+          playedNote = `${activeRainInfo.tier} [${rawVal.toFixed(1)}mm] • ${activeRainInfo.primaryNote}`;
+          playedFreq = Math.round(Tone.Frequency(activeRainInfo.primaryNote).toFrequency());
 
-          if (rawVal <= 3.0) {
-            // Light drizzle: Soft cozy rustle + delicate droplet taps
-            rainVol = 0.10 + (rawVal / 3.0) * 0.10; // 0.10 - 0.20
-            filterCutoff = 1100 + (rawVal / 3.0) * 400; // 1100 - 1500 Hz
-            rainDesc = "DRIZZLE";
-          } else if (rawVal <= 15.0) {
-            // Moderate steady rain: Rich open shower hiss + frequent drops
-            rainVol = 0.22 + ((rawVal - 3.0) / 12.0) * 0.22; // 0.22 - 0.44
-            filterCutoff = 1600 + ((rawVal - 3.0) / 12.0) * 1200; // 1600 - 2800 Hz
-            rainDesc = "SHOWER";
-          } else {
-            // Heavy monsoon storm / deluge: Wide stereo rush + rolling thunder
-            rainVol = Math.min(0.80, 0.42 + ((rawVal - 15.0) / 50.0) * 0.38); // 0.42 - 0.80
-            filterCutoff = Math.min(5000, 3000 + ((rawVal - 15.0) / 50.0) * 2000); // 3000 - 5000 Hz
-            rainDesc = "DELUGE";
-          }
-
-          // Smoothly ramp the continuous rain sound
-          if (this.rainLowPass) this.rainLowPass.frequency.rampTo(filterCutoff, 0.06);
-          if (this.rainGain) this.rainGain.gain.rampTo(rainVol * 0.65, 0.06);
+          // Smoothly ramp the continuous rain sound & lowpass sweep
+          if (this.rainLowPass) this.rainLowPass.frequency.rampTo(activeRainInfo.filterCutoff, 0.06);
+          if (this.rainGain) this.rainGain.gain.rampTo(activeRainInfo.volume * 0.65, 0.06);
 
           // Layer authentic real rain recording loop
           if (this.rainPlayer && this.isRainPlayerLoaded) {
             if (this.rainPlayer.state !== "started") {
               try { this.rainPlayer.start(); } catch (e) {}
             }
-            if (this.rainPlayerFilter) this.rainPlayerFilter.frequency.rampTo(filterCutoff, 0.06);
-            if (this.rainPlayerGain) this.rainPlayerGain.gain.rampTo(rainVol * 0.9, 0.06);
+            if (this.rainPlayerFilter) this.rainPlayerFilter.frequency.rampTo(activeRainInfo.filterCutoff, 0.06);
+            if (this.rainPlayerGain) this.rainPlayerGain.gain.rampTo(activeRainInfo.volume * 0.9, 0.06);
           }
 
-          // Pitter-patter droplet burst
-          const dropletCount = rawVal <= 3.0 ? 2 : rawVal <= 15.0 ? 4 : 7;
-          const dropPitches = ["C5", "E5", "G5", "B5", "D6", "G6", "A6"];
-          const now = Tone.now();
+          // Primary Musical Rain Note (FM Aqueous Chime & Sampler)
+          const chimeVel = Math.min(0.95, 0.50 + (rawVal / 35.0) * 0.45);
+          if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
+            this.sampler.triggerAttackRelease(activeRainInfo.primaryNote, durationSeconds, undefined, chimeVel);
+          } else if (this.waterChimeSynth) {
+            this.waterChimeSynth.triggerAttackRelease(activeRainInfo.primaryNote, durationSeconds, undefined, chimeVel);
+          }
 
-          for (let d = 0; d < dropletCount; d++) {
-            const timeOffset = d * (stepMs / 1000 / (dropletCount + 1)) + (Math.random() * 0.015);
-            const dropPitch = dropPitches[Math.floor(Math.random() * dropPitches.length)];
-            const dropVel = Math.min(0.9, 0.25 + (rawVal / 30.0) * 0.65);
+          // Pitter-patter water droplet notes that ascend/descend with rain volume
+          const now = Tone.now();
+          const drops = activeRainInfo.dropletPitches;
+          for (let d = 0; d < activeRainInfo.dropCount; d++) {
+            const timeOffset = d * (stepMs / 1000 / (activeRainInfo.dropCount + 1)) + (Math.random() * 0.015);
+            const dropPitch = drops[d % drops.length];
+            const dropVel = Math.min(0.9, 0.30 + (rawVal / 30.0) * 0.60);
             if (this.dropletSynth) {
               this.dropletSynth.triggerAttackRelease(dropPitch, 0.02, now + timeOffset, dropVel);
             }
           }
 
-          // Deep rolling thunder for heavy deluge (> 20mm, e.g. Dubai, Karachi, Tokyo floods)
-          if (rawVal > 20.0 && this.thunderSynth) {
-            const thunderPitch = rawVal > 60.0 ? "C1" : "E1";
+          // Deep rolling thunder for heavy storm events (> 20mm)
+          if (activeRainInfo.isThunder && this.thunderSynth) {
             const thunderVel = Math.min(1.0, 0.45 + (rawVal / 80.0) * 0.55);
-            this.thunderSynth.triggerAttackRelease(thunderPitch, 0.65, undefined, thunderVel);
-          }
-
-          // Acoustic Chime note accompaniment
-          const noteInfo = this.valueToNote(normVal);
-          playedNote = `${rainDesc} • ${noteInfo.note}`;
-          playedFreq = Math.round(noteInfo.freq);
-
-          if (this.isSamplerLoaded && this.sampler) {
-            this.sampler.triggerAttackRelease(noteInfo.note, durationSeconds, undefined, 0.6);
-          } else if (this.waterChimeSynth) {
-            this.waterChimeSynth.triggerAttackRelease(noteInfo.note, durationSeconds, undefined, 0.5);
+            this.thunderSynth.triggerAttackRelease(activeRainInfo.thunderPitch, 0.65, undefined, thunderVel);
           }
         } else {
           // Dry day / Rest
@@ -834,6 +922,11 @@ class EarthSonifier {
         isExtreme: activeCat ? !!activeCat.isExtreme : false,
         isTransition: transitionType !== null,
         transitionType: transitionType,
+        rainTier: activeRainInfo ? activeRainInfo.tier : null,
+        rainLabel: activeRainInfo ? activeRainInfo.label : null,
+        rainNote: activeRainInfo ? activeRainInfo.primaryNote : null,
+        rainMm: activeRainInfo ? activeRainInfo.mm : (dataType === "rainfall" ? rawVal : 0),
+        rainThunder: activeRainInfo ? activeRainInfo.isThunder : false,
         isFirstOfMonth: isFirstOfMonth
       });
     }

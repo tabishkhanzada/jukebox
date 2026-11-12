@@ -613,6 +613,29 @@ class EarthJukeboxApp {
     // Dynamic Season calculation
     this.dom.hudSeason.textContent = this.calculateSeason(stepInfo.date, this.currentData.location.lat);
 
+    // Dynamic Atmosphere & Rain Note Synchronizer (Notes evolve as rain increases/decreases)
+    if (this.currentData.data_type === "rainfall") {
+      if (stepInfo.value > 0.05) {
+        this.dom.hudAtmosphere.textContent = `${stepInfo.rainTier || 'RAIN'} [${stepInfo.value.toFixed(1)} mm]`;
+        this.dom.hudAtmosphere.className = "col-value text-cyan";
+        this.dom.hudRainDays.textContent = `AQUEOUS NOTE: ${stepInfo.rainNote || '--'} ${stepInfo.rainThunder ? '• ⚡ THUNDER' : ''}`;
+      } else {
+        this.dom.hudAtmosphere.textContent = "DRY REST";
+        this.dom.hudAtmosphere.className = "col-value";
+        this.dom.hudRainDays.textContent = "0.0 mm/day • CLEAR SKIES";
+      }
+    } else if (this.currentData.data_type === "temperature") {
+      if (stepInfo.rainMm > 0.1) {
+        this.dom.hudAtmosphere.textContent = `🌧️ ${stepInfo.rainTier || 'RAIN'} [${stepInfo.rainMm.toFixed(1)} mm]`;
+        this.dom.hudAtmosphere.className = "col-value text-cyan";
+        this.dom.hudRainDays.textContent = `RAIN NOTE: ${stepInfo.rainNote || '--'} ${stepInfo.rainThunder ? '• ⚡ THUNDER' : ''}`;
+      } else {
+        this.dom.hudAtmosphere.textContent = "TEMPERATE CONDITIONS";
+        this.dom.hudAtmosphere.className = "col-value";
+        this.dom.hudRainDays.textContent = "0.0 mm/day • CLEAR SKIES";
+      }
+    }
+
     // Dynamic 3-Category Thermal Badge & Rang Legend Sync
     if (stepInfo.category) {
       this.updateThermalCategoryBadge(stepInfo.category, stepInfo.value, stepInfo.categoryColor, stepInfo.isExtreme);
