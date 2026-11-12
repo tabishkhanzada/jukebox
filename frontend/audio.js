@@ -60,13 +60,20 @@ class EarthSonifier {
     };
 
     this.currentScaleKey = "pentatonic_major";
-    this.currentInstrumentKey = "crystal_celesta";
+    this.currentInstrumentKey = "acoustic_chimes";
 
     // Audio node references
     this.melodySynth = null;
     this.compareSynth = null;
+    this.sampler = null;
+    this.isSamplerLoaded = false;
 
-    // Procedural Rain Synthesis Nodes (Ambient Sheet, Droplets, Thunder, Liquid Chimes)
+    // Real Rain Player & Procedural Synthesis Nodes
+    this.rainPlayer = null;
+    this.isRainPlayerLoaded = false;
+    this.rainPlayerFilter = null;
+    this.rainPlayerGain = null;
+
     this.rainNoise = null;
     this.rainHighPass = null;
     this.rainLowPass = null;
@@ -133,7 +140,49 @@ class EarthSonifier {
         wet: 0.14
       }).connect(this.reverb);
 
-      // 1. Melody Synthesizer for Temperature / Primary pitch
+      // 1. Authentic Acoustic Chime Sampler (Sampled directly from user reference audio)
+      this.isSamplerLoaded = false;
+      try {
+        this.sampler = new Tone.Sampler({
+          urls: {
+            "C4": "audio_samples/C4.wav",
+            "D4": "audio_samples/D4.wav",
+            "A4": "audio_samples/A4.wav",
+            "D5": "audio_samples/D5.wav"
+          },
+          baseUrl: "",
+          onload: () => {
+            console.log("Authentic Acoustic Chimes loaded from audio_samples.");
+            this.isSamplerLoaded = true;
+          }
+        }).connect(this.delay);
+        this.sampler.volume.value = -1;
+      } catch (err) {
+        console.warn("Sampler initialization fallback:", err);
+      }
+
+      // 2. Authentic Real Rain Audio Player (Sampled directly from user real rain audio)
+      this.isRainPlayerLoaded = false;
+      try {
+        this.rainPlayer = new Tone.Player({
+          url: "audio_samples/real_rain_loop.wav",
+          loop: true,
+          autostart: false,
+          onload: () => {
+            console.log("Real rain audio loop loaded from audio_samples.");
+            this.isRainPlayerLoaded = true;
+          }
+        });
+        this.rainPlayerFilter = new Tone.Filter(2400, "lowpass");
+        this.rainPlayerGain = new Tone.Gain(0);
+        this.rainPlayer.connect(this.rainPlayerFilter);
+        this.rainPlayerFilter.connect(this.rainPlayerGain);
+        this.rainPlayerGain.connect(this.reverb);
+      } catch (err) {
+        console.warn("Rain player initialization fallback:", err);
+      }
+
+      // 3. Melody Synthesizer for Temperature / Primary pitch (Synthesizer Engine & Fallback)
       this.buildMelodySynth(this.currentInstrumentKey);
 
       // Comparative Synthesizer for Dual-City side-by-side sonification
@@ -234,7 +283,18 @@ class EarthSonifier {
 
     this.currentInstrumentKey = instrumentKey;
 
-    if (instrumentKey === "crystal_celesta" || instrumentKey === "space_synth") {
+    if (instrumentKey === "acoustic_chimes") {
+      // 0. Authentic Acoustic Chimes (Tone.Sampler plays real recordings; FM chime is dynamic fallback)
+      this.melodySynth = new Tone.PolySynth(Tone.FMSynth, {
+        harmonicity: 2.01,
+        modulationIndex: 1.8,
+        oscillator: { type: "sine" },
+        modulation: { type: "triangle" },
+        envelope: { attack: 0.005, decay: 0.35, sustain: 0.08, release: 0.45 },
+        modulationEnvelope: { attack: 0.002, decay: 0.2, sustain: 0.0, release: 0.2 }
+      }).connect(this.delay);
+      this.melodySynth.volume.value = -3;
+    } else if (instrumentKey === "crystal_celesta" || instrumentKey === "space_synth") {
       // 1. Crystal Celestial Chimes: Ethereal FM chime with shimmering high crystal overtones
       this.melodySynth = new Tone.PolySynth(Tone.FMSynth, {
         harmonicity: 2.01,
@@ -413,17 +473,32 @@ class EarthSonifier {
         playedFreq = Math.round(noteInfo.freq);
 
         const velocity = 0.5 + normVal * 0.45;
-        this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, undefined, velocity);
+
+        // Play authentic sampled crystal chimes when active and loaded, or synth fallback
+        if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
+          this.sampler.triggerAttackRelease(playedNote, durationSeconds, undefined, velocity);
+        } else {
+          this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, undefined, velocity);
+        }
 
         // Dual-track accompaniment: If authentic rainfall data is active, layer real rain acoustics
         if (this.dualTrackEnabled && this.secondaryData && this.secondaryData.values[idx] !== undefined) {
           const rainVal = this.secondaryData.values[idx];
           if (rainVal > 0.1) {
             // Realistic ambient rain hiss proportional to mm/day
-            const rainVol = Math.min(0.32, 0.05 + (rainVal / 25.0) * 0.25);
+            const rainVol = Math.min(0.35, 0.06 + (rainVal / 25.0) * 0.28);
             const cutoff = Math.min(4200, 1100 + (rainVal / 25.0) * 2000);
             if (this.rainLowPass) this.rainLowPass.frequency.rampTo(cutoff, 0.06);
             if (this.rainGain) this.rainGain.gain.rampTo(rainVol, 0.06);
+
+            // Layer authentic real rain recording
+            if (this.rainPlayer && this.isRainPlayerLoaded) {
+              if (this.rainPlayer.state !== "started") {
+                try { this.rainPlayer.start(); } catch (e) {}
+              }
+              if (this.rainPlayerFilter) this.rainPlayerFilter.frequency.rampTo(cutoff, 0.06);
+              if (this.rainPlayerGain) this.rainPlayerGain.gain.rampTo(rainVol * 0.9, 0.06);
+            }
 
             // Micro-droplet pitter-patter
             const numDrops = rainVal > 15.0 ? 3 : rainVal > 3.0 ? 2 : 1;
@@ -442,9 +517,11 @@ class EarthSonifier {
             }
           } else {
             if (this.rainGain) this.rainGain.gain.rampTo(0, 0.08);
+            if (this.rainPlayerGain) this.rainPlayerGain.gain.rampTo(0, 0.08);
           }
         } else {
           if (this.rainGain) this.rainGain.gain.rampTo(0, 0.08);
+          if (this.rainPlayerGain) this.rainPlayerGain.gain.rampTo(0, 0.08);
         }
 
         // Soft calendar drone on 1st of month
@@ -452,7 +529,7 @@ class EarthSonifier {
           this.bassDrone.triggerAttackRelease("C2", "8n");
         }
       } else if (dataType === "rainfall") {
-        // PURE PROCEDURAL RAIN ENGINE (Low to High realistic physical sound)
+        // PURE PROCEDURAL & AUTHENTIC REAL RAIN ENGINE (Low to High realistic physical sound)
         if (rawVal > 0.05) {
           let rainVol = 0;
           let filterCutoff = 1200;
@@ -460,24 +537,33 @@ class EarthSonifier {
 
           if (rawVal <= 3.0) {
             // Light drizzle: Soft cozy rustle + delicate droplet taps
-            rainVol = 0.08 + (rawVal / 3.0) * 0.08; // 0.08 - 0.16
+            rainVol = 0.10 + (rawVal / 3.0) * 0.10; // 0.10 - 0.20
             filterCutoff = 1100 + (rawVal / 3.0) * 400; // 1100 - 1500 Hz
             rainDesc = "DRIZZLE";
           } else if (rawVal <= 15.0) {
             // Moderate steady rain: Rich open shower hiss + frequent drops
-            rainVol = 0.18 + ((rawVal - 3.0) / 12.0) * 0.18; // 0.18 - 0.36
+            rainVol = 0.22 + ((rawVal - 3.0) / 12.0) * 0.22; // 0.22 - 0.44
             filterCutoff = 1600 + ((rawVal - 3.0) / 12.0) * 1200; // 1600 - 2800 Hz
             rainDesc = "SHOWER";
           } else {
             // Heavy monsoon storm / deluge: Wide stereo rush + rolling thunder
-            rainVol = Math.min(0.70, 0.38 + ((rawVal - 15.0) / 50.0) * 0.32); // 0.38 - 0.70
+            rainVol = Math.min(0.80, 0.42 + ((rawVal - 15.0) / 50.0) * 0.38); // 0.42 - 0.80
             filterCutoff = Math.min(5000, 3000 + ((rawVal - 15.0) / 50.0) * 2000); // 3000 - 5000 Hz
             rainDesc = "DELUGE";
           }
 
           // Smoothly ramp the continuous rain sound
           if (this.rainLowPass) this.rainLowPass.frequency.rampTo(filterCutoff, 0.06);
-          if (this.rainGain) this.rainGain.gain.rampTo(rainVol, 0.06);
+          if (this.rainGain) this.rainGain.gain.rampTo(rainVol * 0.65, 0.06);
+
+          // Layer authentic real rain recording loop
+          if (this.rainPlayer && this.isRainPlayerLoaded) {
+            if (this.rainPlayer.state !== "started") {
+              try { this.rainPlayer.start(); } catch (e) {}
+            }
+            if (this.rainPlayerFilter) this.rainPlayerFilter.frequency.rampTo(filterCutoff, 0.06);
+            if (this.rainPlayerGain) this.rainPlayerGain.gain.rampTo(rainVol * 0.9, 0.06);
+          }
 
           // Pitter-patter droplet burst
           const dropletCount = rawVal <= 3.0 ? 2 : rawVal <= 15.0 ? 4 : 7;
@@ -500,16 +586,20 @@ class EarthSonifier {
             this.thunderSynth.triggerAttackRelease(thunderPitch, 0.65, undefined, thunderVel);
           }
 
-          // Liquid glass musical chime
+          // Acoustic Chime note accompaniment
           const noteInfo = this.valueToNote(normVal);
           playedNote = `${rainDesc} • ${noteInfo.note}`;
           playedFreq = Math.round(noteInfo.freq);
-          if (this.waterChimeSynth) {
+
+          if (this.isSamplerLoaded && this.sampler) {
+            this.sampler.triggerAttackRelease(noteInfo.note, durationSeconds, undefined, 0.6);
+          } else if (this.waterChimeSynth) {
             this.waterChimeSynth.triggerAttackRelease(noteInfo.note, durationSeconds, undefined, 0.5);
           }
         } else {
           // Dry day / Rest
           if (this.rainGain) this.rainGain.gain.rampTo(0, 0.08);
+          if (this.rainPlayerGain) this.rainPlayerGain.gain.rampTo(0, 0.08);
           playedNote = "DRY REST";
           playedFreq = 0;
         }
@@ -566,6 +656,9 @@ class EarthSonifier {
     }
     if (this.rainGain) {
       this.rainGain.gain.rampTo(0, 0.05);
+    }
+    if (this.rainPlayerGain) {
+      this.rainPlayerGain.gain.rampTo(0, 0.05);
     }
     if (this.windGain) {
       this.windGain.gain.rampTo(0, 0.05);
