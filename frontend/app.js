@@ -343,6 +343,11 @@ class EarthJukeboxApp {
 
     // Audio Transport Controls
     this.dom.playBtn.addEventListener("click", async () => {
+      if (this.sonifier && this.sonifier.nativeAudio) {
+        try {
+          this.sonifier.nativeAudio.ensureContext();
+        } catch (_) {}
+      }
       if (window.Tone) {
         try {
           await Tone.start();
