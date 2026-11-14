@@ -75,6 +75,7 @@ class EarthJukeboxApp {
     this.activeYear = 2024;
     this.customCoords = null;
     this.isDualTrackActive = true;
+    this.activeViewMode = "timeline"; // "timeline" or "scanner"
 
     // Subsystem instances
     this.chartEngine = null;
@@ -82,10 +83,12 @@ class EarthJukeboxApp {
     this.globe = null;
     this.leafletMap = null;
     this.mapMarker = null;
+    this.scanner = null;
+    this.accessibility = null;
 
     // DOM Elements cache
     this.dom = {
-      // Top Navigation
+      // Top Navigation & Modes
       stationDropdownBtn: document.getElementById("stationDropdownBtn"),
       toggleControlsBtn: document.getElementById("toggleControlsBtn"),
       toggleMapBtn: document.getElementById("toggleMapBtn"),
@@ -93,6 +96,12 @@ class EarthJukeboxApp {
       recordAudioBtn: document.getElementById("recordAudioBtn"),
       recordDot: document.getElementById("recordDot"),
       recordText: document.getElementById("recordText"),
+      viewTimelineBtn: document.getElementById("viewTimelineBtn"),
+      viewScannerBtn: document.getElementById("viewScannerBtn"),
+      toggleVoiceBtn: document.getElementById("toggleVoiceBtn"),
+      keyboardHelpBtn: document.getElementById("keyboardHelpBtn"),
+      closeAccModalBtn: document.getElementById("closeAccModalBtn"),
+      accessibilityHelpModal: document.getElementById("accessibilityHelpModal"),
 
       // Error Banner
       errorBanner: document.getElementById("errorBanner"),
@@ -106,6 +115,16 @@ class EarthJukeboxApp {
       restartBtn: document.getElementById("restartBtn"),
       speedRange: document.getElementById("speedRange"),
       pitchModeSelect: document.getElementById("pitchModeSelect"),
+
+      // Viewports
+      heroChartContainer: document.getElementById("heroChartContainer"),
+      globeCanvasContainer: document.getElementById("globeCanvasContainer"),
+      eicScannerStage: document.getElementById("eicScannerStage"),
+      eicDatasetSelect: document.getElementById("eicDatasetSelect"),
+      eicCustomFileInput: document.getElementById("eicCustomFileInput"),
+      eicUploadBtn: document.getElementById("eicUploadBtn"),
+      eicInspectorCoords: document.getElementById("eicInspectorCoords"),
+      eicInspectorChords: document.getElementById("eicInspectorChords"),
 
       // Bottom 5-Column Telemetry HUD (Matching NASA Reference Photo)
       hudSeason: document.getElementById("hudSeason"),
@@ -173,11 +192,24 @@ class EarthJukeboxApp {
     this.sonifier.onPlaybackStateChange = (isPlaying) => this.handlePlaybackChange(isPlaying);
     this.sonifier.onRecordingStateChange = (isRec) => this.handleRecordingChange(isRec);
 
-    // 4. Setup UI Listeners & Leaflet Map
+    // 4. Initialize NASA EIC Visual Frame Sonifier Engine
+    if (window.EicFrameScanner) {
+      this.scanner = new window.EicFrameScanner("eicScannerCanvas");
+      this.scanner.onScanStep = (step) => this.handleScannerStep(step);
+      this.scanner.onTransportChange = (isPlaying) => this.handleScannerPlaybackChange(isPlaying);
+      this.scanner.loadFrame("sst");
+    }
+
+    // 5. Initialize Universal Accessibility Suite (WCAG 2.2 Level AAA)
+    if (window.AccessibilitySuite) {
+      this.accessibility = new window.AccessibilitySuite(this);
+    }
+
+    // 6. Setup UI Listeners & Leaflet Map
     this.bindEvents();
     this.initGlobalMap();
 
-    // 5. Initial Telemetry Ingestion (Karachi default station)
+    // 7. Initial Telemetry Ingestion (Karachi default station)
     await this.loadTelemetry();
   }
 
@@ -341,13 +373,74 @@ class EarthJukeboxApp {
       this.loadTelemetry(true);
     });
 
-    // Audio Transport Controls
+    // Mode Switching: Timeline vs EIC Visual Scanner
+    if (this.dom.viewTimelineBtn) {
+      this.dom.viewTimelineBtn.addEventListener("click", () => this.toggleViewMode("timeline"));
+    }
+    if (this.dom.viewScannerBtn) {
+      this.dom.viewScannerBtn.addEventListener("click", () => this.toggleViewMode("scanner"));
+    }
+
+    // Voice Mission Narrator (Web Speech API)
+    if (this.dom.toggleVoiceBtn && this.accessibility) {
+      this.dom.toggleVoiceBtn.addEventListener("click", () => {
+        const isActive = this.accessibility.toggleVoiceNarrator();
+        this.dom.toggleVoiceBtn.classList.toggle("active", isActive);
+      });
+    }
+
+    // Keyboard Shortcuts Modal Triggers
+    if (this.dom.keyboardHelpBtn && this.accessibility) {
+      this.dom.keyboardHelpBtn.addEventListener("click", () => {
+        this.accessibility.toggleHelpModal();
+      });
+    }
+    if (this.dom.closeAccModalBtn && this.accessibility) {
+      this.dom.closeAccModalBtn.addEventListener("click", () => {
+        this.accessibility.closeAllModals();
+      });
+    }
+
+    // EIC Visual Frame Selection & Custom Upload
+    if (this.dom.eicDatasetSelect && this.scanner) {
+      this.dom.eicDatasetSelect.addEventListener("change", (e) => {
+        const val = e.target.value;
+        if (val === "custom") {
+          if (this.dom.eicCustomFileInput) this.dom.eicCustomFileInput.click();
+        } else {
+          this.scanner.loadFrame(val);
+          if (this.accessibility) {
+            const title = this.scanner.frames[val]?.title || val;
+            this.accessibility.announce(`Loaded NASA EIC Dataset: ${title}`, "polite", true);
+          }
+        }
+      });
+    }
+
+    if (this.dom.eicUploadBtn && this.dom.eicCustomFileInput) {
+      this.dom.eicUploadBtn.addEventListener("click", () => {
+        this.dom.eicCustomFileInput.click();
+      });
+    }
+
+    if (this.dom.eicCustomFileInput && this.scanner) {
+      this.dom.eicCustomFileInput.addEventListener("change", (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (re) => {
+            this.scanner.loadCustomImage(re.target.result, file.name);
+            if (this.accessibility) {
+              this.accessibility.announce(`Uploaded and scanned custom NASA frame: ${file.name}`, "assertive", true);
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    // Dual-Mode Audio Transport Controls (Timeline & EIC Scanner)
     this.dom.playBtn.addEventListener("click", async () => {
-      if (this.sonifier && this.sonifier.nativeAudio) {
-        try {
-          this.sonifier.nativeAudio.ensureContext();
-        } catch (_) {}
-      }
       if (window.Tone) {
         try {
           await Tone.start();
@@ -357,25 +450,40 @@ class EarthJukeboxApp {
         } catch (_) {}
       }
 
-      if (this.sonifier.isPlaying) {
-        this.sonifier.pause();
-      } else {
-        await this.sonifier.play();
+      if (this.activeViewMode === "scanner" && this.scanner) {
+        this.scanner.togglePlay();
+      } else if (this.sonifier) {
+        if (this.sonifier.isPlaying) {
+          this.sonifier.pause();
+        } else {
+          await this.sonifier.play();
+        }
       }
     });
 
     this.dom.pauseBtn.addEventListener("click", () => {
-      this.sonifier.pause();
+      if (this.activeViewMode === "scanner" && this.scanner) {
+        this.scanner.pause();
+      } else if (this.sonifier) {
+        this.sonifier.pause();
+      }
     });
 
     this.dom.restartBtn.addEventListener("click", async () => {
-      this.sonifier.stop();
-      await this.sonifier.play();
+      if (this.activeViewMode === "scanner" && this.scanner) {
+        this.scanner.stop();
+        await this.scanner.play();
+      } else if (this.sonifier) {
+        this.sonifier.stop();
+        await this.sonifier.play();
+      }
     });
 
-    // Tempo Speed Selector
-    this.dom.speedRange.addEventListener("change", (e) => {
-      this.sonifier.setSpeed(parseFloat(e.target.value));
+    // Tempo Speed Selector (Unified)
+    this.dom.speedRange.addEventListener("input", (e) => {
+      const speed = parseFloat(e.target.value);
+      if (this.sonifier) this.sonifier.setSpeed(speed);
+      if (this.scanner) this.scanner.setSpeed(speed);
     });
 
     // Pitch Mode Selector
@@ -409,6 +517,9 @@ class EarthJukeboxApp {
       const db = parseInt(e.target.value, 10);
       this.dom.volumeDisplay.textContent = `${db} dB`;
       this.sonifier.setMasterVolume(db);
+      // Map -36..0 to 0..1 for scanner
+      const normVol = Math.max(0, (db + 36) / 36);
+      if (this.scanner) this.scanner.setVolume(normVol);
     });
 
     // Export CSV
@@ -435,27 +546,6 @@ class EarthJukeboxApp {
         this.fetchAiBrief();
       });
     }
-
-    // Keyboard Shortcuts
-    window.addEventListener("keydown", (e) => {
-      if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
-      if (e.code === "Space") {
-        e.preventDefault();
-        this.dom.playBtn.click();
-      } else if (e.code === "ArrowRight") {
-        e.preventDefault();
-        this.sonifier.seek(this.sonifier.currentIndex + 5);
-      } else if (e.code === "ArrowLeft") {
-        e.preventDefault();
-        this.sonifier.seek(this.sonifier.currentIndex - 5);
-      } else if (e.code === "KeyR") {
-        e.preventDefault();
-        this.sonifier.stop();
-      } else if (e.code === "KeyM") {
-        e.preventDefault();
-        this.dom.toggleMapBtn.click();
-      }
-    });
   }
 
   /**
@@ -693,6 +783,16 @@ class EarthJukeboxApp {
       stepInfo.stepMs || 90,
       stepInfo.isPlaying !== undefined ? stepInfo.isPlaying : this.sonifier.isPlaying
     );
+
+    // Screen reader & Voice Narrator dispatch (WCAG 2.2 AAA rate-limited)
+    if (this.accessibility && (stepInfo.index % 25 === 0 || stepInfo.isExtreme)) {
+      const seasonName = this.dom.hudSeason.textContent || "Active season";
+      const valStr = `${stepInfo.value.toFixed(1)}${stepInfo.unit === '°C' ? '°C' : ' ' + stepInfo.unit}`;
+      const msg = stepInfo.isExtreme
+        ? `Climate anomaly detected on ${stepInfo.date}: ${valStr}. Acoustic frequency ${stepInfo.frequency} Hertz.`
+        : `${seasonName}. ${stepInfo.date}. ${valStr}, note ${stepInfo.note}.`;
+      this.accessibility.announce(msg, stepInfo.isExtreme ? "assertive" : "polite");
+    }
   }
 
   calculateSeason(dateStr, lat = 30) {
@@ -736,6 +836,88 @@ class EarthJukeboxApp {
     } else {
       this.dom.recordDot.classList.remove("recording");
       this.dom.recordText.textContent = "AUDIO";
+    }
+  }
+
+  toggleViewMode(mode) {
+    if (mode === this.activeViewMode) return;
+    this.activeViewMode = mode;
+
+    if (mode === "scanner") {
+      // Pause timeline sonifier if playing
+      if (this.sonifier && this.sonifier.isPlaying) {
+        this.sonifier.pause();
+      }
+      if (this.dom.heroChartContainer) this.dom.heroChartContainer.classList.add("hidden");
+      if (this.dom.globeCanvasContainer) this.dom.globeCanvasContainer.classList.add("hidden");
+      if (this.dom.eicScannerStage) this.dom.eicScannerStage.classList.remove("hidden");
+      if (this.dom.viewScannerBtn) this.dom.viewScannerBtn.classList.add("active");
+      if (this.dom.viewTimelineBtn) this.dom.viewTimelineBtn.classList.remove("active");
+
+      if (this.scanner) {
+        this.scanner.resize();
+        this.handleScannerPlaybackChange(this.scanner.isPlaying);
+      }
+      if (this.accessibility) {
+        this.accessibility.announce("Switched to NASA EIC Visual Frame Sonifier mode.", "assertive", true);
+      }
+    } else {
+      // Pause scanner if playing
+      if (this.scanner && this.scanner.isPlaying) {
+        this.scanner.pause();
+      }
+      if (this.dom.eicScannerStage) this.dom.eicScannerStage.classList.add("hidden");
+      if (this.dom.heroChartContainer) this.dom.heroChartContainer.classList.remove("hidden");
+      if (this.dom.globeCanvasContainer) this.dom.globeCanvasContainer.classList.remove("hidden");
+      if (this.dom.viewTimelineBtn) this.dom.viewTimelineBtn.classList.add("active");
+      if (this.dom.viewScannerBtn) this.dom.viewScannerBtn.classList.remove("active");
+
+      if (this.chartEngine && this.chartEngine.chart) {
+        this.chartEngine.chart.resize();
+        this.chartEngine.chart.draw();
+      }
+      this.handlePlaybackChange(this.sonifier ? this.sonifier.isPlaying : false);
+      if (this.accessibility) {
+        this.accessibility.announce("Switched to 1-Year Planetary Telemetry Timeline mode.", "assertive", true);
+      }
+    }
+  }
+
+  handleScannerPlaybackChange(isPlaying) {
+    if (this.activeViewMode !== "scanner") return;
+    const playText = this.dom.playBtn.querySelector(".play-text");
+    const playIcon = this.dom.playBtn.querySelector(".play-icon-shape");
+    if (isPlaying) {
+      this.dom.playBtn.classList.add("playing");
+      if (playText) playText.textContent = "PAUSE";
+      if (playIcon) playIcon.textContent = "⏸";
+    } else {
+      this.dom.playBtn.classList.remove("playing");
+      if (playText) playText.textContent = "PLAY";
+      if (playIcon) playIcon.textContent = "▶";
+    }
+  }
+
+  handleScannerStep(step) {
+    if (this.activeViewMode !== "scanner") return;
+    const lonDeg = Math.round(step.progress * 360 - 180);
+    const lonStr = lonDeg < 0 ? `${Math.abs(lonDeg)}°W` : `${lonDeg}°E`;
+
+    if (this.dom.eicInspectorCoords) {
+      this.dom.eicInspectorCoords.textContent = `${lonStr} (${Math.round(step.progress * 100)}%)`;
+    }
+
+    const notes = step.notes || [];
+    const noteStr = notes.length > 0 ? notes.join(" • ") : "Rest";
+    if (this.dom.eicInspectorChords) {
+      this.dom.eicInspectorChords.textContent = noteStr;
+    }
+
+    if (this.dom.hudNote && notes.length > 0) {
+      this.dom.hudNote.textContent = notes[0];
+    }
+    if (this.dom.hudAtmosphere && step.frame) {
+      this.dom.hudAtmosphere.textContent = (step.frame.title || "EIC FRAME").substring(0, 22).toUpperCase();
     }
   }
 
