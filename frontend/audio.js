@@ -3,171 +3,10 @@
  * Module 3: Authentic Sonification Architecture
  * - Zero-drift performance.now() high-precision scheduling
  * - True Planetary (Absolute °C) vs Local Seasonal pitch modes
- * - Expressive multi-timbral synthesis (Melody, Thunder/Raindrops, Wind Resonator, Calendar Drones)
+ * - Expressive multi-timbral synthesis (Melody, Membrane Rain Percussion, Wind Resonator, Calendar Drones)
  * - Anti-clipping dynamic envelope articulation
  * - Direct Web Audio MediaRecorder capture to downloadable .webm
  */
-
-/**
- * Direct Hardware Web Audio Engine (Zero-dependency, zero-hang, 100% reliable)
- * Directly drives hardware speakers via native AudioContext.
- */
-class DirectAcousticAudio {
-  constructor() {
-    this.ctx = null;
-    this.masterGain = null;
-    this.isMuted = false;
-  }
-
-  ensureContext() {
-    if (!this.ctx) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) {
-        this.ctx = new AudioCtx();
-        this.masterGain = this.ctx.createGain();
-        this.masterGain.gain.setValueAtTime(0.85, this.ctx.currentTime);
-        this.masterGain.connect(this.ctx.destination);
-      }
-    }
-    if (this.ctx && this.ctx.state === "suspended") {
-      this.ctx.resume().catch(() => {});
-    }
-    return this.ctx;
-  }
-
-  setVolume(gainVal) {
-    if (this.masterGain && this.ctx) {
-      try {
-        this.masterGain.gain.setTargetAtTime(Math.max(0, Math.min(1.0, gainVal)), this.ctx.currentTime, 0.05);
-      } catch (_) {}
-    }
-  }
-
-  playNote(freq, category, durationSeconds = 0.28, velocity = 0.7) {
-    const ctx = this.ensureContext();
-    if (!ctx || this.isMuted || freq <= 10) return;
-
-    try {
-      const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-
-      // Timbre profiling matching authentic 3 categories
-      if (category === "COLD") {
-        // Frosted sine + warm sub-body
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(freq, now);
-
-        // Sub-octave anchor
-        const subOsc = ctx.createOscillator();
-        const subGain = ctx.createGain();
-        subOsc.type = "triangle";
-        subOsc.frequency.setValueAtTime(freq * 0.5, now);
-        subGain.gain.setValueAtTime(0.0001, now);
-        subGain.gain.linearRampToValueAtTime(velocity * 0.35, now + 0.015);
-        subGain.gain.exponentialRampToValueAtTime(0.0001, now + durationSeconds * 1.2);
-        subOsc.connect(subGain);
-        subGain.connect(this.masterGain);
-        subOsc.start(now);
-        subOsc.stop(now + durationSeconds * 1.25);
-      } else if (category === "MODERATE") {
-        // Melodious crystal triangle chime
-        osc.type = "triangle";
-        osc.frequency.setValueAtTime(freq, now);
-      } else if (category === "HOT") {
-        // High solar sawtooth with bright chime overtone
-        osc.type = "sawtooth";
-        osc.frequency.setValueAtTime(freq, now);
-
-        // High shimmer sparkle
-        const shimmerOsc = ctx.createOscillator();
-        const shimmerGain = ctx.createGain();
-        shimmerOsc.type = "sine";
-        shimmerOsc.frequency.setValueAtTime(freq * 2.0, now);
-        shimmerGain.gain.setValueAtTime(0.0001, now);
-        shimmerGain.gain.linearRampToValueAtTime(velocity * 0.22, now + 0.008);
-        shimmerGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
-        shimmerOsc.connect(shimmerGain);
-        shimmerGain.connect(this.masterGain);
-        shimmerOsc.start(now);
-        shimmerOsc.stop(now + 0.17);
-      } else {
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(freq, now);
-      }
-
-      // Smooth attack and natural resonant acoustic decay
-      const peakGain = Math.max(0.01, Math.min(0.85, velocity * 0.55));
-      gainNode.gain.setValueAtTime(0.0001, now);
-      gainNode.gain.linearRampToValueAtTime(peakGain, now + 0.012);
-      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + durationSeconds);
-
-      osc.connect(gainNode);
-      gainNode.connect(this.masterGain);
-
-      osc.start(now);
-      osc.stop(now + durationSeconds + 0.02);
-    } catch (_) {}
-  }
-
-  playRain(freq, mm, durationSeconds = 0.20, velocity = 0.6) {
-    const ctx = this.ensureContext();
-    if (!ctx || this.isMuted) return;
-
-    try {
-      const now = ctx.currentTime;
-      // High-pitched crystal water chime note
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, now);
-
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.linearRampToValueAtTime(velocity * 0.45, now + 0.008);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + durationSeconds);
-
-      osc.connect(gain);
-      gain.connect(this.masterGain);
-      osc.start(now);
-      osc.stop(now + durationSeconds + 0.02);
-
-      // Thunder for storm
-      if (mm > 20.0) {
-        const thOsc = ctx.createOscillator();
-        const thGain = ctx.createGain();
-        thOsc.type = "sine";
-        thOsc.frequency.setValueAtTime(55, now);
-        thOsc.frequency.exponentialRampToValueAtTime(25, now + 0.6);
-        thGain.gain.setValueAtTime(0.0001, now);
-        thGain.gain.linearRampToValueAtTime(0.4, now + 0.04);
-        thGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
-        thOsc.connect(thGain);
-        thGain.connect(this.masterGain);
-        thOsc.start(now);
-        thOsc.stop(now + 0.75);
-      }
-    } catch (_) {}
-  }
-
-  playDrone(freq = 65, duration = 0.4) {
-    const ctx = this.ensureContext();
-    if (!ctx || this.isMuted) return;
-    try {
-      const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(freq, now);
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.linearRampToValueAtTime(0.35, now + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-      osc.connect(gain);
-      gain.connect(this.masterGain);
-      osc.start(now);
-      osc.stop(now + duration + 0.02);
-    } catch (_) {}
-  }
-}
 
 class EarthSonifier {
   constructor() {
@@ -179,12 +18,16 @@ class EarthSonifier {
     this.data = null;
     this.secondaryData = null; // Authentic rainfall data for dual-track
     this.dualTrackEnabled = false;
-    this.compareData = null; // Authentic City 2 data for comparative sonification
-    this.compareMode = false;
     this.pitchMode = "planetary"; // "planetary" (True absolute physical scale) or "seasonal" (Local dynamic range)
 
-    // Direct hardware Web Audio engine (Fail-safe, zero-hang)
-    this.nativeAudio = new DirectAcousticAudio();
+    // Safe direct audio handle for compatibility
+    this.nativeAudio = {
+      ensureContext: () => {},
+      setVolume: () => {},
+      playNote: () => {},
+      playRain: () => {},
+      playDrone: () => {}
+    };
 
     // Drift-free scheduling timer state
     this.stepTimer = null;
@@ -224,49 +67,13 @@ class EarthSonifier {
     };
 
     this.currentScaleKey = "pentatonic_major";
-    this.currentInstrumentKey = "acoustic_chimes";
-
-    // 3-Category Thermal Sonification State
-    this.lastCategory = null;
-    this.activeCategory = null;
+    this.currentInstrumentKey = "space_synth";
 
     // Audio node references
+    this.masterBus = null;
     this.melodySynth = null;
-    this.compareSynth = null;
-    this.sampler = null;
-    this.isSamplerLoaded = false;
-
-    // Category-specific acoustic signal processors
-    this.coldFilter = null;
-    this.coldGain = null;
-    this.coldSubSynth = null;
-    this.hotFilter = null;
-    this.hotGain = null;
-    this.heatShimmerSynth = null;
-    this.transitionSynth = null;
-
-    // Real Rain Player & Procedural Synthesis Nodes
-    this.rainPlayer = null;
-    this.isRainPlayerLoaded = false;
-    this.rainPlayerFilter = null;
-    this.rainPlayerGain = null;
-
-    this.rainNoise = null;
-    this.rainHighPass = null;
-    this.rainLowPass = null;
-    this.rainGain = null;
-    this.dropletSynth = null;
-    this.dropletFilter = null;
-    this.dropletGain = null;
-    this.thunderSynth = null;
-    this.waterChimeSynth = null;
-
-    // Procedural Wind Resonator Nodes
-    this.windNoise = null;
-    this.windFilter = null;
-    this.windGain = null;
-
-    // Master FX & Calendar Drone
+    this.rainSynth = null;
+    this.windSynth = null;
     this.bassDrone = null;
     this.reverb = null;
     this.delay = null;
@@ -284,28 +91,23 @@ class EarthSonifier {
   async initAudioContext() {
     if (this.isInitialized) return;
 
-    // 0. Ensure Native Direct Hardware Web Audio Engine is active
-    if (this.nativeAudio) {
-      try {
-        this.nativeAudio.ensureContext();
-      } catch (_) {}
-    }
-
     if (window.Tone) {
       try {
         await Tone.start();
         if (Tone.context && Tone.context.state !== "running") {
           await Tone.context.resume();
         }
+        console.log("Authentic Web Audio Context initialized.");
       } catch (err) {
-        console.warn("Tone.start activation warning:", err);
+        console.warn("Tone audio start:", err);
       }
-      console.log("Authentic Web Audio Context initialized, state:", Tone.context ? Tone.context.state : "unknown");
 
-      // 1. Master Output Architecture: Direct to Destination for maximum clarity and zero loss
-      this.masterBus = new Tone.Gain(1.0).toDestination();
+      // Master FX chain: MasterBus -> Limiter -> Destination (Speakers) & Recorder
+      this.masterBus = new Tone.Gain(1.0);
+      this.limiter = new Tone.Limiter(-1.5);
+      this.masterBus.connect(this.limiter);
+      this.limiter.toDestination();
 
-      // Ensure Master Destination is unmuted and at 0 dB
       try {
         Tone.getDestination().mute = false;
         Tone.getDestination().volume.value = 0;
@@ -316,187 +118,53 @@ class EarthSonifier {
         const rawCtx = Tone.getContext().rawContext;
         this.mediaStreamDest = rawCtx.createMediaStreamDestination();
         if (this.mediaStreamDest) {
-          this.masterBus.connect(this.mediaStreamDest);
+          this.limiter.connect(this.mediaStreamDest);
         }
       } catch (e) {
         console.warn("MediaStreamDestination not supported:", e);
       }
 
-      // Master FX chain: Instantaneous, zero-hang Freeverb & FeedbackDelay connected into Master Bus
-      this.reverb = new Tone.Freeverb({
-        roomSize: 0.65,
-        dampening: 3200,
+      // Master spatial acoustic environment
+      this.reverb = new Tone.Reverb({
+        decay: 2.2,
+        preDelay: 0.04,
         wet: 0.22
       }).connect(this.masterBus);
+      await this.reverb.generate();
 
       this.delay = new Tone.FeedbackDelay({
         delayTime: "16n",
-        feedback: 0.15,
-        wet: 0.16
-      }).connect(this.masterBus);
+        feedback: 0.12,
+        wet: 0.12
+      }).connect(this.reverb);
 
-      // 1. Authentic Acoustic Chime Sampler (Sampled directly from user reference audio)
-      this.isSamplerLoaded = false;
-      try {
-        this.sampler = new Tone.Sampler({
-          urls: {
-            "C4": "audio_samples/C4.wav",
-            "D4": "audio_samples/D4.wav",
-            "A4": "audio_samples/A4.wav",
-            "D5": "audio_samples/D5.wav"
-          },
-          baseUrl: "",
-          onload: () => {
-            console.log("Authentic Acoustic Chimes loaded from audio_samples.");
-            this.isSamplerLoaded = true;
-          },
-          onerror: (err) => {
-            console.warn("Sampler load fallback to synth:", err);
-            this.isSamplerLoaded = false;
-          }
-        });
-        this.sampler.connect(this.masterBus);
-        this.sampler.connect(this.delay);
-        this.sampler.volume.value = 0;
-      } catch (err) {
-        console.warn("Sampler initialization fallback:", err);
-      }
-
-      // 2. Authentic Real Rain Audio Player (Sampled directly from user real rain audio)
-      this.isRainPlayerLoaded = false;
-      try {
-        this.rainPlayer = new Tone.Player({
-          url: "audio_samples/real_rain_loop.wav",
-          loop: true,
-          autostart: false,
-          onload: () => {
-            console.log("Real rain audio loop loaded from audio_samples.");
-            this.isRainPlayerLoaded = true;
-          }
-        });
-        this.rainPlayerFilter = new Tone.Filter(2400, "lowpass");
-        this.rainPlayerGain = new Tone.Gain(0);
-        this.rainPlayer.connect(this.rainPlayerFilter);
-        this.rainPlayerFilter.connect(this.rainPlayerGain);
-        this.rainPlayerGain.connect(this.masterBus);
-      } catch (err) {
-        console.warn("Rain player initialization fallback:", err);
-      }
-
-      // 3. Melody Synthesizer for Temperature / Primary pitch (Synthesizer Engine & Fallback)
+      // 1. Melody Synthesizer for Temperature / Primary pitch (Default: space_synth)
       this.buildMelodySynth(this.currentInstrumentKey);
 
-      // 3-Category Thermal Signal Architecture (Cold Chill, Moderate Comfort, Solar Shimmer)
-      // A. Cold Frost Resonator & Deep Sub-Bass
-      this.coldFilter = new Tone.Filter(850, "lowpass");
-      this.coldGain = new Tone.Gain(0.9);
-      this.coldFilter.connect(this.coldGain);
-      this.coldGain.connect(this.masterBus);
-
-      this.coldSubSynth = new Tone.Synth({
-        oscillator: { type: "sine" },
-        envelope: { attack: 0.04, decay: 0.38, sustain: 0.05, release: 0.45 }
-      }).connect(this.masterBus);
-      this.coldSubSynth.volume.value = -6;
-
-      // B. Solar Heat Shimmer & High-Frequency Shimmer Exciter
-      this.hotFilter = new Tone.Filter(3200, "highpass");
-      this.hotGain = new Tone.Gain(0.75);
-      this.hotFilter.connect(this.hotGain);
-      this.hotGain.connect(this.delay);
-
-      this.heatShimmerSynth = new Tone.PolySynth(Tone.FMSynth, {
-        harmonicity: 3.01,
-        modulationIndex: 2.5,
-        oscillator: { type: "sine" },
-        modulation: { type: "triangle" },
-        envelope: { attack: 0.003, decay: 0.22, sustain: 0.02, release: 0.25 }
-      }).connect(this.masterBus);
-      this.heatShimmerSynth.connect(this.delay);
-      this.heatShimmerSynth.volume.value = -7;
-
-      // C. Distinct Category Boundary Transition Flourish Synth
-      this.transitionSynth = new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: "triangle" },
-        envelope: { attack: 0.01, decay: 0.35, sustain: 0.08, release: 0.4 }
-      }).connect(this.masterBus);
-      this.transitionSynth.connect(this.reverb);
-      this.transitionSynth.volume.value = -4;
-
-      // Comparative Synthesizer for Dual-City side-by-side sonification
-      this.compareSynth = new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: "sine" },
-        envelope: { attack: 0.02, decay: 0.25, sustain: 0.1, release: 0.3 }
-      }).connect(this.masterBus);
-      this.compareSynth.volume.value = -2;
-
-      // 2. Realistic Procedural Rain Acoustic Architecture:
-      // A. Ambient Continuous Rain Sheet (Filtered Pink Noise with dynamic lowpass sweep)
-      this.rainNoise = new Tone.Noise("pink");
-      this.rainHighPass = new Tone.Filter(320, "highpass");
-      this.rainLowPass = new Tone.Filter(1500, "lowpass");
-      this.rainGain = new Tone.Gain(0); // Starts silent
-
-      this.rainNoise.connect(this.rainHighPass);
-      this.rainHighPass.connect(this.rainLowPass);
-      this.rainLowPass.connect(this.rainGain);
-      this.rainGain.connect(this.masterBus);
-
-      // B. Micro-Droplet Granular Resonator ("Pitter-Patter" water droplets)
-      this.dropletSynth = new Tone.MembraneSynth({
-        pitchDecay: 0.008,
-        octaves: 1.2,
+      // 2. Percussion Synthesizer for Rainfall / Drum hits
+      this.rainSynth = new Tone.MembraneSynth({
+        pitchDecay: 0.05,
+        octaves: 3.5,
         oscillator: { type: "sine" },
         envelope: {
           attack: 0.001,
-          decay: 0.035,
-          sustain: 0,
-          release: 0.02
+          decay: 0.22,
+          sustain: 0.01,
+          release: 0.35
         }
-      });
-      this.dropletFilter = new Tone.Filter(2600, "bandpass");
-      this.dropletGain = new Tone.Gain(0.55);
-      this.dropletSynth.connect(this.dropletFilter);
-      this.dropletFilter.connect(this.dropletGain);
-      this.dropletGain.connect(this.masterBus);
+      }).connect(this.masterBus);
+      this.rainSynth.volume.value = -3;
 
-      // C. Deep Rolling Thunder Synth (for deluge storm events > 20 mm/day)
-      this.thunderSynth = new Tone.MembraneSynth({
-        pitchDecay: 0.14,
-        octaves: 4.5,
-        oscillator: { type: "sine" },
+      // 3. Wind Atmospheric Synth: Filtered noise / breeze resonance
+      this.windSynth = new Tone.NoiseSynth({
+        noise: { type: "pink" },
         envelope: {
-          attack: 0.02,
-          decay: 0.85,
-          sustain: 0.04,
-          release: 1.2
+          attack: 0.05,
+          decay: 0.15,
+          sustain: 0.0
         }
-      }).connect(this.masterBus);
-      this.thunderSynth.volume.value = -2;
-
-      // D. Liquid Crystal Water Chime (Expressive FM acoustic water chime whose notes change with rain intensity)
-      this.waterChimeSynth = new Tone.PolySynth(Tone.FMSynth, {
-        harmonicity: 1.5,
-        modulationIndex: 1.4,
-        oscillator: { type: "sine" },
-        modulation: { type: "triangle" },
-        envelope: { attack: 0.004, decay: 0.38, sustain: 0.03, release: 0.35 },
-        modulationEnvelope: { attack: 0.002, decay: 0.18, sustain: 0.0, release: 0.15 }
-      }).connect(this.masterBus);
-      this.waterChimeSynth.connect(this.delay);
-      this.waterChimeSynth.volume.value = -2;
-
-      // 3. Realistic Procedural Wind Resonator (Resonant Bandpass Noise)
-      this.windNoise = new Tone.Noise("pink");
-      this.windFilter = new Tone.Filter({
-        frequency: 450,
-        type: "bandpass",
-        Q: 3.5
-      });
-      this.windGain = new Tone.Gain(0);
-      this.windNoise.connect(this.windFilter);
-      this.windFilter.connect(this.windGain);
-      this.windGain.connect(this.masterBus);
+      }).connect(this.reverb);
+      this.windSynth.volume.value = -12;
 
       // 4. Calendar Marker: Sub-bass for month starts
       this.bassDrone = new Tone.Synth({
@@ -508,7 +176,7 @@ class EarthSonifier {
           release: 0.6
         }
       }).connect(this.masterBus);
-      this.bassDrone.volume.value = -6;
+      this.bassDrone.volume.value = -8;
 
       this.isInitialized = true;
     } else {
@@ -526,73 +194,82 @@ class EarthSonifier {
       } catch (_) {}
     }
 
-    this.currentInstrumentKey = instrumentKey;
+    this.currentInstrumentKey = instrumentKey || "space_synth";
 
-    if (instrumentKey === "acoustic_chimes") {
-      // 0. Authentic Acoustic Chimes (Tone.Sampler plays real recordings; FM chime is dynamic fallback)
-      this.melodySynth = new Tone.PolySynth(Tone.FMSynth, {
-        harmonicity: 2.01,
-        modulationIndex: 1.8,
-        oscillator: { type: "sine" },
-        modulation: { type: "triangle" },
-        envelope: { attack: 0.005, decay: 0.35, sustain: 0.08, release: 0.45 },
-        modulationEnvelope: { attack: 0.002, decay: 0.2, sustain: 0.0, release: 0.2 }
-      });
-      this.melodySynth.volume.value = -2;
-    } else if (instrumentKey === "crystal_celesta" || instrumentKey === "space_synth") {
-      // 1. Crystal Celestial Chimes: Ethereal FM chime with shimmering high crystal overtones
-      this.melodySynth = new Tone.PolySynth(Tone.FMSynth, {
-        harmonicity: 2.01,
-        modulationIndex: 1.8,
-        oscillator: { type: "sine" },
-        modulation: { type: "triangle" },
-        envelope: { attack: 0.005, decay: 0.35, sustain: 0.08, release: 0.45 },
-        modulationEnvelope: { attack: 0.002, decay: 0.2, sustain: 0.0, release: 0.2 }
-      });
-      this.melodySynth.volume.value = -2;
-    } else if (instrumentKey === "acoustic_piano") {
-      // 2. Grand Ambient Piano / Harp: Warm acoustic triangle/sine hybrid with gentle attack & natural decay
+    if (instrumentKey === "marimba" || instrumentKey === "organic_marimba") {
       this.melodySynth = new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: "triangle" },
-        envelope: { attack: 0.005, decay: 0.45, sustain: 0.05, release: 0.4 }
-      });
-      this.melodySynth.volume.value = -1;
-    } else if (instrumentKey === "analog_warm_pad" || instrumentKey === "ambient_pad") {
-      // 3. Cinematic Ambient Pad: Warm atmospheric dual-oscillator sweep
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.004, decay: 0.22, sustain: 0.0, release: 0.18 }
+      }).connect(this.reverb || Tone.getDestination());
+      this.melodySynth.volume.value = -2;
+    } else if (instrumentKey === "ambient_pad" || instrumentKey === "analog_warm_pad" || instrumentKey === "celestial_pad") {
       this.melodySynth = new Tone.PolySynth(Tone.AMSynth, {
         harmonicity: 1.5,
-        oscillator: { type: "sawtooth" },
-        envelope: { attack: 0.06, decay: 0.45, sustain: 0.45, release: 0.65 }
-      });
-      this.melodySynth.volume.value = -3;
-    } else if (instrumentKey === "organic_marimba" || instrumentKey === "marimba") {
-      // 4. Acoustic Wooden Marimba / Kalimba: Snappy mallet strike with wooden resonance
-      this.melodySynth = new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: "sine" },
-        envelope: { attack: 0.002, decay: 0.2, sustain: 0.0, release: 0.16 }
-      });
-      this.melodySynth.volume.value = 0;
-    } else {
-      // Default: Resonant Hologram Synth
+        oscillator: { type: "triangle" },
+        envelope: { attack: 0.06, decay: 0.4, sustain: 0.5, release: 0.6 }
+      }).connect(this.delay || Tone.getDestination());
+      this.melodySynth.volume.value = -5;
+    } else if (instrumentKey === "crystal_piano" || instrumentKey === "acoustic_piano") {
       this.melodySynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: "triangle8" },
-        envelope: { attack: 0.015, decay: 0.22, sustain: 0.12, release: 0.25 }
-      });
+        envelope: { attack: 0.002, decay: 0.28, sustain: 0.08, release: 0.9 }
+      }).connect(this.delay || Tone.getDestination());
       this.melodySynth.volume.value = -2;
-    }
-
-    // Direct dry route to master bus + send to delay/reverb
-    if (this.masterBus) {
-      this.melodySynth.connect(this.masterBus);
-    } else if (this.limiter) {
-      this.melodySynth.connect(this.limiter);
     } else {
-      this.melodySynth.toDestination();
+      // Default: "space_synth" (Celestial Space Synth - clean, harmonious original default)
+      this.melodySynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "triangle8" },
+        envelope: { attack: 0.015, decay: 0.18, sustain: 0.15, release: 0.22 }
+      }).connect(this.delay || Tone.getDestination());
+      this.melodySynth.volume.value = -3;
     }
-    if (this.delay) {
-      try {
-        this.melodySynth.connect(this.delay);
-      } catch (_) {}
+  }
+
+  /**
+   * Temperature classification helper for HUD display
+   */
+  getTemperatureCategory(temp) {
+    if (typeof temp !== "number" || isNaN(temp)) {
+      return {
+        key: "MODERATE",
+        label: "MODERATE REGIME",
+        shortLabel: "THEEK",
+        urdu: "THEEK",
+        color: "#34d399",
+        range: "15.1 – 28.0 °C",
+        isExtreme: false
+      };
+    }
+    if (temp <= 15.0) {
+      return {
+        key: "COLD",
+        label: "COLD REGIME",
+        shortLabel: "COLD",
+        urdu: "SARDI",
+        color: "#38bdf8",
+        range: "≤ 15.0 °C",
+        isExtreme: temp < 0.0
+      };
+    } else if (temp <= 28.0) {
+      return {
+        key: "MODERATE",
+        label: "MODERATE REGIME",
+        shortLabel: "THEEK",
+        urdu: "THEEK",
+        color: "#34d399",
+        range: "15.1 – 28.0 °C",
+        isExtreme: false
+      };
+    } else {
+      return {
+        key: "HOT",
+        label: "HOT REGIME",
+        shortLabel: "WARM",
+        urdu: "GARMI",
+        color: "#f97316",
+        range: "≥ 28.1 °C",
+        isExtreme: temp > 38.0
+      };
     }
   }
 
@@ -614,11 +291,6 @@ class EarthSonifier {
     this.dualTrackEnabled = enabled;
   }
 
-  setCompareData(compareData, enabled = true) {
-    this.compareData = compareData;
-    this.compareMode = enabled && compareData !== null;
-  }
-
   setPitchMode(mode) {
     if (mode === "planetary" || mode === "seasonal") {
       this.pitchMode = mode;
@@ -632,186 +304,10 @@ class EarthSonifier {
   }
 
   /**
-   * 3-Zone Thermal Classification matching authentic reference video:
-   * 1. Cold / Sardi: <= 20.0°C (Deep blue, chilled low acoustic register C3-A3 + frost sub-bass)
-   * 2. Moderate / Theek: 20.1°C - 26.0°C (Lush green, comfortable mid register C4-A4, warm plate reverb)
-   * 3. Hot / Garmi: > 26.0°C (Solar red, shimmering high register C5-C6 + solar sizzle exciter)
-   */
-  getTemperatureCategory(tempC) {
-    if (tempC <= 20.0) {
-      return {
-        key: "COLD",
-        label: "SARDI • COLD",
-        shortLabel: "SARDI",
-        urdu: "سردی",
-        range: "≤ 20°C",
-        color: "#38bdf8",
-        notes: ["C3", "D3", "E3", "G3", "A3"],
-        baseFreq: 130.8,
-        isExtreme: tempC <= 12.0
-      };
-    } else if (tempC <= 26.0) {
-      return {
-        key: "MODERATE",
-        label: "THEEK • MODERATE",
-        shortLabel: "THEEK",
-        urdu: "ٹھیک",
-        range: "21–26°C",
-        color: "#22c55e",
-        notes: ["C4", "D4", "E4", "G4", "A4"],
-        baseFreq: 261.6,
-        isExtreme: false
-      };
-    } else {
-      const isExtreme = tempC >= 33.0;
-      return {
-        key: "HOT",
-        label: isExtreme ? "GARMI • HEATWAVE" : "GARMI • HOT",
-        shortLabel: isExtreme ? "HEATWAVE" : "GARMI",
-        urdu: "گرمی",
-        range: "> 26°C",
-        color: isExtreme ? "#f43f5e" : "#ef4444",
-        notes: ["C5", "D5", "E5", "G5", "A5", "C6"],
-        baseFreq: 523.2,
-        isExtreme: isExtreme
-      };
-    }
-  }
-
-  /**
-   * Maps temperature into its category note with distinct intra-category pitch scaling,
-   * guaranteeing that both the macro thermal category AND day-to-day warming/cooling are crystal clear by ear!
-   */
-  categoryValueToNote(tempC) {
-    const cat = this.getTemperatureCategory(tempC);
-    let note = cat.notes[0];
-    let noteIndex = 0;
-
-    if (cat.key === "COLD") {
-      // Scale 8°C to 20°C across 5 cold notes
-      const ratio = Math.max(0, Math.min(1, (tempC - 8.0) / 12.0));
-      noteIndex = Math.min(Math.floor(ratio * cat.notes.length), cat.notes.length - 1);
-      note = cat.notes[noteIndex];
-    } else if (cat.key === "MODERATE") {
-      // Scale 20.1°C to 26.0°C across 5 moderate notes
-      const ratio = Math.max(0, Math.min(1, (tempC - 20.1) / 5.9));
-      noteIndex = Math.min(Math.floor(ratio * cat.notes.length), cat.notes.length - 1);
-      note = cat.notes[noteIndex];
-    } else {
-      // Scale 26.1°C to 42.0°C across 6 hot notes
-      const ratio = Math.max(0, Math.min(1, (tempC - 26.1) / 15.9));
-      noteIndex = Math.min(Math.floor(ratio * cat.notes.length), cat.notes.length - 1);
-      note = cat.notes[noteIndex];
-    }
-
-    const freq = Tone.Frequency(note).toFrequency();
-    return { note, freq, category: cat, noteIndex };
-  }
-
-  /**
-   * Dynamic Rainfall Acoustic Note Architecture:
-   * Maps mm/day precipitation into evolving musical water notes that climb and descend
-   * precisely as rainfall increases and decreases:
-   * - 0.1 to 3.0 mm (Light Drizzle): Delicate crystal droplets climbing through octave 6 (C6, D6, E6, G6, A6, C7)
-   * - 3.1 to 15.0 mm (Steady Shower): Melodious liquid water chimes ascending through octave 5 (C5, D5, E5, G5, A5, C6)
-   * - 15.1 to 40.0 mm (Heavy Downpour): Deep aqueous bells in octave 4 (C4, D4, E4, G4, A4, C5) + rolling thunder (E1)
-   * - > 40.0 mm (Monsoon Deluge): Powerful multi-tone storm chords (Octave 3 & 4) + sub-bass thunder boom (C1)
-   */
-  getRainfallAcousticNotes(mm) {
-    if (mm <= 0.05) return null;
-
-    if (mm <= 3.0) {
-      // Drizzle / Light Rain (0.1 - 3.0 mm)
-      // Delicate, high-pitched crystal droplets that climb up as drizzle intensifies
-      const scale = ["C6", "D6", "E6", "G6", "A6", "C7"];
-      const ratio = Math.max(0, Math.min(1, (mm - 0.1) / 2.9));
-      const idx = Math.min(Math.floor(ratio * scale.length), scale.length - 1);
-      const primaryNote = scale[idx];
-      const secondNote = scale[Math.min(scale.length - 1, idx + 1)];
-
-      return {
-        tier: "DRIZZLE",
-        label: "LIGHT DRIZZLE",
-        mm: mm,
-        primaryNote: primaryNote,
-        dropletPitches: [primaryNote, secondNote],
-        dropCount: 2,
-        volume: 0.18 + ratio * 0.14,
-        filterCutoff: 1100 + ratio * 600,
-        isThunder: false
-      };
-    } else if (mm <= 15.0) {
-      // Moderate Steady Shower (3.1 - 15.0 mm)
-      // Flowing, melodious liquid water chimes that rise through octave 5
-      const scale = ["C5", "D5", "E5", "G5", "A5", "C6"];
-      const ratio = Math.max(0, Math.min(1, (mm - 3.0) / 12.0));
-      const idx = Math.min(Math.floor(ratio * scale.length), scale.length - 1);
-      const primaryNote = scale[idx];
-      const harmonyNote = scale[(idx + 2) % scale.length];
-      const dropletPitches = [primaryNote, harmonyNote, scale[(idx + 4) % scale.length]];
-
-      return {
-        tier: "SHOWER",
-        label: "STEADY SHOWER",
-        mm: mm,
-        primaryNote: primaryNote,
-        dropletPitches: dropletPitches,
-        dropCount: 4,
-        volume: 0.35 + ratio * 0.25,
-        filterCutoff: 1700 + ratio * 1300,
-        isThunder: false
-      };
-    } else if (mm <= 40.0) {
-      // Heavy Downpour (15.1 - 40.0 mm)
-      // Deep aqueous bells & storm cascade climbing through octave 4
-      const scale = ["C4", "D4", "E4", "G4", "A4", "C5"];
-      const ratio = Math.max(0, Math.min(1, (mm - 15.0) / 25.0));
-      const idx = Math.min(Math.floor(ratio * scale.length), scale.length - 1);
-      const primaryNote = scale[idx];
-      const harmonyNote = scale[(idx + 2) % scale.length];
-      const dropletPitches = [primaryNote, harmonyNote, "E5", "G5"];
-
-      return {
-        tier: "DOWNPOUR",
-        label: "HEAVY DOWNPOUR",
-        mm: mm,
-        primaryNote: primaryNote,
-        dropletPitches: dropletPitches,
-        dropCount: 6,
-        volume: 0.62 + ratio * 0.20,
-        filterCutoff: 3000 + ratio * 1500,
-        isThunder: mm > 20.0,
-        thunderPitch: "E1"
-      };
-    } else {
-      // Monsoon Deluge / Flood (> 40.0 mm)
-      // Deep resonant aqueous strikes, heavy chords & sub-bass thunder
-      const scale = ["A3", "C4", "D4", "E4", "G4", "C5"];
-      const ratio = Math.max(0, Math.min(1, (mm - 40.0) / 45.0));
-      const idx = Math.min(Math.floor(ratio * scale.length), scale.length - 1);
-      const primaryNote = scale[idx];
-      const dropletPitches = ["C3", primaryNote, "G4", "C5", "E5"];
-
-      return {
-        tier: "DELUGE",
-        label: "MONSOON DELUGE",
-        mm: mm,
-        primaryNote: primaryNote,
-        dropletPitches: dropletPitches,
-        dropCount: 8,
-        volume: 0.85,
-        filterCutoff: 4800,
-        isThunder: true,
-        thunderPitch: "C1"
-      };
-    }
-  }
-
-  /**
    * Maps normalized value to a quantized musical note.
    */
   valueToNote(normValue) {
-    const scale = this.scales[this.currentScaleKey];
+    const scale = this.scales[this.currentScaleKey] || this.scales.pentatonic_major;
     const clamped = Math.max(0, Math.min(1, normValue));
     const index = Math.min(Math.floor(clamped * scale.length), scale.length - 1);
     const note = scale[index];
@@ -828,22 +324,7 @@ class EarthSonifier {
       return;
     }
 
-    try {
-      await this.initAudioContext();
-      if (window.Tone && Tone.context && Tone.context.state !== "running") {
-        await Tone.context.resume();
-      }
-    } catch (err) {
-      console.warn("Audio Context resumption warning:", err);
-    }
-
-    // Start background noise generators safely
-    if (this.rainNoise && this.rainNoise.state !== "started") {
-      try { this.rainNoise.start(); } catch (e) {}
-    }
-    if (this.windNoise && this.windNoise.state !== "started") {
-      try { this.windNoise.start(); } catch (e) {}
-    }
+    await this.initAudioContext();
 
     if (this.currentIndex >= this.data.dates.length) {
       this.currentIndex = 0;
@@ -871,17 +352,12 @@ class EarthSonifier {
     }
 
     const stepMs = Math.max(25, this.baseStepDurationMs / this.speedMultiplier);
-    try {
-      this.triggerStep(this.currentIndex, stepMs);
-    } catch (stepErr) {
-      console.warn("Playback step error:", stepErr);
-    }
+    this.triggerStep(this.currentIndex, stepMs);
     this.currentIndex++;
 
     // Zero-drift performance timing calculation
     this.expectedNextTick += stepMs;
     const now = performance.now();
-    // Guard against accumulated drift if tab was throttled or delayed
     if (this.expectedNextTick < now - stepMs * 2) {
       this.expectedNextTick = now;
     }
@@ -907,251 +383,81 @@ class EarthSonifier {
     const dataType = this.data.data_type;
 
     // Detect month marker (e.g. "2024-05-01")
-    const isFirstOfMonth = date.endsWith("-01");
+    const isFirstOfMonth = date ? date.endsWith("-01") : false;
 
     let playedNote = null;
     let playedFreq = null;
-    let activeCat = null;
-    let transitionType = null;
-    let activeRainInfo = null;
+    let rainMm = 0;
+    let rainNote = null;
+    let isThunder = false;
 
     // Dynamic anti-clipping note duration: note releases cleanly before the next step
-    const durationSeconds = Math.max(0.06, Math.min(0.28, (stepMs / 1000) * 0.90));
+    const durationSeconds = Math.max(0.04, Math.min(0.24, (stepMs / 1000) * 0.85));
 
     try {
       const now = Tone.now();
 
       if (dataType === "temperature") {
-        // Continuous Harmonious 1-Year Musical Sonification
+        // Temperature controls Pitch
         const noteInfo = this.valueToNote(normVal);
-        activeCat = this.getTemperatureCategory(rawVal);
         playedNote = noteInfo.note;
         playedFreq = Math.round(noteInfo.freq);
-        const velocity = 0.55 + normVal * 0.40;
 
-        // 1. Primary Melody Synthesis (Space Synth / Chimes / Piano / Pad / Marimba)
+        const velocity = 0.5 + normVal * 0.45;
         if (this.melodySynth) {
-          try {
-            this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, now, velocity);
-          } catch (_) {}
+          this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, now, velocity);
         }
 
-        // 2. Layer authentic acoustic chimes sampler if loaded
-        if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
-          try {
-            this.sampler.triggerAttackRelease(playedNote, durationSeconds * 1.15, now, velocity);
-          } catch (_) {}
-        }
-
-        // 3. Direct hardware Web Audio engine (Fail-safe, 100% audible on all browsers)
-        if (this.nativeAudio && playedFreq > 10) {
-          this.nativeAudio.playNote(playedFreq, activeCat.key, durationSeconds * 1.4, velocity);
-        }
-
-        // Category boundary transition flourish
-        if (this.lastCategory && this.lastCategory !== activeCat.key) {
-          transitionType = `${this.lastCategory}_TO_${activeCat.key}`;
-          if (this.transitionSynth) {
-            try {
-              if (transitionType === "COLD_TO_MODERATE") {
-                this.transitionSynth.triggerAttackRelease(["E3", "A4"], 0.20, now);
-              } else if (transitionType === "MODERATE_TO_HOT") {
-                this.transitionSynth.triggerAttackRelease(["A4", "E5"], 0.16, now);
-              } else if (transitionType === "HOT_TO_MODERATE") {
-                this.transitionSynth.triggerAttackRelease(["E5", "A4"], 0.20, now);
-              } else if (transitionType === "MODERATE_TO_COLD") {
-                this.transitionSynth.triggerAttackRelease(["G4", "C3"], 0.26, now);
-              }
-            } catch (_) {}
-          }
-        }
-        this.lastCategory = activeCat.key;
-        this.activeCategory = activeCat;
-
-        // Subtle sub-bass anchor for cold days
-        if (activeCat.key === "COLD" && this.coldSubSynth) {
-          try {
-            this.coldSubSynth.triggerAttackRelease("C2", 0.22, now, 0.40);
-          } catch (_) {}
-        }
-
-        // Solar shimmer for hot days
-        if (activeCat.key === "HOT" && this.heatShimmerSynth) {
-          try {
-            this.heatShimmerSynth.triggerAttackRelease(playedNote, 0.14, now, 0.35);
-          } catch (_) {}
-        }
-
-        // Dual-track accompaniment: If authentic rainfall data is active, layer real rain acoustics & changing rain notes
+        // Dual-track accompaniment: If authentic rainfall data is active, trigger drum strikes
         if (this.dualTrackEnabled && this.secondaryData && this.secondaryData.values[idx] !== undefined) {
           const rainVal = this.secondaryData.values[idx];
-          if (rainVal > 0.1) {
-            activeRainInfo = this.getRainfallAcousticNotes(rainVal);
-
-            // Realistic ambient rain hiss proportional to mm/day
-            if (this.rainLowPass) this.rainLowPass.frequency.rampTo(activeRainInfo.filterCutoff, 0.06);
-            if (this.rainGain) this.rainGain.gain.rampTo(activeRainInfo.volume * 0.55, 0.06);
-
-            // Layer authentic real rain recording
-            if (this.rainPlayer && this.isRainPlayerLoaded) {
-              if (this.rainPlayer.state !== "started") {
-                try { this.rainPlayer.start(); } catch (e) {}
-              }
-              if (this.rainPlayerFilter) this.rainPlayerFilter.frequency.rampTo(activeRainInfo.filterCutoff, 0.06);
-              if (this.rainPlayerGain) this.rainPlayerGain.gain.rampTo(activeRainInfo.volume * 0.75, 0.06);
-            }
-
-            // Musical rain water chime that ascends/descends with rainfall intensity!
-            if (this.waterChimeSynth) {
-              try {
-                const chimeVel = Math.min(0.85, 0.35 + (rainVal / 30.0) * 0.45);
-                this.waterChimeSynth.triggerAttackRelease(activeRainInfo.primaryNote, durationSeconds * 0.85, now, chimeVel);
-              } catch (_) {}
-            }
-
-            // Micro-droplet notes that change with rain tier
-            const drops = activeRainInfo.dropletPitches;
-            for (let d = 0; d < activeRainInfo.dropCount; d++) {
-              const timeOffset = d * (stepMs / 1000 / (activeRainInfo.dropCount + 1)) + (Math.random() * 0.012);
-              const dropPitch = drops[d % drops.length];
-              const dropVel = Math.min(0.85, 0.30 + (rainVal / 35.0) * 0.55);
-              if (this.dropletSynth) {
-                try {
-                  this.dropletSynth.triggerAttackRelease(dropPitch, 0.02, now + timeOffset, dropVel);
-                } catch (_) {}
-              }
-            }
-
-            // Distant rolling thunder if extreme storm (> 20 mm)
-            if (activeRainInfo.isThunder && this.thunderSynth) {
-              try {
-                this.thunderSynth.triggerAttackRelease(activeRainInfo.thunderPitch, 0.5, now, 0.45);
-              } catch (_) {}
-            }
-          } else {
-            if (this.rainGain) this.rainGain.gain.rampTo(0, 0.08);
-            if (this.rainPlayerGain) this.rainPlayerGain.gain.rampTo(0, 0.08);
+          rainMm = rainVal;
+          if (rainVal > 0.1 && this.rainSynth) {
+            // Authentic physical rain scaling (based on actual mm/day)
+            const drumPitch = rainVal > 25.0 ? "C1" : rainVal > 10.0 ? "G1" : "C2";
+            const drumVel = Math.min(0.9, 0.25 + (rainVal / 35.0) * 0.65);
+            this.rainSynth.triggerAttackRelease(drumPitch, durationSeconds, now, drumVel);
+            rainNote = drumPitch;
+            isThunder = rainVal > 25.0;
           }
-        } else {
-          if (this.rainGain) this.rainGain.gain.rampTo(0, 0.08);
-          if (this.rainPlayerGain) this.rainPlayerGain.gain.rampTo(0, 0.08);
         }
 
         // Soft calendar drone on 1st of month
-        if (isFirstOfMonth) {
-          if (this.nativeAudio) {
-            try { this.nativeAudio.playDrone(65.4, 0.45); } catch (_) {}
-          }
-          if (this.bassDrone) {
-            try {
-              this.bassDrone.triggerAttackRelease("C2", "8n", now);
-            } catch (_) {}
-          }
+        if (isFirstOfMonth && this.bassDrone) {
+          this.bassDrone.triggerAttackRelease("C2", "8n", now);
         }
       } else if (dataType === "rainfall") {
-        // PURE PROCEDURAL & AUTHENTIC REAL RAIN ENGINE WITH NOTES CHANGING ON INCREASE/DECREASE
-        if (rawVal > 0.05) {
-          activeRainInfo = this.getRainfallAcousticNotes(rawVal);
-          playedNote = `${activeRainInfo.tier} [${rawVal.toFixed(1)}mm] • ${activeRainInfo.primaryNote}`;
-          playedFreq = Math.round(Tone.Frequency(activeRainInfo.primaryNote).toFrequency());
-          const chimeVel = Math.min(0.95, 0.50 + (rawVal / 35.0) * 0.45);
-
-          // Direct Hardware Web Audio rainfall acoustic chime
-          if (this.nativeAudio && playedFreq > 10) {
-            this.nativeAudio.playRain(playedFreq, rawVal, durationSeconds * 1.4, chimeVel);
+        // Rainfall controls drum strikes & velocity proportional to actual mm/day
+        rainMm = rawVal;
+        if (rawVal > 0.1) {
+          const drumPitch = rawVal > 25.0 ? "C1" : rawVal > 10.0 ? "G1" : "C2";
+          const drumVel = Math.min(1.0, 0.3 + (rawVal / 30.0) * 0.7);
+          if (this.rainSynth) {
+            this.rainSynth.triggerAttackRelease(drumPitch, durationSeconds, now, drumVel);
           }
-
-          // Smoothly ramp the continuous rain sound & lowpass sweep
-          if (this.rainLowPass) this.rainLowPass.frequency.rampTo(activeRainInfo.filterCutoff, 0.06);
-          if (this.rainGain) this.rainGain.gain.rampTo(activeRainInfo.volume * 0.65, 0.06);
-
-          // Layer authentic real rain recording loop
-          if (this.rainPlayer && this.isRainPlayerLoaded) {
-            if (this.rainPlayer.state !== "started") {
-              try { this.rainPlayer.start(); } catch (e) {}
-            }
-            if (this.rainPlayerFilter) this.rainPlayerFilter.frequency.rampTo(activeRainInfo.filterCutoff, 0.06);
-            if (this.rainPlayerGain) this.rainPlayerGain.gain.rampTo(activeRainInfo.volume * 0.9, 0.06);
-          }
-
-          // Primary Musical Rain Note (FM Aqueous Chime & Sampler)
-          let rainSounded = false;
-          if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
-            try {
-              this.sampler.triggerAttackRelease(activeRainInfo.primaryNote, durationSeconds, now, chimeVel);
-              rainSounded = true;
-            } catch (_) {}
-          }
-          if (!rainSounded && this.waterChimeSynth) {
-            try {
-              this.waterChimeSynth.triggerAttackRelease(activeRainInfo.primaryNote, durationSeconds, now, chimeVel);
-            } catch (_) {}
-          }
-
-          // Pitter-patter water droplet notes that ascend/descend with rain volume
-          const drops = activeRainInfo.dropletPitches;
-          for (let d = 0; d < activeRainInfo.dropCount; d++) {
-            const timeOffset = d * (stepMs / 1000 / (activeRainInfo.dropCount + 1)) + (Math.random() * 0.015);
-            const dropPitch = drops[d % drops.length];
-            const dropVel = Math.min(0.9, 0.30 + (rawVal / 30.0) * 0.60);
-            if (this.dropletSynth) {
-              try {
-                this.dropletSynth.triggerAttackRelease(dropPitch, 0.02, now + timeOffset, dropVel);
-              } catch (_) {}
-            }
-          }
-
-          // Deep rolling thunder for heavy storm events (> 20mm)
-          if (activeRainInfo.isThunder && this.thunderSynth) {
-            try {
-              const thunderVel = Math.min(1.0, 0.45 + (rawVal / 80.0) * 0.55);
-              this.thunderSynth.triggerAttackRelease(activeRainInfo.thunderPitch, 0.65, now, thunderVel);
-            } catch (_) {}
-          }
+          playedNote = `Rain ${drumPitch}`;
+          playedFreq = Math.round(Tone.Frequency(drumPitch).toFrequency());
+          rainNote = drumPitch;
+          isThunder = rawVal > 25.0;
         } else {
-          // Dry day / Rest
-          if (this.rainGain) this.rainGain.gain.rampTo(0, 0.08);
-          if (this.rainPlayerGain) this.rainPlayerGain.gain.rampTo(0, 0.08);
-          playedNote = "DRY REST";
+          playedNote = "Dry (Rest)";
           playedFreq = 0;
         }
 
-        if (isFirstOfMonth) {
-          if (this.nativeAudio) {
-            try { this.nativeAudio.playDrone(65.4, 0.45); } catch (_) {}
-          }
-          if (this.bassDrone) {
-            try {
-              this.bassDrone.triggerAttackRelease("G2", "8n", now);
-            } catch (_) {}
-          }
+        if (isFirstOfMonth && this.bassDrone) {
+          this.bassDrone.triggerAttackRelease("G2", "8n", now);
         }
       } else if (dataType === "wind") {
-        // Wind speed: Resonant airy velocity & howling wind filter sweep
+        // Wind speed: Resonant airy velocity & pitch modulation
         const noteInfo = this.valueToNote(normVal);
         playedNote = noteInfo.note;
         playedFreq = Math.round(noteInfo.freq);
-        const windVel = 0.5 + normVal * 0.45;
-
-        if (this.nativeAudio && playedFreq > 10) {
-          this.nativeAudio.playNote(playedFreq, "MODERATE", durationSeconds * 1.2, windVel);
-        }
 
         if (this.melodySynth) {
-          try {
-            this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, now, windVel);
-          } catch (_) {}
+          this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, now, 0.6);
         }
-
-        if (this.windFilter && this.windGain) {
-          if (rawVal > 1.0) {
-            const windCutoff = Math.min(1800, 300 + (rawVal / 15.0) * 1200);
-            const windVol = Math.min(0.35, 0.05 + (rawVal / 15.0) * 0.3);
-            this.windFilter.frequency.rampTo(windCutoff, 0.06);
-            this.windGain.gain.rampTo(windVol, 0.06);
-          } else {
-            this.windGain.gain.rampTo(0, 0.08);
-          }
+        if (this.windSynth && rawVal > 3.0) {
+          this.windSynth.triggerAttackRelease(Math.min(0.2, (rawVal / 15.0) * 0.2), now);
         }
       }
     } catch (err) {
@@ -1161,6 +467,7 @@ class EarthSonifier {
     // Fire synchronization callback to Chart and UI HUD
     if (this.onStepCallback) {
       try {
+        const activeCat = this.getTemperatureCategory(rawVal);
         this.onStepCallback({
           index: idx,
           date: date,
@@ -1176,13 +483,11 @@ class EarthSonifier {
           categoryColor: activeCat ? activeCat.color : null,
           categoryRange: activeCat ? activeCat.range : null,
           isExtreme: activeCat ? !!activeCat.isExtreme : false,
-          isTransition: transitionType !== null,
-          transitionType: transitionType,
-          rainTier: activeRainInfo ? activeRainInfo.tier : null,
-          rainLabel: activeRainInfo ? activeRainInfo.label : null,
-          rainNote: activeRainInfo ? activeRainInfo.primaryNote : null,
-          rainMm: activeRainInfo ? activeRainInfo.mm : (dataType === "rainfall" ? rawVal : 0),
-          rainThunder: activeRainInfo ? activeRainInfo.isThunder : false,
+          rainTier: rainMm > 25.0 ? "HEAVY" : (rainMm > 10.0 ? "MODERATE" : "LIGHT"),
+          rainLabel: rainMm > 0.1 ? `${rainMm.toFixed(1)} mm` : "Dry",
+          rainNote: rainNote,
+          rainMm: rainMm,
+          rainThunder: isThunder,
           isFirstOfMonth: isFirstOfMonth,
           stepMs: stepMs,
           isPlaying: this.isPlaying
@@ -1198,19 +503,9 @@ class EarthSonifier {
    */
   pause() {
     this.isPlaying = false;
-    this.lastCategory = null;
     if (this.stepTimer) {
       clearTimeout(this.stepTimer);
       this.stepTimer = null;
-    }
-    if (this.rainGain) {
-      this.rainGain.gain.rampTo(0, 0.05);
-    }
-    if (this.rainPlayerGain) {
-      this.rainPlayerGain.gain.rampTo(0, 0.05);
-    }
-    if (this.windGain) {
-      this.windGain.gain.rampTo(0, 0.05);
     }
     if (this.onPlaybackStateChange) this.onPlaybackStateChange(false);
   }
@@ -1221,49 +516,45 @@ class EarthSonifier {
   stop() {
     this.pause();
     this.currentIndex = 0;
-    this.lastCategory = null;
     if (this.onPlaybackStateChange) this.onPlaybackStateChange(false);
-    if (this.onStepCallback && this.data && this.data.dates.length > 0) {
+    if (this.onStepCallback && this.data && this.data.dates && this.data.dates.length > 0) {
       const firstVal = this.data.values[0];
-      const firstCat = this.data.data_type === "temperature" ? this.getTemperatureCategory(firstVal) : null;
-      this.onStepCallback({
-        index: 0,
-        date: this.data.dates[0],
-        value: firstVal,
-        normalized: this.data.normalized[0],
-        unit: this.data.unit,
-        note: "--",
-        frequency: 0,
-        category: firstCat ? firstCat.key : null,
-        categoryLabel: firstCat ? firstCat.label : null,
-        categoryShort: firstCat ? firstCat.shortLabel : null,
-        categoryUrdu: firstCat ? firstCat.urdu : null,
-        categoryColor: firstCat ? firstCat.color : null,
-        categoryRange: firstCat ? firstCat.range : null,
-        isExtreme: firstCat ? !!firstCat.isExtreme : false,
-        isTransition: false,
-        transitionType: null,
-        isFirstOfMonth: false,
-        stepMs: 90,
-        isPlaying: false
-      });
+      const firstCat = this.getTemperatureCategory(firstVal);
+      try {
+        this.onStepCallback({
+          index: 0,
+          date: this.data.dates[0],
+          value: firstVal,
+          normalized: this.data.normalized[0],
+          unit: this.data.unit,
+          note: "--",
+          frequency: 0,
+          category: firstCat ? firstCat.key : null,
+          categoryLabel: firstCat ? firstCat.label : null,
+          categoryShort: firstCat ? firstCat.shortLabel : null,
+          categoryUrdu: firstCat ? firstCat.urdu : null,
+          categoryColor: firstCat ? firstCat.color : null,
+          categoryRange: firstCat ? firstCat.range : null,
+          isExtreme: firstCat ? !!firstCat.isExtreme : false,
+          rainTier: null,
+          rainLabel: null,
+          rainNote: null,
+          rainMm: 0,
+          rainThunder: false,
+          isFirstOfMonth: false,
+          stepMs: 90,
+          isPlaying: false
+        });
+      } catch (_) {}
     }
   }
 
   /**
    * Jump playhead to specific day index (0 to 365).
    */
-  async seek(index) {
+  seek(index) {
     if (!this.data || index < 0 || index >= this.data.dates.length) return;
     this.currentIndex = index;
-    if (!this.isInitialized) {
-      try {
-        await this.initAudioContext();
-        if (window.Tone && Tone.context && Tone.context.state !== "running") {
-          await Tone.context.resume();
-        }
-      } catch (_) {}
-    }
     const stepMs = Math.max(25, this.baseStepDurationMs / this.speedMultiplier);
 
     // Cancel pending timeout to avoid jitter or double-stepping
@@ -1285,7 +576,7 @@ class EarthSonifier {
   }
 
   /**
-   * Adjust playback speed multiplier (0.5x to 2.5x).
+   * Adjust playback speed multiplier (0.5x to 3.0x).
    */
   setSpeed(multiplier) {
     this.speedMultiplier = Math.max(0.25, Math.min(3.0, multiplier));
@@ -1300,10 +591,6 @@ class EarthSonifier {
         Tone.getDestination().volume.value = db;
       }
     } catch (_) {}
-    if (this.nativeAudio) {
-      const linearGain = Math.max(0, Math.min(1.0, Math.pow(10, db / 20)));
-      this.nativeAudio.setVolume(linearGain);
-    }
   }
 
   // --- AUDIO RECORDING & EXPORT (Web Audio MediaRecorder) ---
