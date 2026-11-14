@@ -231,3 +231,4 @@ def analyze_frame_by_key(frame_key: str) -> Dict[str, Any]:
         "frame_metadata": meta,
         "computer_vision_analysis": analysis
     }
+
