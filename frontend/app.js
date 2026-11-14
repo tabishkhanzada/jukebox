@@ -874,12 +874,14 @@ class EarthJukeboxApp {
   toggleViewMode(mode) {
     if (mode === this.activeViewMode) return;
     this.activeViewMode = mode;
+    const timelineSec = document.getElementById("timelineSection");
 
     if (mode === "scanner") {
       // Pause timeline sonifier if playing
       if (this.sonifier && this.sonifier.isPlaying) {
         this.sonifier.pause();
       }
+      if (timelineSec) timelineSec.classList.add("hidden");
       if (this.dom.heroChartContainer) this.dom.heroChartContainer.classList.add("hidden");
       if (this.dom.globeCanvasContainer) this.dom.globeCanvasContainer.classList.add("hidden");
       if (this.dom.eicScannerStage) this.dom.eicScannerStage.classList.remove("hidden");
@@ -899,6 +901,7 @@ class EarthJukeboxApp {
         this.scanner.pause();
       }
       if (this.dom.eicScannerStage) this.dom.eicScannerStage.classList.add("hidden");
+      if (timelineSec) timelineSec.classList.remove("hidden");
       if (this.dom.heroChartContainer) this.dom.heroChartContainer.classList.remove("hidden");
       if (this.dom.globeCanvasContainer) this.dom.globeCanvasContainer.classList.remove("hidden");
       if (this.dom.viewTimelineBtn) this.dom.viewTimelineBtn.classList.add("active");

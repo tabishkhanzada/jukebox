@@ -1,54 +1,56 @@
-/*
-  NASA SCIENCE | The Earth Information Jukebox
-  Aesthetic: Deep Space Mission Control / Planetary Horizon Interface
-  Typography: Space Grotesk, JetBrains Mono, Inter
-*/
+/* ==========================================================================
+   THE EARTH INFORMATION JUKEBOX — MODERN SIMPLE & ACCESSIBLE THEME (v3.0.0)
+   Designed for clarity, zero clutter, and immediate understanding.
+   ========================================================================== */
 
 :root {
-  --bg-black: #000000;
-  --bg-surface: #05070f;
-  --bg-glass: rgba(10, 14, 26, 0.8);
-  --bg-glass-heavy: rgba(5, 7, 15, 0.92);
-  --border-hairline: rgba(255, 255, 255, 0.08);
-  --border-focus: rgba(56, 189, 248, 0.4);
+  --bg-main: #080d1a;
+  --bg-card: rgba(15, 23, 42, 0.85);
+  --bg-card-hover: rgba(22, 33, 58, 0.95);
+  --border-card: rgba(255, 255, 255, 0.09);
+  --border-focus: #38bdf8;
+  
+  --color-primary: #38bdf8;       /* Electric Cyan */
+  --color-accent: #ff7043;        /* Solar Warmth */
+  --color-success: #10b981;       /* Emerald */
+  --color-text: #f8fafc;
+  --color-text-muted: #94a3b8;
+  --color-text-dim: #64748b;
 
-  --text-white: #ffffff;
-  --text-primary: #f3f4f6;
-  --text-dim: #9ca3af;
-  --text-muted: #6b7280;
-
-  --accent-solar: #ff5722;
-  --accent-amber: #f59e0b;
-  --accent-cyan: #38bdf8;
-  --accent-blue: #0ea5e9;
-  --accent-violet: #8b5cf6;
-
-  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --font-sans: 'Inter', -apple-system, sans-serif;
 
-  --ease-nasa: cubic-bezier(0.16, 1, 0.3, 1);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
 }
 
-* {
+/* Global Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
-body.nasa-theme {
-  background-color: var(--bg-black);
-  color: var(--text-white);
-  font-family: var(--font-sans);
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
+body.simple-theme {
+  font-family: var(--font-body);
+  background-color: var(--bg-main);
+  color: var(--color-text);
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow-x: hidden;
   position: relative;
-  -webkit-font-smoothing: antialiased;
 }
 
-/* Background Cosmic Nebula Glows */
-.space-backdrop {
+/* Universal Hidden Utility */
+.hidden {
+  display: none !important;
+}
+
+/* Ambient Subtle Glow Backdrop */
+.ambient-backdrop {
   position: fixed;
   inset: 0;
   pointer-events: none;
@@ -56,1188 +58,778 @@ body.nasa-theme {
   overflow: hidden;
 }
 
-.nebula-glow {
+.glow-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(140px);
-  opacity: 0.16;
+  filter: blur(120px);
+  opacity: 0.18;
 }
 
-.glow-solar {
-  width: 900px;
-  height: 600px;
-  background: radial-gradient(circle, var(--accent-solar), transparent 75%);
-  bottom: -250px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.glow-cyan {
+.orb-primary {
+  top: -100px;
+  right: -100px;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, var(--accent-cyan), transparent 75%);
-  top: -200px;
-  right: -100px;
-  opacity: 0.08;
+  background: radial-gradient(circle, #38bdf8, transparent 70%);
 }
 
-.stardust-overlay {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
-  background-size: 64px 64px;
-  opacity: 0.25;
+.orb-secondary {
+  bottom: -150px;
+  left: -150px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, #ff7043, transparent 70%);
 }
 
-/* Main Viewport Container */
-.nasa-app-viewport {
+/* Main App Layout Shell */
+.app-shell {
   position: relative;
   z-index: 1;
-  height: 100vh;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0.85rem 1.5rem 2rem;
   display: flex;
   flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ==========================================================================
+   TOP NAVIGATION NAVBAR
+   ========================================================================== */
+.app-navbar {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 0.65rem 1.25rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
-/* 1. TOP MISSION CONTROL BAR (Matching Reference Photo) */
-.nasa-top-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 2rem;
-  border-bottom: 1px solid var(--border-hairline);
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(12px);
-  z-index: 10;
-}
-
-.nav-left {
-  display: flex;
-  align-items: center;
-  gap: 1.75rem;
-}
-
-.nasa-brand-group {
-  display: flex;
-  align-items: center;
-}
-
-.nasa-logo-svg {
-  height: 22px;
-  width: auto;
-  color: #ffffff;
-  letter-spacing: 0.1em;
-}
-
-.mission-title-group {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  border-left: 1px solid var(--border-hairline);
-  padding-left: 1.5rem;
-}
-
-.mission-star {
-  color: #ffffff;
-  font-size: 1rem;
-  animation: pulse-star 3s infinite alternate;
-}
-
-@keyframes pulse-star {
-  0% { opacity: 0.4; transform: scale(0.9); }
-  100% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 6px #fff); }
-}
-
-.mission-text-stack {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.15;
-}
-
-.agency-title {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.2em;
-  color: var(--text-dim);
-  font-weight: 500;
-}
-
-.mission-name {
-  font-family: var(--font-display);
-  font-size: 0.82rem;
-  letter-spacing: 0.12em;
-  font-weight: 700;
-  color: var(--text-white);
-}
-
-.nav-right {
+.nav-brand-area {
   display: flex;
   align-items: center;
   gap: 0.85rem;
 }
 
-.nav-pill-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-hairline);
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.15em;
-  padding: 0.45rem 0.95rem;
-  border-radius: 999px;
-  cursor: pointer;
+.nasa-badge {
+  background: #e11d48;
+  color: #ffffff;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: center;
+}
+
+.brand-text .brand-title {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.brand-text .brand-subtitle {
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+}
+
+/* Mode Navigation Switcher */
+.mode-navigation {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.25rem;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-full);
+  cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.nav-pill-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
+.mode-btn:hover {
+  color: #ffffff;
+}
+
+.mode-btn.active {
+  background: var(--color-primary);
+  color: #040810;
+  box-shadow: 0 2px 10px rgba(56, 189, 248, 0.4);
+}
+
+/* Nav Actions (Right) */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--color-text-muted);
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
   border-color: rgba(255, 255, 255, 0.25);
 }
 
-.nav-icon-btn {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-hairline);
-  color: var(--text-primary);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
+.action-btn.active, .voice-btn.active {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
-.nav-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: var(--accent-cyan);
-  color: var(--accent-cyan);
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
-}
-
-.nav-record-btn {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-hairline);
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.15em;
-  padding: 0.45rem 0.85rem;
-  border-radius: 999px;
-  cursor: pointer;
+.record-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  transition: all 0.2s ease;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.nav-record-btn:hover {
-  border-color: #ef4444;
+.record-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ffffff;
 }
 
-.record-pulse-dot {
+.record-dot {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
-  background-color: #ef4444;
-}
-
-.record-pulse-dot.recording {
-  animation: pulse-red 1s infinite alternate;
-  box-shadow: 0 0 10px #ef4444;
-}
-
-@keyframes pulse-red {
-  0% { transform: scale(1); opacity: 0.4; }
-  100% { transform: scale(1.5); opacity: 1; }
-}
-
-.nav-hamburger-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 6px;
-}
-
-.hamburger-bar {
-  width: 22px;
-  height: 2px;
-  background-color: #ffffff;
-  border-radius: 2px;
-  transition: all 0.25s ease;
-}
-
-.nav-hamburger-btn:hover .hamburger-bar {
-  background-color: var(--accent-cyan);
-}
-
-/* Error Diagnostic Banner */
-.nasa-error-banner {
-  margin: 0.5rem 2rem 0;
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  color: #fca5a5;
-  padding: 0.6rem 1rem;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.8rem;
-  z-index: 10;
-}
-
-.nasa-error-banner.hidden {
-  display: none;
-}
-
-.error-badge {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
   background: #ef4444;
-  color: #fff;
-  padding: 0.15rem 0.45rem;
-  border-radius: 3px;
-  font-weight: 700;
+  border-radius: 50%;
 }
 
-/* 2. MAIN PLANETARY STAGE (Centerpiece with 3D Globe matching photo) */
-.planetary-stage {
-  position: relative;
-  flex: 1;
+.record-dot.recording {
+  animation: pulseRec 1s infinite;
+}
+
+@keyframes pulseRec {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.3); }
+}
+
+/* ==========================================================================
+   ERROR BANNER
+   ========================================================================== */
+.error-banner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.84rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ==========================================================================
+   MAIN CONTENT & SETUP CARD
+   ========================================================================== */
+.main-content {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  overflow: hidden;
+  gap: 1.25rem;
 }
 
-.globe-canvas-frame {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  cursor: grab;
-}
-
-.globe-canvas-frame:active {
-  cursor: grabbing;
-}
-
-/* Station Reticle HUD (Docked to top-right with glassmorphism) */
-.reticle-telemetry-hud {
-  position: absolute;
-  top: 1.25rem;
-  right: 2rem;
-  z-index: 6;
-  pointer-events: none;
-  text-align: right;
-  line-height: 1.35;
-  background: rgba(5, 7, 15, 0.65);
-  backdrop-filter: blur(16px);
-  padding: 0.55rem 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--border-hairline);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
-}
-
-.reticle-label {
-  font-size: 0.74rem;
-  letter-spacing: 0.16em;
-  color: var(--text-white);
-  font-weight: 600;
-  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
-}
-
-.reticle-sub {
-  font-size: 0.68rem;
-  letter-spacing: 0.14em;
-  color: var(--text-dim);
-}
-
-/* Floating Center Audio Transport Dock */
-.hero-transport-dock {
-  position: relative;
-  z-index: 5;
-  margin: 0 auto 0.35rem;
+.view-section {
   display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  background: rgba(10, 14, 26, 0.85);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--border-hairline);
-  padding: 0.32rem 0.9rem;
-  border-radius: 999px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65);
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-.transport-circle-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-hairline);
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.transport-circle-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: var(--accent-cyan);
-  color: var(--accent-cyan);
-}
-
-.transport-main-play {
-  background: linear-gradient(135deg, var(--accent-solar), #ea580c);
-  border: none;
-  color: #ffffff;
-  padding: 0.45rem 1.25rem;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  transition: all 0.25s var(--ease-nasa);
-  box-shadow: 0 0 20px rgba(255, 87, 34, 0.45);
-}
-
-.transport-main-play:hover {
-  transform: scale(1.04);
-  box-shadow: 0 0 28px rgba(255, 87, 34, 0.7);
-}
-
-.transport-main-play.playing {
-  background: linear-gradient(135deg, #0284c7, #2563eb);
-  box-shadow: 0 0 24px rgba(56, 189, 248, 0.5);
-}
-
-.speed-pill-group, .pitch-mode-pill {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  border-left: 1px solid var(--border-hairline);
-  padding-left: 0.75rem;
-}
-
-.speed-label {
-  font-size: 0.65rem;
-  letter-spacing: 0.12em;
-  color: var(--text-muted);
-}
-
-.speed-select, .pitch-select {
-  background: transparent;
-  border: none;
-  color: var(--text-primary);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  outline: none;
-}
-
-.speed-select option, .pitch-select option {
-  background: #0f172a;
-  color: #fff;
-}
-
-/* 3-Category Thermal Legend Dock (Rang Scale matching reference video) */
-.thermal-legend-dock {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  border-left: 1px solid var(--border-hairline);
-  padding-left: 0.65rem;
-}
-
-.legend-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.26rem;
-  font-size: 0.58rem;
-  letter-spacing: 0.08em;
-  padding: 0.18rem 0.45rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--text-dim);
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.legend-chip.chip-red {
-  color: #fca5a5;
-  border-color: rgba(239, 68, 68, 0.25);
-  background: rgba(239, 68, 68, 0.08);
-}
-.legend-chip.chip-green {
-  color: #86efac;
-  border-color: rgba(34, 197, 94, 0.25);
-  background: rgba(34, 197, 94, 0.08);
-}
-.legend-chip.chip-blue {
-  color: #7dd3fc;
-  border-color: rgba(56, 189, 248, 0.25);
-  background: rgba(56, 189, 248, 0.08);
-}
-
-.legend-chip.active {
-  box-shadow: 0 0 10px currentColor;
-  transform: scale(1.06);
-}
-
-.chip-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  display: inline-block;
-}
-.chip-dot.red { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
-.chip-dot.green { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
-.chip-dot.blue { background: #38bdf8; box-shadow: 0 0 6px #38bdf8; }
-
-/* Hero Chart Waveform Container (Scientific Telemetry Timeline Console) */
-.hero-chart-container {
-  position: relative;
-  z-index: 4;
-  width: calc(100% - 3.5rem);
-  max-width: 1400px;
-  margin: 0 auto 0.35rem;
-  height: 115px;
-  padding: 0.35rem 1.25rem 0.25rem;
-  background: rgba(8, 12, 22, 0.72);
+/* Step 1 & Step 2 Setup Card */
+.setup-card {
+  display: grid;
+  grid-template-columns: 1.4fr 1.6fr 0.8fr;
+  gap: 1.25rem;
+  background: var(--bg-card);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-  opacity: 0.95;
-  transition: all 0.3s ease;
-  user-select: none;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
-.hero-chart-container:hover {
-  opacity: 1;
-  border-color: rgba(56, 189, 248, 0.32);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 16px rgba(56, 189, 248, 0.15);
-}
-
-.hero-chart-container canvas#climateChart {
-  display: block;
-  width: 100%;
-  height: 100%;
-  cursor: crosshair;
-}
-
-.hero-chart-container canvas#climateChartOverlay {
-  display: none !important;
-}
-
-/* 3. BOTTOM TELEMETRY HUD BAR (EXACT MATCH TO REFERENCE PHOTO'S 5 COLUMNS - COMPACT) */
-.nasa-bottom-telemetry-hud {
-  position: relative;
-  z-index: 10;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  padding: 0.55rem 2rem 0.65rem;
-  border-top: 1px solid var(--border-hairline);
-  background: rgba(4, 7, 14, 0.85);
-  backdrop-filter: blur(20px);
-}
-
-.telemetry-col {
+.setup-col {
   display: flex;
   flex-direction: column;
-  gap: 0.12rem;
-  border-left: 1px solid var(--border-hairline);
-  padding-left: 1.15rem;
+  gap: 0.5rem;
 }
 
-.telemetry-col:first-child {
-  border-left: none;
-  padding-left: 0;
-}
-
-.col-header {
-  font-size: 0.58rem;
-  letter-spacing: 0.16em;
-  color: var(--text-muted);
-  font-weight: 500;
-  text-transform: uppercase;
-}
-
-.col-value {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--text-white);
-  line-height: 1.15;
-}
-
-.col-value-spread {
-  display: flex;
-  align-items: baseline;
-  gap: 0.45rem;
-}
-
-.col-peak-trough {
-  font-size: 0.72rem;
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.sub-dim {
-  font-size: 0.58rem;
-  color: var(--text-muted);
-  letter-spacing: 0.08em;
-}
-
-.col-value-dim {
-  font-size: 0.72rem;
-  color: var(--text-dim);
-}
-
-.col-sub {
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  color: var(--text-dim);
-  line-height: 1.1;
-}
-
-.col-sub-row {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  color: var(--text-dim);
-  line-height: 1.1;
-  margin-top: 0.12rem;
-}
-
-.thermal-zone-badge {
-  font-size: 0.56rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  padding: 0.12rem 0.42rem;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  transition: all 0.25s ease;
-  white-space: nowrap;
-}
-
-.badge-cold {
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.4);
-  box-shadow: 0 0 8px rgba(56, 189, 248, 0.2);
-}
-
-.badge-moderate {
-  background: rgba(34, 197, 94, 0.15);
-  color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.4);
-  box-shadow: 0 0 8px rgba(34, 197, 94, 0.2);
-}
-
-.badge-hot {
-  background: rgba(239, 68, 68, 0.18);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.25);
-}
-
-.badge-heatwave {
-  background: rgba(244, 63, 94, 0.22);
-  color: #f43f5e;
-  border: 1px solid rgba(244, 63, 94, 0.6);
-  box-shadow: 0 0 12px rgba(244, 63, 94, 0.45);
-  animation: heatwave-pulse 1.2s infinite alternate;
-}
-
-@keyframes heatwave-pulse {
-  0% { transform: scale(1); filter: brightness(1); }
-  100% { transform: scale(1.05); filter: brightness(1.25); }
-}
-
-.text-glow-amber {
-  color: #ff9800;
-  text-shadow: 0 0 12px rgba(255, 152, 0, 0.4);
-}
-
-.text-cyan {
-  color: var(--accent-cyan);
-  text-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
-}
-
-.status-live {
-  color: var(--accent-cyan);
-  text-shadow: 0 0 14px rgba(56, 189, 248, 0.55);
-  letter-spacing: 0.05em;
-  font-size: 1.05rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.status-live::before {
-  content: '';
+.step-badge {
   display: inline-block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent-cyan);
-  box-shadow: 0 0 8px var(--accent-cyan);
-  animation: pulse-blue-status 2s infinite ease-in-out;
-}
-
-@keyframes pulse-blue-status {
-  0% { transform: scale(0.85); opacity: 0.5; }
-  50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 14px var(--accent-cyan); }
-  100% { transform: scale(0.85); opacity: 0.5; }
-}
-
-/* Sci-Fi Telemetry Matrix Glyph Decoding Animation */
-.telemetry-scrambling {
-  color: var(--accent-cyan) !important;
-  text-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 20px rgba(56, 189, 248, 0.35) !important;
-  opacity: 0.92;
-  transition: none !important;
-}
-
-.telemetry-settled {
-  animation: telemetry-lock-flash 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes telemetry-lock-flash {
-  0% {
-    text-shadow: 0 0 16px rgba(56, 189, 248, 0.9);
-    filter: brightness(1.3);
-  }
-  100% {
-    text-shadow: none;
-    filter: brightness(1);
-  }
-}
-
-/* 4. SLIDE-OUT MISSION CONTROL DRAWER */
-.nasa-drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 440px;
-  background: var(--bg-glass-heavy);
-  backdrop-filter: blur(28px);
-  border-left: 1px solid var(--border-hairline);
-  z-index: 100;
-  box-shadow: -15px 0 50px rgba(0, 0, 0, 0.85);
-  transition: transform 0.4s var(--ease-nasa);
-  transform: translateX(0);
-}
-
-.nasa-drawer.hidden {
-  transform: translateX(100%);
-  pointer-events: none;
-}
-
-.drawer-inner {
-  height: 100%;
-  overflow-y: auto;
-  padding: 1.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.6rem;
-}
-
-.drawer-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--border-hairline);
-  padding-bottom: 1rem;
-}
-
-.drawer-title {
-  font-size: 0.78rem;
-  letter-spacing: 0.2em;
-  color: var(--accent-cyan);
-  font-weight: 600;
-}
-
-.drawer-close-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-dim);
-  font-size: 1.5rem;
-  cursor: pointer;
-  line-height: 1;
-  transition: color 0.2s;
-}
-
-.drawer-close-btn:hover {
-  color: #fff;
-}
-
-.drawer-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  padding-bottom: 1.4rem;
-}
-
-.section-label {
+  align-self: flex-start;
+  font-family: var(--font-mono);
   font-size: 0.68rem;
-  letter-spacing: 0.16em;
-  color: var(--text-muted);
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.06em;
 }
 
-.nasa-select {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid var(--border-hairline);
-  color: var(--text-primary);
+.control-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.select-wrapper {
+  position: relative;
+}
+
+.form-select, .form-input {
+  width: 100%;
+  background: rgba(10, 16, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
   padding: 0.55rem 0.85rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  outline: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 0.84rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.nasa-select:focus {
-  border-color: var(--accent-cyan);
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+.form-select:hover, .form-input:hover {
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
-.custom-coord-row {
+.form-select:focus, .form-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+}
+
+/* Metric Buttons Group (Step 2) */
+.metric-button-group {
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.custom-coord-row.hidden {
-  display: none;
-}
-
-.coord-input {
-  flex: 1;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid var(--border-hairline);
-  color: #fff;
-  padding: 0.45rem 0.65rem;
-  border-radius: 4px;
-  font-size: 0.78rem;
-}
-
-.nasa-btn, .nasa-btn-primary {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--border-hairline);
-  color: #fff;
-  padding: 0.45rem 0.85rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.nasa-btn-primary {
-  background: linear-gradient(135deg, #0284c7, #2563eb);
-  border: none;
-}
-
-.nasa-btn-primary:hover {
-  box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
-}
-
-.metric-switch-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.4rem;
-  background: rgba(15, 23, 42, 0.6);
-  padding: 3px;
-  border-radius: 6px;
-  border: 1px solid var(--border-hairline);
 }
 
 .metric-pill {
-  background: transparent;
-  border: none;
-  color: var(--text-dim);
-  padding: 0.4rem 0.2rem;
-  border-radius: 4px;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.metric-pill.active {
-  background: rgba(56, 189, 248, 0.18);
-  color: var(--accent-cyan);
-  border: 1px solid rgba(56, 189, 248, 0.4);
-  font-weight: 600;
-}
-
-.year-action-row {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.year-action-row select {
   flex: 1;
-}
-
-.sound-control-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
-}
-
-.control-pair {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.sub-label {
-  font-size: 0.62rem;
-  letter-spacing: 0.12em;
-  color: var(--text-muted);
-}
-
-/* Custom Toggle */
-.custom-toggle-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  cursor: pointer;
-  user-select: none;
-}
-
-.custom-toggle-label input {
-  display: none;
-}
-
-.toggle-track {
-  width: 28px;
-  height: 16px;
-  background-color: rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  position: relative;
-  transition: background-color 0.2s;
-}
-
-.toggle-track::after {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background-color: #fff;
-  transition: transform 0.2s;
-}
-
-.custom-toggle-label input:checked + .toggle-track {
-  background-color: var(--accent-cyan);
-}
-
-.custom-toggle-label input:checked + .toggle-track::after {
-  transform: translateX(12px);
-}
-
-.toggle-text {
-  font-size: 0.75rem;
-  color: var(--text-primary);
-}
-
-.volume-slider-row {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.nasa-slider {
-  flex: 1;
-  accent-color: var(--accent-cyan);
-  cursor: pointer;
-}
-
-.slider-val {
-  font-size: 0.72rem;
-  color: var(--text-dim);
-  width: 45px;
-  text-align: right;
-}
-
-/* Analysis Section */
-.section-header-split {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.ai-brief-trigger {
-  background: linear-gradient(135deg, #7c3aed, #4f46e5);
-  border: none;
-  color: #ffffff;
-  padding: 0.25rem 0.65rem;
-  border-radius: 999px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.ai-brief-trigger:hover {
-  box-shadow: 0 0 12px rgba(124, 58, 237, 0.6);
-}
-
-.narrative-body {
-  font-size: 0.78rem;
-  line-height: 1.6;
-  color: var(--text-dim);
-}
-
-.ai-analysis-box {
-  background: rgba(30, 27, 75, 0.45);
-  border: 1px solid rgba(139, 92, 246, 0.35);
-  border-radius: 6px;
-  padding: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-top: 0.4rem;
-}
-
-.ai-analysis-box.hidden {
-  display: none;
-}
-
-.ai-engine-tag {
-  font-size: 0.6rem;
-  letter-spacing: 0.15em;
-  color: #c084fc;
-}
-
-.ai-brief-body {
-  font-size: 0.75rem;
-  line-height: 1.5;
-  color: #f3f4f6;
-}
-
-/* 5. SATELLITE WORLD MAP MODAL */
-.map-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(14px);
-  z-index: 200;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
-}
-
-.map-modal-backdrop.hidden {
-  display: none;
-}
-
-.map-modal-window {
-  width: 900px;
-  max-width: 100%;
-  background: #090d16;
-  border: 1px solid var(--border-hairline);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9);
-}
-
-.map-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.85rem 1.25rem;
-  border-bottom: 1px solid var(--border-hairline);
-  font-size: 0.8rem;
-  letter-spacing: 0.15em;
-}
-
-.leaflet-map-frame {
-  width: 100%;
-  height: 380px;
-}
-
-.map-modal-footer {
-  padding: 0.65rem 1.25rem;
-  font-size: 0.72rem;
-  color: var(--text-dim);
-  border-top: 1px solid var(--border-hairline);
-}
-
-/* Helpers */
-/* --- EIC Visual Frame Sonifier & Universal Accessibility Suite (WCAG 2.2 AAA) --- */
-
-/* Segmented View Mode Switcher (Top Navigation) */
-.view-mode-toggle {
-  display: flex;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 20px;
-  padding: 2px;
-  margin-left: 1.25rem;
-}
-
-.mode-tab-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  background: transparent;
-  border: 1px solid transparent;
-  color: rgba(255, 255, 255, 0.65);
-  font-size: 0.72rem;
+  gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--color-text-muted);
+  padding: 0.55rem 0.65rem;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  padding: 0.28rem 0.75rem;
-  border-radius: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.mode-tab-btn:hover {
+.metric-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.metric-pill.active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+}
+
+.custom-coords-bar {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.small-btn, .refresh-btn {
   background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.mode-tab-btn.active {
-  background: rgba(56, 189, 248, 0.22);
-  color: #38bdf8;
-  border-color: rgba(56, 189, 248, 0.45);
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+.small-btn:hover, .refresh-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
-.voice-btn.active {
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.25);
-  border-color: #38bdf8;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
-}
-
-/* Universal Hidden Utility (Guarantees zero bleed-through) */
-.hidden {
-  display: none !important;
-}
-
-/* EIC Scanner Stage Viewport */
-.eic-scanner-viewport {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+/* ==========================================================================
+   PLAYER CARD & TIMELINE CHART
+   ========================================================================== */
+.player-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem 1rem;
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.45);
   display: flex;
   flex-direction: column;
-  padding: 0.75rem 2rem 5.5rem;
-  z-index: 6;
-  pointer-events: auto;
-  animation: fadeIn 0.3s ease-out;
+  gap: 1rem;
+}
+
+/* Transport Bar */
+.transport-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.icon-control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border-radius: 50%;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-control-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* Big Play Button */
+.main-play-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: linear-gradient(135deg, #ff7043, #ea580c);
+  border: none;
+  color: #ffffff;
+  padding: 0.65rem 1.75rem;
+  border-radius: var(--radius-full);
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(234, 88, 12, 0.45);
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.main-play-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(234, 88, 12, 0.65);
+}
+
+.main-play-btn.playing {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45);
+}
+
+.play-icon-shape {
+  font-size: 1.05rem;
+}
+
+.sub-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 0.35rem;
+}
+
+.tempo-control, .sound-mood-control, .volume-control {
+  display: flex;
+  align-items: center;
+}
+
+.speed-select, .mood-select {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
+}
+
+.volume-slider {
+  width: 90px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.volume-value {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin-left: 0.4rem;
+  min-width: 42px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.checkbox-label input {
+  accent-color: var(--color-primary);
+}
+
+/* Chart Canvas Viewport */
+.chart-viewport {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  background: rgba(5, 8, 16, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+  overflow: hidden;
+}
+
+.chart-viewport canvas#climateChart {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  cursor: crosshair;
+}
+
+/* Active Location Banner */
+.active-location-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  padding: 0.35rem 0.25rem;
+}
+
+.loc-pin {
+  font-size: 0.9rem;
+}
+
+.loc-name {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.loc-divider {
+  color: var(--color-text-dim);
+}
+
+.thermal-legend {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.74rem;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.2rem;
+}
+
+.legend-dot.red { background: #ef4444; }
+.legend-dot.green { background: #10b981; }
+.legend-dot.blue { background: #38bdf8; }
+
+/* ==========================================================================
+   "WHAT YOU ARE HEARING" SIMPLE EXPLAINER CARD
+   ========================================================================== */
+.explainer-card {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 1.5rem;
+}
+
+.explainer-heading {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.85rem;
+}
+
+.explainer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.explainer-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+}
+
+.item-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.item-text h3 {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.2rem;
+}
+
+.item-text p {
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   TELEMETRY STATUS DECK (5 CARDS)
+   ========================================================================== */
+.telemetry-deck {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+
+.telemetry-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.card-caption {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--color-text-dim);
+  letter-spacing: 0.05em;
+}
+
+.card-metric {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.card-sub {
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+}
+
+.text-solar { color: var(--color-accent) !important; }
+.text-cyan { color: var(--color-primary) !important; }
+.text-emerald { color: var(--color-success) !important; }
+
+/* AI Brief Strip */
+.ai-brief-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ai-btn {
+  align-self: flex-start;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.2));
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #ffffff;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ai-btn:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.35), rgba(129, 140, 248, 0.35));
+  border-color: var(--color-primary);
+}
+
+.ai-box {
+  background: rgba(10, 16, 28, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+}
+
+.ai-box-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+}
+
+.ai-tag { color: var(--color-primary); font-weight: 700; }
+.source-tag { color: var(--color-text-dim); }
+.ai-body { font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; }
+
+/* ==========================================================================
+   MODE 2: EIC SATELLITE SCANNER VIEWPORT
+   ========================================================================== */
+.eic-scanner-viewport {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  animation: fadeIn 0.25s ease-out;
 }
 
 .eic-scanner-viewport.hidden {
   display: none !important;
 }
 
-.eic-frame-header-controls {
+.eic-banner-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.6rem;
-  background: rgba(8, 12, 22, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  padding: 0.5rem 1.25rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.eic-title {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+}
+
+.eic-desc {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
 }
 
 .eic-dataset-selector-group {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  font-size: 0.78rem;
-  color: #94a3b8;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.eic-label {
-  color: #38bdf8;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-}
-
-.eic-upload-btn {
+.upload-btn {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #ffffff;
-  padding: 0.3rem 0.65rem;
-  border-radius: 4px;
-  font-size: 0.72rem;
+  padding: 0.55rem 0.95rem;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
 }
 
-.eic-upload-btn:hover {
+.upload-btn:hover {
   background: rgba(56, 189, 248, 0.2);
-  border-color: #38bdf8;
-  color: #38bdf8;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .eic-live-readout {
   display: flex;
-  gap: 0.6rem;
-  font-size: 0.78rem;
   align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
 }
 
-.readout-label {
-  color: #64748b;
+.scanner-indicator {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.coord-tag {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.chord-tag {
+  color: var(--color-accent);
   font-weight: 600;
 }
 
 .eic-canvas-frame {
-  flex: 1;
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(4, 7, 14, 0.95);
+  height: 480px;
+  background: #02040a;
   border: 1px solid rgba(56, 189, 248, 0.3);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
   position: relative;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 24px rgba(56, 189, 248, 0.12);
 }
 
 .eic-canvas-frame canvas#eicScannerCanvas {
@@ -1248,8 +840,10 @@ body.nasa-theme {
   display: block;
 }
 
-/* Accessibility Modal & Keyboard Guide (WCAG 2.2 AAA) */
-.nasa-modal-backdrop {
+/* ==========================================================================
+   MODALS (ACCESSIBILITY & MAP)
+   ========================================================================== */
+.nasa-modal-backdrop, .map-modal-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(2, 4, 10, 0.85);
@@ -1262,19 +856,24 @@ body.nasa-theme {
   animation: fadeIn 0.2s ease-out;
 }
 
-.nasa-modal-backdrop.hidden {
+.nasa-modal-backdrop.hidden, .map-modal-backdrop.hidden {
   display: none !important;
 }
 
-.nasa-modal-card {
-  background: rgba(10, 16, 28, 0.96);
+.nasa-modal-card, .map-modal-card {
+  background: rgba(15, 23, 42, 0.98);
   border: 1px solid rgba(56, 189, 248, 0.35);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   width: 90%;
   max-width: 620px;
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(56, 189, 248, 0.2);
   padding: 1.5rem;
   color: #ffffff;
+}
+
+.map-modal-card {
+  max-width: 850px;
+  padding: 1.25rem;
 }
 
 .modal-header {
@@ -1287,22 +886,21 @@ body.nasa-theme {
 }
 
 .modal-title {
+  font-family: var(--font-heading);
   font-size: 0.95rem;
-  color: #38bdf8;
-  letter-spacing: 0.08em;
+  color: var(--color-primary);
   font-weight: 700;
-  margin: 0;
 }
 
 .close-modal-btn {
   background: transparent;
   border: none;
-  color: #94a3b8;
-  font-size: 1.2rem;
+  color: var(--color-text-muted);
+  font-size: 1.25rem;
   cursor: pointer;
   line-height: 1;
   padding: 0.2rem 0.5rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   transition: all 0.2s;
 }
 
@@ -1316,7 +914,7 @@ body.nasa-theme {
   grid-template-columns: 1fr 1fr;
   gap: 0.65rem 1.25rem;
   margin: 1rem 0;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
 }
 
 .shortcut-item {
@@ -1330,22 +928,36 @@ body.nasa-theme {
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 4px;
-  padding: 0.18rem 0.45rem;
-  color: #38bdf8;
-  font-size: 0.72rem;
+  padding: 0.2rem 0.5rem;
+  color: var(--color-primary);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
   font-weight: 700;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
 }
 
 .wcag-compliance-badge {
   margin-top: 1.25rem;
-  padding: 0.6rem;
+  padding: 0.65rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 0.68rem;
-  color: #34d399;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--color-success);
   text-align: center;
-  letter-spacing: 0.06em;
   font-weight: 600;
+}
+
+.leaflet-map-frame {
+  width: 100%;
+  height: 420px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.map-modal-footer {
+  margin-top: 0.75rem;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  text-align: center;
 }
 
 /* Screen-Reader Invisible Live Container */
@@ -1361,49 +973,31 @@ body.nasa-theme {
   border: 0;
 }
 
-/* High-Visibility Focus Outline for Keyboard Users (WCAG 2.2 AAA) */
+/* Keyboard Focus Ring (WCAG 2.2 AAA) */
 body.using-keyboard *:focus {
-  outline: 2px solid #38bdf8 !important;
+  outline: 2px solid var(--color-primary) !important;
   outline-offset: 3px !important;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5) !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.6) !important;
 }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.mt-2 { margin-top: 0.5rem; }
-.mt-3 { margin-top: 0.75rem; }
 
-/* Responsive adjustments */
-@media (max-width: 992px) {
-  .nasa-bottom-telemetry-hud {
-    grid-template-columns: repeat(3, 1fr);
-    row-gap: 1rem;
-  }
-  .telemetry-col:nth-child(4),
-  .telemetry-col:nth-child(5) {
-    border-left: none;
-    padding-left: 0;
-  }
-  .reticle-telemetry-hud {
-    right: 5%;
-    top: 12%;
-  }
+/* Responsive Breakpoints */
+@media (max-width: 1024px) {
+  .setup-card { grid-template-columns: 1fr 1fr; }
+  .setup-col-year { grid-column: span 2; }
+  .explainer-grid { grid-template-columns: 1fr; }
+  .telemetry-deck { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (max-width: 680px) {
-  .nasa-top-bar {
-    padding: 1rem;
-  }
-  .mission-title-group {
-    display: none;
-  }
-  .nasa-bottom-telemetry-hud {
-    grid-template-columns: 1fr 1fr;
-    padding: 1rem;
-  }
-  .nasa-drawer {
-    width: 100%;
-  }
+@media (max-width: 768px) {
+  .app-navbar { flex-direction: column; gap: 0.75rem; align-items: stretch; }
+  .setup-card { grid-template-columns: 1fr; }
+  .setup-col-year { grid-column: span 1; }
+  .metric-button-group { flex-direction: column; }
+  .telemetry-deck { grid-template-columns: 1fr; }
+  .shortcut-grid { grid-template-columns: 1fr; }
 }
