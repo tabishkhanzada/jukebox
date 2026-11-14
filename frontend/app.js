@@ -368,8 +368,9 @@ class EarthJukeboxApp {
       this.sonifier.pause();
     });
 
-    this.dom.restartBtn.addEventListener("click", () => {
+    this.dom.restartBtn.addEventListener("click", async () => {
       this.sonifier.stop();
+      await this.sonifier.play();
     });
 
     // Tempo Speed Selector

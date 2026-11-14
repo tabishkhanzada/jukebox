@@ -912,25 +912,39 @@ class EarthSonifier {
     let activeRainInfo = null;
 
     // Dynamic anti-clipping note duration: note releases cleanly before the next step
-    const durationSeconds = Math.max(0.04, Math.min(0.24, (stepMs / 1000) * 0.85));
+    const durationSeconds = Math.max(0.06, Math.min(0.28, (stepMs / 1000) * 0.90));
 
     try {
       const now = Tone.now();
 
       if (dataType === "temperature") {
-        // Authentic 3-Zone Thermal Sonification Engine
-        const noteInfo = this.categoryValueToNote(rawVal);
-        activeCat = noteInfo.category;
+        // Continuous Harmonious 1-Year Musical Sonification
+        const noteInfo = this.valueToNote(normVal);
+        activeCat = this.getTemperatureCategory(rawVal);
         playedNote = noteInfo.note;
         playedFreq = Math.round(noteInfo.freq);
+        const velocity = 0.55 + normVal * 0.40;
 
-        // Fail-safe direct hardware Web Audio chime output (100% audible on all browsers)
-        if (this.nativeAudio && playedFreq > 10) {
-          const directVel = activeCat.key === "COLD" ? 0.70 : (activeCat.key === "MODERATE" ? 0.78 : 0.88);
-          this.nativeAudio.playNote(playedFreq, activeCat.key, durationSeconds * 1.5, directVel);
+        // 1. Primary Melody Synthesis (Space Synth / Chimes / Piano / Pad / Marimba)
+        if (this.melodySynth) {
+          try {
+            this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, now, velocity);
+          } catch (_) {}
         }
 
-        // 1. Boundary Transition Audio Flourish: Detect macro thermal shifts
+        // 2. Layer authentic acoustic chimes sampler if loaded
+        if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
+          try {
+            this.sampler.triggerAttackRelease(playedNote, durationSeconds * 1.15, now, velocity);
+          } catch (_) {}
+        }
+
+        // 3. Direct hardware Web Audio engine (Fail-safe, 100% audible on all browsers)
+        if (this.nativeAudio && playedFreq > 10) {
+          this.nativeAudio.playNote(playedFreq, activeCat.key, durationSeconds * 1.4, velocity);
+        }
+
+        // Category boundary transition flourish
         if (this.lastCategory && this.lastCategory !== activeCat.key) {
           transitionType = `${this.lastCategory}_TO_${activeCat.key}`;
           if (this.transitionSynth) {
@@ -950,75 +964,18 @@ class EarthSonifier {
         this.lastCategory = activeCat.key;
         this.activeCategory = activeCat;
 
-        // 2. Category-Specific Acoustic Profiling
-        if (activeCat.key === "COLD") {
-          // SARDI (Cold Zone <= 20°C): Deep, frosted, grounded acoustic chime + sub-bass
-          const coldVel = 0.65 + Math.min(0.20, noteInfo.noteIndex * 0.04);
-          let noteSounded = false;
-          if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
-            try {
-              this.sampler.triggerAttackRelease(playedNote, durationSeconds * 1.25, now, coldVel);
-              noteSounded = true;
-            } catch (_) {}
-          }
-          if (!noteSounded && this.melodySynth) {
-            try {
-              this.melodySynth.triggerAttackRelease(playedNote, durationSeconds * 1.25, now, coldVel);
-            } catch (_) {}
-          }
+        // Subtle sub-bass anchor for cold days
+        if (activeCat.key === "COLD" && this.coldSubSynth) {
+          try {
+            this.coldSubSynth.triggerAttackRelease("C2", 0.22, now, 0.40);
+          } catch (_) {}
+        }
 
-          // Subtle frosty sub-bass body anchor
-          if (this.coldSubSynth) {
-            try {
-              const subPitch = noteInfo.noteIndex <= 1 ? "C2" : "E2";
-              this.coldSubSynth.triggerAttackRelease(subPitch, 0.25, now, 0.45);
-            } catch (_) {}
-          }
-        } else if (activeCat.key === "MODERATE") {
-          // THEEK (Moderate Zone 21-26°C): Melodious, pleasant, comfortable warm crystal chime
-          const modVel = 0.75 + Math.min(0.20, noteInfo.noteIndex * 0.04);
-          let noteSounded = false;
-          if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
-            try {
-              this.sampler.triggerAttackRelease(playedNote, durationSeconds, now, modVel);
-              noteSounded = true;
-            } catch (_) {}
-          }
-          if (!noteSounded && this.melodySynth) {
-            try {
-              this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, now, modVel);
-            } catch (_) {}
-          }
-        } else {
-          // GARMI (Hot Zone > 26°C): High register, bright, energetic solar chimes + heatwave sizzle
-          const hotVel = 0.85 + Math.min(0.15, noteInfo.noteIndex * 0.03);
-          let noteSounded = false;
-          if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
-            try {
-              this.sampler.triggerAttackRelease(playedNote, durationSeconds * 0.85, now, hotVel);
-              noteSounded = true;
-            } catch (_) {}
-          }
-          if (!noteSounded && this.melodySynth) {
-            try {
-              this.melodySynth.triggerAttackRelease(playedNote, durationSeconds * 0.85, now, hotVel);
-            } catch (_) {}
-          }
-
-          // Solar heat shimmer exciter
-          if (this.heatShimmerSynth) {
-            try {
-              this.heatShimmerSynth.triggerAttackRelease(playedNote, 0.14, now, 0.40);
-            } catch (_) {}
-          }
-
-          // Extreme heatwave anomaly sparkle (> 33°C)
-          if (activeCat.isExtreme && this.melodySynth) {
-            try {
-              const sparkleNote = rawVal >= 36.0 ? "E6" : "C6";
-              this.melodySynth.triggerAttackRelease(sparkleNote, 0.10, now + 0.03, 0.35);
-            } catch (_) {}
-          }
+        // Solar shimmer for hot days
+        if (activeCat.key === "HOT" && this.heatShimmerSynth) {
+          try {
+            this.heatShimmerSynth.triggerAttackRelease(playedNote, 0.14, now, 0.35);
+          } catch (_) {}
         }
 
         // Dual-track accompaniment: If authentic rainfall data is active, layer real rain acoustics & changing rain notes
@@ -1093,10 +1050,11 @@ class EarthSonifier {
           activeRainInfo = this.getRainfallAcousticNotes(rawVal);
           playedNote = `${activeRainInfo.tier} [${rawVal.toFixed(1)}mm] • ${activeRainInfo.primaryNote}`;
           playedFreq = Math.round(Tone.Frequency(activeRainInfo.primaryNote).toFrequency());
+          const chimeVel = Math.min(0.95, 0.50 + (rawVal / 35.0) * 0.45);
 
           // Direct Hardware Web Audio rainfall acoustic chime
           if (this.nativeAudio && playedFreq > 10) {
-            this.nativeAudio.playRain(playedFreq, rawVal, durationSeconds * 1.4, 0.75);
+            this.nativeAudio.playRain(playedFreq, rawVal, durationSeconds * 1.4, chimeVel);
           }
 
           // Smoothly ramp the continuous rain sound & lowpass sweep
@@ -1113,7 +1071,6 @@ class EarthSonifier {
           }
 
           // Primary Musical Rain Note (FM Aqueous Chime & Sampler)
-          const chimeVel = Math.min(0.95, 0.50 + (rawVal / 35.0) * 0.45);
           let rainSounded = false;
           if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
             try {
@@ -1170,14 +1127,15 @@ class EarthSonifier {
         const noteInfo = this.valueToNote(normVal);
         playedNote = noteInfo.note;
         playedFreq = Math.round(noteInfo.freq);
+        const windVel = 0.5 + normVal * 0.45;
 
         if (this.nativeAudio && playedFreq > 10) {
-          this.nativeAudio.playNote(playedFreq, "MODERATE", durationSeconds * 1.2, 0.65);
+          this.nativeAudio.playNote(playedFreq, "MODERATE", durationSeconds * 1.2, windVel);
         }
 
         if (this.melodySynth) {
           try {
-            this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, now, 0.65);
+            this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, now, windVel);
           } catch (_) {}
         }
 
