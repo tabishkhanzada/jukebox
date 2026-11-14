@@ -541,15 +541,7 @@ body.nasa-theme {
 }
 
 .hero-chart-container canvas#climateChartOverlay {
-  position: absolute;
-  top: 0.35rem;
-  left: 1.25rem;
-  right: 1.25rem;
-  bottom: 0.25rem;
-  width: calc(100% - 2.5rem);
-  height: calc(100% - 0.6rem);
-  pointer-events: none;
-  z-index: 5;
+  display: none !important;
 }
 
 /* 3. BOTTOM TELEMETRY HUD BAR (EXACT MATCH TO REFERENCE PHOTO'S 5 COLUMNS - COMPACT) */
