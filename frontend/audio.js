@@ -121,37 +121,52 @@ class EarthSonifier {
     if (this.isInitialized) return;
 
     if (window.Tone) {
-      await Tone.start();
-      console.log("Authentic Web Audio Context initialized.");
+      try {
+        await Tone.start();
+        if (Tone.context && Tone.context.state !== "running") {
+          await Tone.context.resume();
+        }
+      } catch (err) {
+        console.warn("Tone.start activation warning:", err);
+      }
+      console.log("Authentic Web Audio Context initialized, state:", Tone.context ? Tone.context.state : "unknown");
+
+      // 1. Master Output Architecture:
+      // Master Bus (Gain 1.0) -> Master Limiter (-1.0 dB) -> Destination (Hardware Speakers) & Recorder
+      this.masterBus = new Tone.Gain(1.0);
+      this.limiter = new Tone.Limiter(-1.0);
+      this.masterBus.connect(this.limiter);
+      this.limiter.toDestination();
+
+      // Ensure Master Destination is unmuted and audible
+      try {
+        Tone.getDestination().mute = false;
+        Tone.getDestination().volume.value = 0;
+      } catch (_) {}
 
       // Setup MediaStreamDestination for authentic audio recording & download
       try {
         const rawCtx = Tone.getContext().rawContext;
         this.mediaStreamDest = rawCtx.createMediaStreamDestination();
+        if (this.mediaStreamDest) {
+          this.limiter.connect(this.mediaStreamDest);
+        }
       } catch (e) {
         console.warn("MediaStreamDestination not supported:", e);
       }
 
-      // Master FX chain: Reverb + PingPong Delay -> Limiter -> Destination & Recorder
-      this.limiter = new Tone.Limiter(-1.5);
-      this.limiter.toDestination();
-
-      if (this.mediaStreamDest) {
-        Tone.getDestination().connect(this.mediaStreamDest);
-      }
-      
-      this.reverb = new Tone.Reverb({
-        decay: 2.8,
-        preDelay: 0.04,
-        wet: 0.25
-      }).connect(this.limiter);
-      await this.reverb.generate();
+      // Master FX chain: Instantaneous, zero-hang Freeverb & FeedbackDelay connected into Master Bus
+      this.reverb = new Tone.Freeverb({
+        roomSize: 0.65,
+        dampening: 3200,
+        wet: 0.22
+      }).connect(this.masterBus);
 
       this.delay = new Tone.FeedbackDelay({
         delayTime: "16n",
-        feedback: 0.14,
-        wet: 0.14
-      }).connect(this.reverb);
+        feedback: 0.15,
+        wet: 0.16
+      }).connect(this.masterBus);
 
       // 1. Authentic Acoustic Chime Sampler (Sampled directly from user reference audio)
       this.isSamplerLoaded = false;
@@ -167,9 +182,15 @@ class EarthSonifier {
           onload: () => {
             console.log("Authentic Acoustic Chimes loaded from audio_samples.");
             this.isSamplerLoaded = true;
+          },
+          onerror: (err) => {
+            console.warn("Sampler load fallback to synth:", err);
+            this.isSamplerLoaded = false;
           }
-        }).connect(this.delay);
-        this.sampler.volume.value = -1;
+        });
+        this.sampler.connect(this.masterBus);
+        this.sampler.connect(this.delay);
+        this.sampler.volume.value = 0;
       } catch (err) {
         console.warn("Sampler initialization fallback:", err);
       }
@@ -190,7 +211,7 @@ class EarthSonifier {
         this.rainPlayerGain = new Tone.Gain(0);
         this.rainPlayer.connect(this.rainPlayerFilter);
         this.rainPlayerFilter.connect(this.rainPlayerGain);
-        this.rainPlayerGain.connect(this.reverb);
+        this.rainPlayerGain.connect(this.masterBus);
       } catch (err) {
         console.warn("Rain player initialization fallback:", err);
       }
@@ -203,13 +224,13 @@ class EarthSonifier {
       this.coldFilter = new Tone.Filter(850, "lowpass");
       this.coldGain = new Tone.Gain(0.9);
       this.coldFilter.connect(this.coldGain);
-      this.coldGain.connect(this.reverb);
+      this.coldGain.connect(this.masterBus);
 
       this.coldSubSynth = new Tone.Synth({
         oscillator: { type: "sine" },
         envelope: { attack: 0.04, decay: 0.38, sustain: 0.05, release: 0.45 }
-      }).connect(this.limiter);
-      this.coldSubSynth.volume.value = -9;
+      }).connect(this.masterBus);
+      this.coldSubSynth.volume.value = -6;
 
       // B. Solar Heat Shimmer & High-Frequency Shimmer Exciter
       this.hotFilter = new Tone.Filter(3200, "highpass");
@@ -223,22 +244,24 @@ class EarthSonifier {
         oscillator: { type: "sine" },
         modulation: { type: "triangle" },
         envelope: { attack: 0.003, decay: 0.22, sustain: 0.02, release: 0.25 }
-      }).connect(this.delay);
-      this.heatShimmerSynth.volume.value = -9.5;
+      }).connect(this.masterBus);
+      this.heatShimmerSynth.connect(this.delay);
+      this.heatShimmerSynth.volume.value = -7;
 
       // C. Distinct Category Boundary Transition Flourish Synth
       this.transitionSynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: "triangle" },
         envelope: { attack: 0.01, decay: 0.35, sustain: 0.08, release: 0.4 }
-      }).connect(this.reverb);
-      this.transitionSynth.volume.value = -6;
+      }).connect(this.masterBus);
+      this.transitionSynth.connect(this.reverb);
+      this.transitionSynth.volume.value = -4;
 
       // Comparative Synthesizer for Dual-City side-by-side sonification
       this.compareSynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: "sine" },
         envelope: { attack: 0.02, decay: 0.25, sustain: 0.1, release: 0.3 }
-      }).connect(this.reverb);
-      this.compareSynth.volume.value = -3.5;
+      }).connect(this.masterBus);
+      this.compareSynth.volume.value = -2;
 
       // 2. Realistic Procedural Rain Acoustic Architecture:
       // A. Ambient Continuous Rain Sheet (Filtered Pink Noise with dynamic lowpass sweep)
@@ -250,7 +273,7 @@ class EarthSonifier {
       this.rainNoise.connect(this.rainHighPass);
       this.rainHighPass.connect(this.rainLowPass);
       this.rainLowPass.connect(this.rainGain);
-      this.rainGain.connect(this.reverb);
+      this.rainGain.connect(this.masterBus);
 
       // B. Micro-Droplet Granular Resonator ("Pitter-Patter" water droplets)
       this.dropletSynth = new Tone.MembraneSynth({
@@ -265,10 +288,10 @@ class EarthSonifier {
         }
       });
       this.dropletFilter = new Tone.Filter(2600, "bandpass");
-      this.dropletGain = new Tone.Gain(0.40);
+      this.dropletGain = new Tone.Gain(0.55);
       this.dropletSynth.connect(this.dropletFilter);
       this.dropletFilter.connect(this.dropletGain);
-      this.dropletGain.connect(this.reverb);
+      this.dropletGain.connect(this.masterBus);
 
       // C. Deep Rolling Thunder Synth (for deluge storm events > 20 mm/day)
       this.thunderSynth = new Tone.MembraneSynth({
@@ -281,8 +304,8 @@ class EarthSonifier {
           sustain: 0.04,
           release: 1.2
         }
-      }).connect(this.limiter);
-      this.thunderSynth.volume.value = -3;
+      }).connect(this.masterBus);
+      this.thunderSynth.volume.value = -2;
 
       // D. Liquid Crystal Water Chime (Expressive FM acoustic water chime whose notes change with rain intensity)
       this.waterChimeSynth = new Tone.PolySynth(Tone.FMSynth, {
@@ -292,8 +315,9 @@ class EarthSonifier {
         modulation: { type: "triangle" },
         envelope: { attack: 0.004, decay: 0.38, sustain: 0.03, release: 0.35 },
         modulationEnvelope: { attack: 0.002, decay: 0.18, sustain: 0.0, release: 0.15 }
-      }).connect(this.delay);
-      this.waterChimeSynth.volume.value = -3.5;
+      }).connect(this.masterBus);
+      this.waterChimeSynth.connect(this.delay);
+      this.waterChimeSynth.volume.value = -2;
 
       // 3. Realistic Procedural Wind Resonator (Resonant Bandpass Noise)
       this.windNoise = new Tone.Noise("pink");
@@ -305,7 +329,7 @@ class EarthSonifier {
       this.windGain = new Tone.Gain(0);
       this.windNoise.connect(this.windFilter);
       this.windFilter.connect(this.windGain);
-      this.windGain.connect(this.reverb);
+      this.windGain.connect(this.masterBus);
 
       // 4. Calendar Marker: Sub-bass for month starts
       this.bassDrone = new Tone.Synth({
@@ -316,8 +340,8 @@ class EarthSonifier {
           sustain: 0.1,
           release: 0.6
         }
-      }).connect(this.limiter);
-      this.bassDrone.volume.value = -8;
+      }).connect(this.masterBus);
+      this.bassDrone.volume.value = -6;
 
       this.isInitialized = true;
     } else {
@@ -330,7 +354,9 @@ class EarthSonifier {
    */
   buildMelodySynth(instrumentKey) {
     if (this.melodySynth) {
-      this.melodySynth.dispose();
+      try {
+        this.melodySynth.dispose();
+      } catch (_) {}
     }
 
     this.currentInstrumentKey = instrumentKey;
@@ -344,8 +370,8 @@ class EarthSonifier {
         modulation: { type: "triangle" },
         envelope: { attack: 0.005, decay: 0.35, sustain: 0.08, release: 0.45 },
         modulationEnvelope: { attack: 0.002, decay: 0.2, sustain: 0.0, release: 0.2 }
-      }).connect(this.delay);
-      this.melodySynth.volume.value = -3;
+      });
+      this.melodySynth.volume.value = -2;
     } else if (instrumentKey === "crystal_celesta" || instrumentKey === "space_synth") {
       // 1. Crystal Celestial Chimes: Ethereal FM chime with shimmering high crystal overtones
       this.melodySynth = new Tone.PolySynth(Tone.FMSynth, {
@@ -355,37 +381,51 @@ class EarthSonifier {
         modulation: { type: "triangle" },
         envelope: { attack: 0.005, decay: 0.35, sustain: 0.08, release: 0.45 },
         modulationEnvelope: { attack: 0.002, decay: 0.2, sustain: 0.0, release: 0.2 }
-      }).connect(this.delay);
-      this.melodySynth.volume.value = -4;
+      });
+      this.melodySynth.volume.value = -2;
     } else if (instrumentKey === "acoustic_piano") {
       // 2. Grand Ambient Piano / Harp: Warm acoustic triangle/sine hybrid with gentle attack & natural decay
       this.melodySynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: "triangle" },
         envelope: { attack: 0.005, decay: 0.45, sustain: 0.05, release: 0.4 }
-      }).connect(this.reverb);
-      this.melodySynth.volume.value = -2;
+      });
+      this.melodySynth.volume.value = -1;
     } else if (instrumentKey === "analog_warm_pad" || instrumentKey === "ambient_pad") {
       // 3. Cinematic Ambient Pad: Warm atmospheric dual-oscillator sweep
       this.melodySynth = new Tone.PolySynth(Tone.AMSynth, {
         harmonicity: 1.5,
         oscillator: { type: "sawtooth" },
         envelope: { attack: 0.06, decay: 0.45, sustain: 0.45, release: 0.65 }
-      }).connect(this.delay);
-      this.melodySynth.volume.value = -5;
+      });
+      this.melodySynth.volume.value = -3;
     } else if (instrumentKey === "organic_marimba" || instrumentKey === "marimba") {
       // 4. Acoustic Wooden Marimba / Kalimba: Snappy mallet strike with wooden resonance
       this.melodySynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: "sine" },
         envelope: { attack: 0.002, decay: 0.2, sustain: 0.0, release: 0.16 }
-      }).connect(this.reverb);
-      this.melodySynth.volume.value = -1.5;
+      });
+      this.melodySynth.volume.value = 0;
     } else {
       // Default: Resonant Hologram Synth
       this.melodySynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: "triangle8" },
         envelope: { attack: 0.015, decay: 0.22, sustain: 0.12, release: 0.25 }
-      }).connect(this.delay);
-      this.melodySynth.volume.value = -3;
+      });
+      this.melodySynth.volume.value = -2;
+    }
+
+    // Direct dry route to master bus + send to delay/reverb
+    if (this.masterBus) {
+      this.melodySynth.connect(this.masterBus);
+    } else if (this.limiter) {
+      this.melodySynth.connect(this.limiter);
+    } else {
+      this.melodySynth.toDestination();
+    }
+    if (this.delay) {
+      try {
+        this.melodySynth.connect(this.delay);
+      } catch (_) {}
     }
   }
 
@@ -621,7 +661,14 @@ class EarthSonifier {
       return;
     }
 
-    await this.initAudioContext();
+    try {
+      await this.initAudioContext();
+      if (window.Tone && Tone.context && Tone.context.state !== "running") {
+        await Tone.context.resume();
+      }
+    } catch (err) {
+      console.warn("Audio Context resumption warning:", err);
+    }
 
     // Start background noise generators safely
     if (this.rainNoise && this.rainNoise.state !== "started") {
@@ -697,6 +744,8 @@ class EarthSonifier {
     const durationSeconds = Math.max(0.04, Math.min(0.24, (stepMs / 1000) * 0.85));
 
     try {
+      const now = Tone.now();
+
       if (dataType === "temperature") {
         // Authentic 3-Zone Thermal Sonification Engine
         const noteInfo = this.categoryValueToNote(rawVal);
@@ -708,19 +757,17 @@ class EarthSonifier {
         if (this.lastCategory && this.lastCategory !== activeCat.key) {
           transitionType = `${this.lastCategory}_TO_${activeCat.key}`;
           if (this.transitionSynth) {
-            if (transitionType === "COLD_TO_MODERATE") {
-              // Spring thaw / warming chime flourish
-              this.transitionSynth.triggerAttackRelease(["E3", "A4"], 0.20);
-            } else if (transitionType === "MODERATE_TO_HOT") {
-              // Summer heatwave entry sizzle
-              this.transitionSynth.triggerAttackRelease(["A4", "E5"], 0.16);
-            } else if (transitionType === "HOT_TO_MODERATE") {
-              // Autumn cool-down chime
-              this.transitionSynth.triggerAttackRelease(["E5", "A4"], 0.20);
-            } else if (transitionType === "MODERATE_TO_COLD") {
-              // Winter freeze drop chime
-              this.transitionSynth.triggerAttackRelease(["G4", "C3"], 0.26);
-            }
+            try {
+              if (transitionType === "COLD_TO_MODERATE") {
+                this.transitionSynth.triggerAttackRelease(["E3", "A4"], 0.20, now);
+              } else if (transitionType === "MODERATE_TO_HOT") {
+                this.transitionSynth.triggerAttackRelease(["A4", "E5"], 0.16, now);
+              } else if (transitionType === "HOT_TO_MODERATE") {
+                this.transitionSynth.triggerAttackRelease(["E5", "A4"], 0.20, now);
+              } else if (transitionType === "MODERATE_TO_COLD") {
+                this.transitionSynth.triggerAttackRelease(["G4", "C3"], 0.26, now);
+              }
+            } catch (_) {}
           }
         }
         this.lastCategory = activeCat.key;
@@ -729,44 +776,71 @@ class EarthSonifier {
         // 2. Category-Specific Acoustic Profiling
         if (activeCat.key === "COLD") {
           // SARDI (Cold Zone <= 20°C): Deep, frosted, grounded acoustic chime + sub-bass
-          const coldVel = 0.50 + Math.min(0.20, noteInfo.noteIndex * 0.04);
+          const coldVel = 0.65 + Math.min(0.20, noteInfo.noteIndex * 0.04);
+          let noteSounded = false;
           if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
-            this.sampler.triggerAttackRelease(playedNote, durationSeconds * 1.25, undefined, coldVel);
-          } else {
-            this.melodySynth.triggerAttackRelease(playedNote, durationSeconds * 1.25, undefined, coldVel);
+            try {
+              this.sampler.triggerAttackRelease(playedNote, durationSeconds * 1.25, now, coldVel);
+              noteSounded = true;
+            } catch (_) {}
+          }
+          if (!noteSounded && this.melodySynth) {
+            try {
+              this.melodySynth.triggerAttackRelease(playedNote, durationSeconds * 1.25, now, coldVel);
+            } catch (_) {}
           }
 
           // Subtle frosty sub-bass body anchor
           if (this.coldSubSynth) {
-            const subPitch = noteInfo.noteIndex <= 1 ? "C2" : "E2";
-            this.coldSubSynth.triggerAttackRelease(subPitch, 0.25, undefined, 0.45);
+            try {
+              const subPitch = noteInfo.noteIndex <= 1 ? "C2" : "E2";
+              this.coldSubSynth.triggerAttackRelease(subPitch, 0.25, now, 0.45);
+            } catch (_) {}
           }
         } else if (activeCat.key === "MODERATE") {
           // THEEK (Moderate Zone 21-26°C): Melodious, pleasant, comfortable warm crystal chime
-          const modVel = 0.65 + Math.min(0.20, noteInfo.noteIndex * 0.04);
+          const modVel = 0.75 + Math.min(0.20, noteInfo.noteIndex * 0.04);
+          let noteSounded = false;
           if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
-            this.sampler.triggerAttackRelease(playedNote, durationSeconds, undefined, modVel);
-          } else {
-            this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, undefined, modVel);
+            try {
+              this.sampler.triggerAttackRelease(playedNote, durationSeconds, now, modVel);
+              noteSounded = true;
+            } catch (_) {}
+          }
+          if (!noteSounded && this.melodySynth) {
+            try {
+              this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, now, modVel);
+            } catch (_) {}
           }
         } else {
           // GARMI (Hot Zone > 26°C): High register, bright, energetic solar chimes + heatwave sizzle
-          const hotVel = 0.75 + Math.min(0.20, noteInfo.noteIndex * 0.035);
+          const hotVel = 0.85 + Math.min(0.15, noteInfo.noteIndex * 0.03);
+          let noteSounded = false;
           if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
-            this.sampler.triggerAttackRelease(playedNote, durationSeconds * 0.85, undefined, hotVel);
-          } else {
-            this.melodySynth.triggerAttackRelease(playedNote, durationSeconds * 0.85, undefined, hotVel);
+            try {
+              this.sampler.triggerAttackRelease(playedNote, durationSeconds * 0.85, now, hotVel);
+              noteSounded = true;
+            } catch (_) {}
+          }
+          if (!noteSounded && this.melodySynth) {
+            try {
+              this.melodySynth.triggerAttackRelease(playedNote, durationSeconds * 0.85, now, hotVel);
+            } catch (_) {}
           }
 
           // Solar heat shimmer exciter
           if (this.heatShimmerSynth) {
-            this.heatShimmerSynth.triggerAttackRelease(playedNote, 0.14, undefined, 0.40);
+            try {
+              this.heatShimmerSynth.triggerAttackRelease(playedNote, 0.14, now, 0.40);
+            } catch (_) {}
           }
 
           // Extreme heatwave anomaly sparkle (> 33°C)
           if (activeCat.isExtreme && this.melodySynth) {
-            const sparkleNote = rawVal >= 36.0 ? "E6" : "C6";
-            this.melodySynth.triggerAttackRelease(sparkleNote, 0.10, undefined, 0.35);
+            try {
+              const sparkleNote = rawVal >= 36.0 ? "E6" : "C6";
+              this.melodySynth.triggerAttackRelease(sparkleNote, 0.10, now + 0.03, 0.35);
+            } catch (_) {}
           }
         }
 
@@ -791,25 +865,30 @@ class EarthSonifier {
 
             // Musical rain water chime that ascends/descends with rainfall intensity!
             if (this.waterChimeSynth) {
-              const chimeVel = Math.min(0.85, 0.35 + (rainVal / 30.0) * 0.45);
-              this.waterChimeSynth.triggerAttackRelease(activeRainInfo.primaryNote, durationSeconds * 0.85, undefined, chimeVel);
+              try {
+                const chimeVel = Math.min(0.85, 0.35 + (rainVal / 30.0) * 0.45);
+                this.waterChimeSynth.triggerAttackRelease(activeRainInfo.primaryNote, durationSeconds * 0.85, now, chimeVel);
+              } catch (_) {}
             }
 
             // Micro-droplet notes that change with rain tier
-            const now = Tone.now();
             const drops = activeRainInfo.dropletPitches;
             for (let d = 0; d < activeRainInfo.dropCount; d++) {
               const timeOffset = d * (stepMs / 1000 / (activeRainInfo.dropCount + 1)) + (Math.random() * 0.012);
               const dropPitch = drops[d % drops.length];
               const dropVel = Math.min(0.85, 0.30 + (rainVal / 35.0) * 0.55);
               if (this.dropletSynth) {
-                this.dropletSynth.triggerAttackRelease(dropPitch, 0.02, now + timeOffset, dropVel);
+                try {
+                  this.dropletSynth.triggerAttackRelease(dropPitch, 0.02, now + timeOffset, dropVel);
+                } catch (_) {}
               }
             }
 
             // Distant rolling thunder if extreme storm (> 20 mm)
             if (activeRainInfo.isThunder && this.thunderSynth) {
-              this.thunderSynth.triggerAttackRelease(activeRainInfo.thunderPitch, 0.5, undefined, 0.45);
+              try {
+                this.thunderSynth.triggerAttackRelease(activeRainInfo.thunderPitch, 0.5, now, 0.45);
+              } catch (_) {}
             }
           } else {
             if (this.rainGain) this.rainGain.gain.rampTo(0, 0.08);
@@ -822,7 +901,9 @@ class EarthSonifier {
 
         // Soft calendar drone on 1st of month
         if (isFirstOfMonth && this.bassDrone) {
-          this.bassDrone.triggerAttackRelease("C2", "8n");
+          try {
+            this.bassDrone.triggerAttackRelease("C2", "8n", now);
+          } catch (_) {}
         }
       } else if (dataType === "rainfall") {
         // PURE PROCEDURAL & AUTHENTIC REAL RAIN ENGINE WITH NOTES CHANGING ON INCREASE/DECREASE
@@ -846,28 +927,38 @@ class EarthSonifier {
 
           // Primary Musical Rain Note (FM Aqueous Chime & Sampler)
           const chimeVel = Math.min(0.95, 0.50 + (rawVal / 35.0) * 0.45);
+          let rainSounded = false;
           if (this.currentInstrumentKey === "acoustic_chimes" && this.isSamplerLoaded && this.sampler) {
-            this.sampler.triggerAttackRelease(activeRainInfo.primaryNote, durationSeconds, undefined, chimeVel);
-          } else if (this.waterChimeSynth) {
-            this.waterChimeSynth.triggerAttackRelease(activeRainInfo.primaryNote, durationSeconds, undefined, chimeVel);
+            try {
+              this.sampler.triggerAttackRelease(activeRainInfo.primaryNote, durationSeconds, now, chimeVel);
+              rainSounded = true;
+            } catch (_) {}
+          }
+          if (!rainSounded && this.waterChimeSynth) {
+            try {
+              this.waterChimeSynth.triggerAttackRelease(activeRainInfo.primaryNote, durationSeconds, now, chimeVel);
+            } catch (_) {}
           }
 
           // Pitter-patter water droplet notes that ascend/descend with rain volume
-          const now = Tone.now();
           const drops = activeRainInfo.dropletPitches;
           for (let d = 0; d < activeRainInfo.dropCount; d++) {
             const timeOffset = d * (stepMs / 1000 / (activeRainInfo.dropCount + 1)) + (Math.random() * 0.015);
             const dropPitch = drops[d % drops.length];
             const dropVel = Math.min(0.9, 0.30 + (rawVal / 30.0) * 0.60);
             if (this.dropletSynth) {
-              this.dropletSynth.triggerAttackRelease(dropPitch, 0.02, now + timeOffset, dropVel);
+              try {
+                this.dropletSynth.triggerAttackRelease(dropPitch, 0.02, now + timeOffset, dropVel);
+              } catch (_) {}
             }
           }
 
           // Deep rolling thunder for heavy storm events (> 20mm)
           if (activeRainInfo.isThunder && this.thunderSynth) {
-            const thunderVel = Math.min(1.0, 0.45 + (rawVal / 80.0) * 0.55);
-            this.thunderSynth.triggerAttackRelease(activeRainInfo.thunderPitch, 0.65, undefined, thunderVel);
+            try {
+              const thunderVel = Math.min(1.0, 0.45 + (rawVal / 80.0) * 0.55);
+              this.thunderSynth.triggerAttackRelease(activeRainInfo.thunderPitch, 0.65, now, thunderVel);
+            } catch (_) {}
           }
         } else {
           // Dry day / Rest
@@ -878,7 +969,9 @@ class EarthSonifier {
         }
 
         if (isFirstOfMonth && this.bassDrone) {
-          this.bassDrone.triggerAttackRelease("G2", "8n");
+          try {
+            this.bassDrone.triggerAttackRelease("G2", "8n", now);
+          } catch (_) {}
         }
       } else if (dataType === "wind") {
         // Wind speed: Resonant airy velocity & howling wind filter sweep
@@ -886,7 +979,11 @@ class EarthSonifier {
         playedNote = noteInfo.note;
         playedFreq = Math.round(noteInfo.freq);
 
-        this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, undefined, 0.6);
+        if (this.melodySynth) {
+          try {
+            this.melodySynth.triggerAttackRelease(playedNote, durationSeconds, now, 0.65);
+          } catch (_) {}
+        }
 
         if (this.windFilter && this.windGain) {
           if (rawVal > 1.0) {
@@ -990,9 +1087,17 @@ class EarthSonifier {
   /**
    * Jump playhead to specific day index (0 to 365).
    */
-  seek(index) {
+  async seek(index) {
     if (!this.data || index < 0 || index >= this.data.dates.length) return;
     this.currentIndex = index;
+    if (!this.isInitialized) {
+      try {
+        await this.initAudioContext();
+        if (window.Tone && Tone.context && Tone.context.state !== "running") {
+          await Tone.context.resume();
+        }
+      } catch (_) {}
+    }
     const stepMs = Math.max(25, this.baseStepDurationMs / this.speedMultiplier);
     this.triggerStep(this.currentIndex, stepMs);
   }
@@ -1008,9 +1113,11 @@ class EarthSonifier {
    * Adjust master volume (-30 dB to +6 dB).
    */
   setMasterVolume(db) {
-    if (Tone.getDestination()) {
-      Tone.getDestination().volume.value = db;
-    }
+    try {
+      if (Tone.getDestination()) {
+        Tone.getDestination().volume.value = db;
+      }
+    } catch (_) {}
   }
 
   // --- AUDIO RECORDING & EXPORT (Web Audio MediaRecorder) ---

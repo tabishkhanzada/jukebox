@@ -256,6 +256,22 @@ class EarthJukeboxApp {
   }
 
   bindEvents() {
+    // 0. Chrome & Web Audio Autoplay Unlock on first user gesture
+    const unlockUserAudio = async () => {
+      if (window.Tone) {
+        try {
+          await Tone.start();
+          if (Tone.context && Tone.context.state !== "running") {
+            await Tone.context.resume();
+          }
+          console.log("Web Audio Context unlocked by user gesture.");
+        } catch (_) {}
+      }
+    };
+    window.addEventListener("pointerdown", unlockUserAudio, { once: true });
+    window.addEventListener("click", unlockUserAudio, { once: true });
+    window.addEventListener("keydown", unlockUserAudio, { once: true });
+
     // Drawer open / close triggers
     const toggleDrawer = () => {
       this.dom.controlsDrawer.classList.toggle("hidden");
@@ -326,11 +342,20 @@ class EarthJukeboxApp {
     });
 
     // Audio Transport Controls
-    this.dom.playBtn.addEventListener("click", () => {
+    this.dom.playBtn.addEventListener("click", async () => {
+      if (window.Tone) {
+        try {
+          await Tone.start();
+          if (Tone.context && Tone.context.state !== "running") {
+            await Tone.context.resume();
+          }
+        } catch (_) {}
+      }
+
       if (this.sonifier.isPlaying) {
         this.sonifier.pause();
       } else {
-        this.sonifier.play();
+        await this.sonifier.play();
       }
     });
 
