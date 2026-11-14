@@ -934,22 +934,53 @@ class EarthJukeboxApp {
     if (this.activeViewMode !== "scanner") return;
     const lonDeg = Math.round(step.progress * 360 - 180);
     const lonStr = lonDeg < 0 ? `${Math.abs(lonDeg)}°W` : `${lonDeg}°E`;
-
-    if (this.dom.eicInspectorCoords) {
-      this.dom.eicInspectorCoords.textContent = `${lonStr} (${Math.round(step.progress * 100)}%)`;
-    }
-
+    const density = (step.features && step.features.density !== undefined) ? step.features.density : 0;
+    const brightness = (step.features && step.features.brightness !== undefined) ? step.features.brightness : 0;
     const notes = step.notes || [];
     const noteStr = notes.length > 0 ? notes.join(" • ") : "Rest";
+
+    // Update Top Scanner Reticle Readout
+    if (this.dom.eicInspectorCoords) {
+      this.dom.eicInspectorCoords.textContent = `${lonStr} • ${brightness}% BRI • ${density}% DENS`;
+    }
     if (this.dom.eicInspectorChords) {
-      this.dom.eicInspectorChords.textContent = noteStr;
+      this.dom.eicInspectorChords.textContent = `CHORD: ${noteStr}`;
     }
 
-    if (this.dom.hudNote && notes.length > 0) {
-      this.dom.hudNote.textContent = notes[0];
+    // Update Bottom 5-Column Telemetry HUD with Live Computer Vision Metrics
+    if (this.dom.hudDate) {
+      this.dom.hudDate.textContent = `LON ${lonStr} [${Math.round(step.progress * 100)}%]`;
+    }
+    if (this.dom.hudDayOfYear) {
+      this.dom.hudDayOfYear.textContent = `RASTER COLUMN ${step.column + 1} OF 256`;
+    }
+    if (this.dom.hudValue) {
+      this.dom.hudValue.textContent = `${brightness}%`;
+    }
+    if (this.dom.hudPeakTrough) {
+      this.dom.hudPeakTrough.textContent = `LUMINANCE (BT.709)`;
+    }
+    if (this.dom.hudThermalZone) {
+      this.dom.hudThermalZone.textContent = step.frame ? (step.frame.title || "EIC SATELLITE").toUpperCase() : "EIC SATELLITE";
+    }
+    if (this.dom.hudNote) {
+      this.dom.hudNote.textContent = noteStr;
+    }
+    if (this.dom.hudFreq) {
+      this.dom.hudFreq.textContent = `${notes.length} VOICES [${density}% DENSITY]`;
     }
     if (this.dom.hudAtmosphere && step.frame) {
-      this.dom.hudAtmosphere.textContent = (step.frame.title || "EIC FRAME").substring(0, 22).toUpperCase();
+      this.dom.hudAtmosphere.textContent = `FEATURE DENSITY: ${density}%`;
+      this.dom.hudAtmosphere.className = density > 40 ? "col-value text-solar" : "col-value text-cyan";
+    }
+    if (this.dom.hudRainDays) {
+      this.dom.hudRainDays.textContent = `${step.features && step.features.dominantRgb ? step.features.dominantRgb : 'RGB'} • ITU-R BT.709`;
+    }
+
+    // Screen reader & Voice Narrator dispatch for significant feature clusters
+    if (this.accessibility && (step.column % 32 === 0 || density > 75)) {
+      const msg = `Longitude ${lonStr}: ${step.frame ? step.frame.title : 'Satellite frame'}. Feature density ${density} percent, brightness ${brightness} percent. Chord: ${noteStr}.`;
+      this.accessibility.announce(msg, density > 75 ? "assertive" : "polite");
     }
   }
 

@@ -6,11 +6,13 @@ geographic resolution, comparative endpoints, and static application hosting.
 
 import os
 from typing import Optional, List
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, Response
 import io
+import cv2
+import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field
 
@@ -21,6 +23,11 @@ from backend.data_service import (
     CACHE_DIR
 )
 from backend.ai_service import generate_climate_analysis
+from backend.cv_processor import (
+    get_all_frames_metadata,
+    analyze_frame_by_key,
+    analyze_image_with_opencv
+)
 
 app = FastAPI(
     title="NASA Earth Information Jukebox API",
@@ -255,6 +262,75 @@ def get_climate_explanation(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
+# --- Computer Vision & EIC Visual Frame Endpoints (OpenCV Powered) ---
+@app.get("/api/eic/frames", tags=["Computer Vision & EIC"])
+def list_eic_frames():
+    """
+    Lists available NASA Earth Information Center (EIC) satellite visual frames.
+    """
+    try:
+        frames = get_all_frames_metadata()
+        return {
+            "status": "success",
+            "count": len(frames),
+            "frames": frames
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list frames: {str(e)}")
+
+
+@app.get("/api/eic/analyze", tags=["Computer Vision & EIC"])
+def analyze_eic_frame(
+    frame_id: str = Query("sst", description="EIC frame identifier (sst, sea_level, wildfire, arctic)")
+):
+    """
+    Performs real-time OpenCV computer vision image analysis on an authentic NASA EIC frame:
+    Extracts ITU-R BT.709 perceptual luminance, feature density, colorimetry, anomaly hotspot,
+    and column-wise spatial sonification profiles.
+    """
+    try:
+        result = analyze_frame_by_key(frame_id)
+        return {
+            "status": "success",
+            "frame_id": frame_id,
+            "engine": "OpenCV 4.x + NumPy Computer Vision",
+            **result
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except FileNotFoundError as fe:
+        raise HTTPException(status_code=404, detail=str(fe))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Computer vision analysis failed: {str(e)}")
+
+
+@app.post("/api/eic/upload", tags=["Computer Vision & EIC"])
+async def upload_eic_frame(file: UploadFile = File(...)):
+    """
+    Ingests and analyzes a user-uploaded NASA satellite frame or observation image via OpenCV:
+    Extracts brightness distribution, thermal anomaly density, and spatial column chords.
+    """
+    try:
+        contents = await file.read()
+        nparr = np.frombuffer(contents, np.uint8)
+        img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if img_bgr is None:
+            raise HTTPException(status_code=400, detail="Invalid image file format. Please upload a valid PNG, JPG, or WebP.")
+
+        analysis = analyze_image_with_opencv(img_bgr)
+        return {
+            "status": "success",
+            "file_name": file.filename,
+            "engine": "OpenCV 4.x Dynamic Ingestion",
+            "computer_vision_analysis": analysis
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to process uploaded image: {str(e)}")
 
 
 

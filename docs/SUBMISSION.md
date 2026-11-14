@@ -16,7 +16,7 @@ The Earth Information Jukebox is an open-source, multi-modal Earth science platf
 
 Instead of struggling to interpret complex 2D graphs, dense scientific spreadsheets, or silent satellite imagery, users **listen** to the pulse of our planet:
 - In **Temporal Timeline Mode**, 365 daily observations stream through a consonant multi-timbral synthesis engine where temperature governs melodic pitch, precipitation triggers dynamic percussive rhythms, and monthly sub-bass pulses orient the listener across seasons.
-- In **EIC Visual Frame Sonifier Mode**, interactive raster scanning across NASA satellite frames (Sea Surface Temperature, Sea Level Anomaly, Wildfire Smoke AOD, and Polar Cryosphere) mathematically converts pixel luminance and multi-spectral hue into real-time consonant chords.
+- In **EIC Visual Frame Sonifier Mode**, interactive raster scanning across NASA satellite frames (Sea Surface Temperature, Sea Level Anomaly, Wildfire Smoke AOD, and Polar Cryosphere) mathematically converts pixel luminance, colorimetry, and feature density into real-time consonant chords.
 - Built from the ground up to satisfy **WCAG 2.2 Level AAA accessibility standards**, the platform features a complete keyboard matrix, an `aria-live` screen-reader narration engine, and Web Speech API spoken audio description, empowering visually impaired researchers, students, and educators to experience Earth science independently.
 
 ---
@@ -31,7 +31,7 @@ NASA's Earth-observing satellite fleet (MODIS, VIIRS, ICESat-2, GRACE-FO, Jason-
 
 ## 3. The Solution: Dual-Mode Multi-Sensory Architecture
 
-The Earth Information Jukebox solves this dilemma through a decoupled 7-module architecture that guarantees **100% scientific data integrity** while producing **harmonically consonant music**:
+The Earth Information Jukebox solves this dilemma through a decoupled architecture that guarantees **100% scientific data integrity** while producing **harmonically consonant music**:
 
 ```
 [ NASA POWER API / EIC Satellite Frames ]
@@ -39,23 +39,28 @@ The Earth Information Jukebox solves this dilemma through a decoupled 7-module a
                  ▼
     [ Data Sanitization & Normalization ]
                  │
-     ┌───────────┴───────────┐
-     ▼                       ▼
-[ Temporal Timeline ]   [ EIC Visual Scanner ]
-(1-Year Daily Data)     (Spatial Column Binning)
-     │                       │
-     └───────────┬───────────┘
-                 ▼
-    [ Harmonic Scale Quantizer ]
-     (Major, Minor, Lydian, Akebono)
-                 │
-                 ▼
-    [ Multi-Timbral Tone.js Synthesizer ]
-                 │
-     ┌───────────┼───────────────────────┐
-     ▼           ▼                       ▼
-[ Audio Out ] [ 60fps Scrubber Canvas ] [ WCAG 2.2 AAA Suite ]
-(Speakers)    (Chart.js / Radar Laser)  (ARIA-Live / Voice Narrator)
+     ┌───────────┴──────────────────────────────┐
+     ▼                                          ▼
+[ Temporal Timeline ]                 [ EIC Visual Frame Sonifier ]
+(1-Year Daily Data)                   (OpenCV & HTML5 Canvas CV Engine)
+     │                                          │
+     │                                ┌─────────┴─────────┐
+     │                                ▼                   ▼
+     │                      [ Spatial Column ]   [ Pixel Color, BRI, ]
+     │                      [ 16 Latitude Bins ] [ & Feature Density ]
+     │                                │                   │
+     └───────────────────┬────────────┴───────────────────┘
+                         ▼
+            [ Harmonic Scale Quantizer ]
+            (Major, Minor, Lydian, Akebono)
+                         │
+                         ▼
+        [ Multi-Timbral Tone.js Synthesizer ]
+                         │
+        ┌────────────────┼───────────────────────┐
+        ▼                ▼                       ▼
+  [ Audio Out ]  [ 60fps Scrubber Canvas ] [ WCAG 2.2 AAA Suite ]
+  (Speakers)     (Chart.js / Radar Laser)  (ARIA-Live / Voice Narrator)
 ```
 
 ### Mode 1: 1-Year Planetary Telemetry Timeline
@@ -74,7 +79,78 @@ The Earth Information Jukebox solves this dilemma through a decoupled 7-module a
 
 ---
 
-## 4. Official Evaluation: The 6 Core Questions (Challenge Guide Page 9)
+## 4. Computer Vision / Image Processing Module: Dual Backend & Frontend Engine
+
+### 1. OpenCV 4.x Backend Engine (`backend/cv_processor.py`)
+- **Multi-Spectral Color Processing**: Converts NASA EIC satellite images from BGR to RGB (`cv2.COLOR_BGR2RGB`) and HSV (`cv2.COLOR_BGR2HSV`) to measure optical brightness and thermal saturation.
+- **ITU-R BT.709 Perceptual Luminance Extraction**:
+  $$\mathcal{L} = 0.2126 \cdot R + 0.7152 \cdot G + 0.0722 \cdot B$$
+- **Thermal & Aerosol Density Segmentation**:
+  - Uses binary thresholding (`cv2.inRange`) to isolate high-intensity climate anomalies (thermal coral stress, wildfire smoke corridors, and polar ice margin variations) from background noise.
+  - Computes global and column-wise feature density percentages:
+    $$\text{Density}_{\text{column}} = \left(\frac{\text{Active Bins}}{\text{Total Latitude Bins}}\right) \times 100\%$$
+- **Hotspot Geolocation**: Identifies maximum optical/thermal coordinates $(x,y)$ via `cv2.minMaxLoc` and maps them directly to latitude and longitude.
+- **REST Endpoints**:
+  - `GET /api/eic/frames`: Lists all available NASA EIC frames with full remote-sensing metadata.
+  - `GET /api/eic/analyze`: Executes OpenCV analysis, returning optical metrics, hotspot geolocations, and 128 column-wise spatial sonification profiles.
+  - `POST /api/eic/upload`: Accepts user-uploaded NASA observation imagery, decodes via `cv2.imdecode`, and returns real-time CV metrics.
+
+### 2. Frontend HTML5 Canvas Optical Scanner (`frontend/scanner.js`)
+- Uses offscreen HTML5 Canvas buffers (`willReadFrequently: true`) and `getImageData()` to downsample frames to a $256 \times 64$ analytical grid for instantaneous 60fps scanning without audio or visual stuttering.
+
+---
+
+## 5. Spatial Scanning Strategy: Left-to-Right Raster Scan
+
+1. **West-to-East Longitude Mapping**:
+   - A vertical glowing laser bar sweeps across the satellite temperature map from $180^\circ\text{W}$ to $180^\circ\text{E}$ over a customizable period (15 to 60 seconds).
+   - Longitude maps to time: $t(x) = \left(\frac{x}{W}\right) \times T_{\text{scan}}$.
+2. **Latitude-to-Pitch Spatial Binning**:
+   - The image height is partitioned into 16 discrete vertical latitude bands.
+   - **Bin 15** (top of frame = Arctic / North Pole) produces high frequencies ($C5 - C6$).
+   - **Bin 0** (bottom of frame = Antarctic / South Pole) produces deep foundational frequencies ($C3 - D3$).
+3. **Luminance-to-Gain**:
+   - Each bin's perceptual luminance modulates note velocity and volume.
+   - Dynamic noise gating mutes dark backgrounds ($< 8\%$), preventing noise clutter.
+4. **Spectral Hue-to-Timbre Extraction**:
+   - Red/Orange (heat/wildfires): Analog Sawtooth Synth.
+   - Green/Yellow (vegetation/chlorophyll): Triangle PolySynth.
+   - Cyan/Blue (ice/cryosphere): High Sine Chime with shimmer delay.
+5. **Harmonic Pentatonic Quantization**:
+   - Notes are quantized to a 16-note consonant scale (Major Pentatonic, Minor Pentatonic, Lydian, Akebono, Dorian), guaranteeing that simultaneous notes sound musical and harmonious rather than dissonant white noise.
+6. **Live Telemetry HUD Synchronization**:
+   - Real-time display of longitude ($120^\circ\text{W}$), brightness ($68\%$), feature density ($85\%$), and active chords (`CHORD: C4 • D4 • G4`).
+
+---
+
+## 6. Universal Accessibility Suite (WCAG 2.2 Level AAA)
+
+### Solving Visual Exclusion in Earth Science
+The Earth Information Jukebox empowers blind and low-vision users to explore planetary telemetry independently through multi-sensory equivalence:
+
+| Key Shortcut | Action | Screen Reader & Spoken Voice Output |
+|---|---|---|
+| <kbd>Space</kbd> / <kbd>K</kbd> | Play / Pause Sonification | *"Sonification Playback Started / Paused"* |
+| <kbd>←</kbd> / <kbd>→</kbd> | Step 5 days (Timeline) or 5% (Scanner) | *"Day 41: 2024-02-10. Value: 24.5°C. Playing note E4."* |
+| <kbd>Shift</kbd> + <kbd>←</kbd> / <kbd>→</kbd> | Jump 30 days (Timeline) or 30% (Scanner) | *"Jumped 1 full month: March 12."* |
+| <kbd>Home</kbd> / <kbd>End</kbd> | Jump to start / end of dataset | *"Jumped to January 1 / December 31."* |
+| <kbd>1</kbd> | Switch to Air Temperature (`T2M`) | *"Switched planetary telemetry to Air Temperature."* |
+| <kbd>2</kbd> | Switch to Precipitation (`PRECTOTCORR`) | *"Switched planetary telemetry to Precipitation."* |
+| <kbd>3</kbd> | Switch to Wind Speed (`WS2M`) | *"Switched planetary telemetry to Wind Speed."* |
+| <kbd>V</kbd> | Toggle Mode: Timeline $\leftrightarrow$ EIC Scanner | *"Switched view to NASA EIC Satellite Visual Scanner Mode."* |
+| <kbd>M</kbd> | Master Audio Mute / Unmute | *"Audio Muted / Audio Unmuted."* |
+| <kbd>R</kbd> | Start / Stop WebM Audio Recording | *"Recording started / Track downloaded as WebM."* |
+| <kbd>?</kbd> or <kbd>H</kbd> | Open Accessibility & Keyboard Guide | Opens modal with focus trap on close button |
+| <kbd>Escape</kbd> | Close any open dialog, modal, or drawer | Restores focus to primary transport bar |
+
+- **Screen Reader ARIA-Live Announcer**: Throttled non-visual updates announcing dates, seasons, values, and musical notes via `#srLiveAnnouncer` (`aria-live="polite"`).
+- **🎙️ Web Speech API Mission Narrator**: Integrated voice engine speaking natural-language climate briefs of seasonal shifts and weather extremes.
+- **High-Contrast Focus Outlines**: Electric Cyan (`#38bdf8`) indicators with $>7:1$ contrast against the obsidian space background.
+- **Multi-Modal Sensory Redundancy**: Every data point is presented simultaneously through auditory pitch, percussive timbre, screen-reader text, and visual waveforms.
+
+---
+
+## 7. Official Evaluation: The 6 Core Questions (Challenge Guide Page 9)
 
 ### Question 1: Data Mapping Logic
 > *"How do pixel color attributes (RGB, luminance) map mathematically to acoustic properties (pitch, timbre, gain) without creating chaotic noise?"*
@@ -114,14 +190,7 @@ Continuous planetary telemetry (e.g. temperature varying continuously between $-
 $$\text{NoteIndex} = \text{Clamp}\left(0,\, M - 1,\, \left\lfloor \bar{\mathcal{L}}_{\text{normalized}} \times M \right\rfloor\right)$$
 where $M = 16$ scale degrees across 3 octaves.
 
-**Scale Library & Acoustic Characteristics:**
-- **C Major Pentatonic** (`C3, D3, E3, G3, A3, C4...`): Default baseline. Absence of semitones (minor 2nds) and tritones guarantees every polyphonic combination is consonant and uplifting.
-- **Minor Pentatonic** (`A2, C3, D3, E3, G3, A3...`): Analytical, contemplative mode; emphasizes dramatic climate drop-offs and cold spells.
-- **Lydian Celestial** (`F3, G3, A3, B3, C4, D4...`): Raised 4th degree creates an ethereal, expansive quality ideal for solar radiation and high-altitude thermal zones.
-- **Akebono Meditative** (`C3, D3, Eb3, G3, Ab3, C4...`): Traditional Japanese folk scale providing deep emotional resonance for drought and climate impact studies.
-- **Dorian Orbital** (`D3, E3, F3, G3, A3, B3, C4...`): Atmospheric mode inspired by sci-fi space telemetry.
-
-**Data Fidelity Preservation:** Because the quantization function is strictly monotonic ($x_1 > x_2 \implies f(x_1) \ge f(x_2)$), a higher environmental temperature or higher satellite radiance strictly produces a higher musical pitch. The scientific trend is 100% preserved.
+Because the quantization function is strictly monotonic ($x_1 > x_2 \implies f(x_1) \ge f(x_2)$), a higher environmental temperature or higher satellite radiance strictly produces a higher musical pitch. The scientific trend is 100% preserved.
 
 ---
 
@@ -129,10 +198,8 @@ where $M = 16$ scale degrees across 3 octaves.
 > *"How does the application maintain real-time frame processing and audio synthesis without introducing latency or browser stuttering?"*
 
 **Detailed Engineering Solution:**
-The Earth Information Jukebox achieves zero-lag, 60+ FPS performance through four core optimizations:
-1. **Decoupled Multi-Threaded Audio Execution**: Audio synthesis runs on the browser's dedicated high-priority Web Audio hardware thread via Tone.js, completely decoupled from DOM and canvas rendering. Even if heavy graphics cause a frame drop, audio playback continues uninterrupted without audio clipping or jitter.
-2. **Zero-Drift Clock Scheduling**: Replaces drift-prone JavaScript `setInterval()` with high-precision `performance.now()` wall-clock delta compensation:
-   $$\Delta_{\text{delay}} = \max\left(0,\, t_{\text{expectedNextTick}} - \text{performance.now()}\right)$$
+1. **Decoupled Multi-Threaded Audio Execution**: Tone.js audio synthesis runs on the browser's dedicated high-priority Web Audio hardware thread, completely decoupled from DOM and canvas rendering. Even if heavy graphics cause a frame drop, audio playback continues uninterrupted without audio clipping or jitter.
+2. **Zero-Drift Clock Scheduling**: Replaces drift-prone JavaScript `setInterval()` with high-precision `performance.now()` wall-clock delta compensation.
 3. **O(1) Pre-Computed Downsampling Matrix**: When an EIC satellite frame is ingested, an off-screen HTML5 Canvas downsamples the image to a $256 \times 64$ analytical pixel matrix once. During 60fps scanning, column lookups are pure array index queries ($O(1)$ complexity) requiring zero heavy image filtering per frame.
 4. **Direct Canvas Plugin Scrubber**: The glowing playhead laser line is drawn directly inside Chart.js's native `afterDraw` lifecycle, eliminating separate layered overlay canvases and GPU composition bottlenecks.
 
@@ -142,27 +209,10 @@ The Earth Information Jukebox achieves zero-lag, 60+ FPS performance through fou
 > *"How is the user interface optimized for visually impaired users relying on screen readers, keyboard navigation, or descriptive text?"*
 
 **Detailed Engineering Solution:**
-The platform achieves **WCAG 2.2 Level AAA compliance** across four dimensions:
-1. **Full Keyboard Navigation Matrix**:
-   - `Space` / `K`: Play / Pause sonification
-   - `←` / `→`: Step 5 days (Timeline) or 5% longitude (Scanner)
-   - `Shift` + `←` / `→`: Jump 30 days (Timeline) or 30% longitude (Scanner)
-   - `Home` / `End`: Jump to beginning / end of dataset
-   - `1` - `3`: Switch telemetry parameters (1: Temperature, 2: Precipitation, 3: Wind)
-   - `V`: Toggle between Timeline and EIC Scanner modes
-   - `M`: Toggle master audio mute
-   - `R`: Start / stop audio recording (.webm download)
-   - `?` / `H`: Open Accessibility & Keyboard Shortcuts modal
-   - `Escape`: Close open drawers and modals
-2. **Screen Reader ARIA-Live Announcer**:
-   - Invisible `#srLiveAnnouncer` with `role="status" aria-live="polite"` automatically announces date, season, temperature, precipitation, and playing musical notes.
-   - Features an intelligent rate-limiter (throttling routine updates during rapid playback while dispatching immediate assertive alerts for extreme climate anomalies or user seek events).
-3. **Web Speech API Spoken Mission Narrator**:
-   - An integrated voice narration engine converts planetary telemetry into clear, natural-language spoken commentary (e.g., *"Entering July: Summer Solstice. Day 185: Karachi encounters peak temperature of 38.2 degrees Celsius. Monsoon rainfall surge of 28 millimeters per day."*).
-4. **High-Visibility Visual Accessibility**:
-   - High-contrast color ratios exceeding $7:1$ on Obsidian space backgrounds.
-   - Electric Cyan (`#38bdf8`) high-visibility focus rings (`body.using-keyboard *:focus`) for keyboard users.
-   - Multi-modal thermal indicators combining color, text, and Unicode glyphs (❄️, 🌿, 🔥) so comprehension is never color-dependent.
+- **WCAG 2.2 Level AAA Compliance**: Complete keyboard operability, visible focus indicators, color-independent status icons, and contrast ratios $> 7:1$.
+- **ARIA Live Telemetry Announcer**: Real-time non-visual feedback announcing dates, temperature values, anomalies, and active notes without interrupting screen-reader focus.
+- **Integrated Spoken Audio Description**: Uses the Web Speech API to provide verbal narration of seasonal shifts and planetary weather records.
+- **Auditory Haptic Guidance**: Distinct auditory cues indicate transport events (start, pause, dataset load, and month transitions).
 
 ---
 
@@ -170,21 +220,16 @@ The platform achieves **WCAG 2.2 Level AAA compliance** across four dimensions:
 > *"How can complex visualizations containing multiple environmental layers be represented using distinct timbres or instrumentation?"*
 
 **Detailed Engineering Solution:**
-To represent multiple co-occurring environmental variables without auditory masking, the engine employs **Spectral Band Allocation & Spatial Stereo Panning**:
-1. **Frequency Separation**:
-   - **Primary Melodic Layer (Temperature / Thermal Anomaly)**: Occupies the mid-to-high register ($260\text{ Hz} - 1046\text{ Hz}$) with warm, sustained envelope pads.
-   - **Percussive Layer (Precipitation)**: Occupies the transient low-frequency band ($40\text{ Hz} - 150\text{ Hz}$), triggering acoustic membrane drum strikes with velocity proportional to rainfall volume.
-   - **Wind Speed Layer (Aerodynamic Atmosphere)**: Occupies a band-pass filtered pink noise generator ($400\text{ Hz} - 1200\text{ Hz}$), where wind velocity modulates filter resonance and Q-factor.
-   - **Chronological Timekeeping Layer (Calendar Pulse)**: Triggers a clean sub-bass triangle note (`C2`, $65.4\text{ Hz}$) strictly on the 1st day of each month.
-2. **Spatial Stereo Panning**:
-   - Temperature Melody: Center pan ($0.0$).
-   - Precipitation Percussion: Panned left ($-0.25$).
-   - Atmospheric Wind: Panned right ($+0.25$).
-   - This spatial separation allows the listener's auditory cortex to easily separate and track all environmental variables simultaneously.
+- **Frequency Separation**:
+  - **Primary Melodic Layer (Temperature / Thermal Anomaly)**: Occupies the mid-to-high register ($260\text{ Hz} - 1046\text{ Hz}$) with warm, sustained envelope pads.
+  - **Percussive Layer (Precipitation)**: Occupies the transient low-frequency band ($40\text{ Hz} - 150\text{ Hz}$), triggering acoustic membrane drum strikes with velocity proportional to rainfall volume.
+  - **Wind Speed Layer (Aerodynamic Atmosphere)**: Occupies a band-pass filtered pink noise generator ($400\text{ Hz} - 1200\text{ Hz}$), where wind velocity modulates filter resonance and Q-factor.
+  - **Chronological Timekeeping Layer (Calendar Pulse)**: Triggers a clean sub-bass triangle note (`C2`, $65.4\text{ Hz}$) strictly on the 1st day of each month.
+- **Spatial Stereo Panning**: Temperature is centered, precipitation is panned left ($-0.25$), and wind is panned right ($+0.25$), preventing auditory masking.
 
 ---
 
-## 5. NASA Earth Science Data Utilized
+## 8. NASA Earth Science Data Utilized
 - **NASA Langley Research Center POWER Project**: Daily meteorological telemetry (`T2M`, `PRECTOTCORR`, `WS2M`) from 1981 to present across global grids.
 - **NASA Earth Information Center (EIC) Remote Sensing Blends**:
   - MODIS (Moderate Resolution Imaging Spectroradiometer) on Terra and Aqua
@@ -197,17 +242,10 @@ To represent multiple co-occurring environmental variables without auditory mask
 
 ---
 
-## 6. Technical Stack & Architecture
-- **Backend API**: Python 3.10+, FastAPI, Uvicorn, Pandas, NumPy, Requests
+## 9. Technical Stack
+- **Backend API & Computer Vision**: Python 3.10+, FastAPI, Uvicorn, OpenCV 4.x (`cv2`), NumPy, Pandas, Requests
 - **Audio Synthesis**: Tone.js (Web Audio API hardware synthesis)
 - **Data Visualization**: Chart.js 4.4, Three.js (r128), HTML5 Canvas
 - **Cartography**: Leaflet 1.9 with CartoDB Dark Matter tiles
 - **Accessibility**: Native Web Speech API, WCAG 2.2 Level AAA ARIA-Live framework
 - **Deployment**: Docker, Docker Compose, Windows PowerShell Launcher
-
----
-
-## 7. Verification & Testing Evidence
-- Automated backend unit test suite: `py -m unittest discover -s backend` (5/5 tests passing: sentinel interpolation, boundary normalization, cache persistence).
-- Syntax validation across all JavaScript modules: `node -c frontend/*.js` (100% clean, 0 syntax errors).
-- Cross-origin asset verification: All 4 authentic NASA EIC satellite frames return HTTP 200 with complete payloads.

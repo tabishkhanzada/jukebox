@@ -295,9 +295,19 @@ class EicFrameScanner {
       }
     }
 
+    // Calculate column-wide active feature density & brightness
+    const colDensity = Math.round((activeChords.length / this.numBins) * 100);
+    const colBrightness = activeChords.length > 0
+      ? Math.round((activeChords.reduce((acc, c) => acc + c.luminance, 0) / activeChords.length) * 100)
+      : 0;
+
     // Sort by intensity and limit to top 4 consonant voices to prevent acoustic clutter
     activeChords.sort((a, b) => b.luminance - a.luminance);
-    return activeChords.slice(0, 4);
+    const result = activeChords.slice(0, 4);
+    result.density = colDensity;
+    result.brightness = colBrightness;
+    result.dominantRgb = result.length > 0 ? result[0].rgb : "rgb(0, 0, 0)";
+    return result;
   }
 
   /**
