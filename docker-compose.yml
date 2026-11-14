@@ -12,3 +12,4 @@ services:
       # Mount cache directory to persist downloaded NASA satellite telemetry across container restarts
       - ./backend/cache:/app/backend/cache
     restart: unless-stopped
+
