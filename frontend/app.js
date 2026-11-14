@@ -684,8 +684,15 @@ class EarthJukeboxApp {
       this.globe.setThermalTone(stepInfo.value, stepInfo.normalized);
     }
 
-    // Update 60fps playhead scrubber with category color
-    this.chartEngine.updateScrubber(stepInfo.index, stepInfo.note, stepInfo.frequency, stepInfo.categoryColor);
+    // Update 60fps playhead scrubber with category color and sub-frame glide
+    this.chartEngine.updateScrubber(
+      stepInfo.index,
+      stepInfo.note,
+      stepInfo.frequency,
+      stepInfo.categoryColor,
+      stepInfo.stepMs || 90,
+      stepInfo.isPlaying !== undefined ? stepInfo.isPlaying : this.sonifier.isPlaying
+    );
   }
 
   calculateSeason(dateStr, lat = 30) {
@@ -706,6 +713,10 @@ class EarthJukeboxApp {
   handlePlaybackChange(isPlaying) {
     const playText = this.dom.playBtn.querySelector(".play-text");
     const playIcon = this.dom.playBtn.querySelector(".play-icon-shape");
+
+    if (this.chartEngine) {
+      this.chartEngine.setPlaybackState(isPlaying);
+    }
 
     if (isPlaying) {
       this.dom.playBtn.classList.add("playing");

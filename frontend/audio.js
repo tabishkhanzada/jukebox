@@ -881,6 +881,10 @@ class EarthSonifier {
     // Zero-drift performance timing calculation
     this.expectedNextTick += stepMs;
     const now = performance.now();
+    // Guard against accumulated drift if tab was throttled or delayed
+    if (this.expectedNextTick < now - stepMs * 2) {
+      this.expectedNextTick = now;
+    }
     const delay = Math.max(0, this.expectedNextTick - now);
 
     this.stepTimer = setTimeout(() => {
@@ -1179,7 +1183,9 @@ class EarthSonifier {
           rainNote: activeRainInfo ? activeRainInfo.primaryNote : null,
           rainMm: activeRainInfo ? activeRainInfo.mm : (dataType === "rainfall" ? rawVal : 0),
           rainThunder: activeRainInfo ? activeRainInfo.isThunder : false,
-          isFirstOfMonth: isFirstOfMonth
+          isFirstOfMonth: isFirstOfMonth,
+          stepMs: stepMs,
+          isPlaying: this.isPlaying
         });
       } catch (cbErr) {
         console.warn("UI step callback error:", cbErr);
@@ -1237,7 +1243,9 @@ class EarthSonifier {
         isExtreme: firstCat ? !!firstCat.isExtreme : false,
         isTransition: false,
         transitionType: null,
-        isFirstOfMonth: false
+        isFirstOfMonth: false,
+        stepMs: 90,
+        isPlaying: false
       });
     }
   }
@@ -1257,7 +1265,23 @@ class EarthSonifier {
       } catch (_) {}
     }
     const stepMs = Math.max(25, this.baseStepDurationMs / this.speedMultiplier);
+
+    // Cancel pending timeout to avoid jitter or double-stepping
+    if (this.stepTimer) {
+      clearTimeout(this.stepTimer);
+      this.stepTimer = null;
+    }
+
     this.triggerStep(this.currentIndex, stepMs);
+
+    // If currently playing, smoothly reschedule the next note from this moment
+    if (this.isPlaying) {
+      this.currentIndex++;
+      this.expectedNextTick = performance.now() + stepMs;
+      this.stepTimer = setTimeout(() => {
+        this.scheduleNextStep();
+      }, stepMs);
+    }
   }
 
   /**
