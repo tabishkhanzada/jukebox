@@ -36,24 +36,50 @@ The project is architected into 5 decoupled, high-grade modules:
 
 ## 🚀 Quickstart
 
-### Prerequisites
-- Python 3.10+ (with `fastapi`, `uvicorn`, `requests`, `pandas`, `numpy`)
+You can run the complete project either using **Docker (Recommended — zero dependency setup)** or directly with **Python**.
+
+### Option A: 1-Click with Docker (Zero Setup — Runs Everywhere)
+Works instantly on Windows, Mac, or Linux without installing Python:
+```bash
+# 1. Clone repository
+git clone <YOUR-GITHUB-REPO-URL>
+cd "NASA project"
+
+# 2. Build & launch with Docker Compose
+docker compose up --build
+```
+Open **[http://localhost:8000](http://localhost:8000)** in your browser!
+
+To stop the container:
+```bash
+docker compose down
+```
+
+---
+
+### Option B: Local Python Run
+
+#### Prerequisites
+- Python 3.10+
 - Modern web browser (Chrome, Edge, Firefox, Safari)
 
-### 1-Click Launch (Windows)
-Double-click `start.bat` or run in terminal:
+#### 1-Click Windows Launcher:
 ```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run launcher (starts backend & opens browser)
 py -3.10 run.py
 ```
-This automatically starts the backend server on `http://127.0.0.1:8000/` and opens the UI in your default browser.
 
-### Manual Backend Launch
+#### Manual Terminal Command:
 ```bash
-py -3.10 -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
+pip install -r requirements.txt
+python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 Then visit:
-- **Web App:** http://127.0.0.1:8000/
-- **Interactive API Documentation:** http://127.0.0.1:8000/docs
+- **Web App:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+- **Interactive OpenAPI Documentation:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 ---
 
