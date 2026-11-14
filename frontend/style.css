@@ -1145,6 +1145,11 @@ body.nasa-theme {
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
 }
 
+/* Universal Hidden Utility (Guarantees zero bleed-through) */
+.hidden {
+  display: none !important;
+}
+
 /* EIC Scanner Stage Viewport */
 .eic-scanner-viewport {
   position: absolute;
@@ -1158,6 +1163,10 @@ body.nasa-theme {
   z-index: 6;
   pointer-events: auto;
   animation: fadeIn 0.3s ease-out;
+}
+
+.eic-scanner-viewport.hidden {
+  display: none !important;
 }
 
 .eic-frame-header-controls {
@@ -1251,6 +1260,10 @@ body.nasa-theme {
   justify-content: center;
   z-index: 1000;
   animation: fadeIn 0.2s ease-out;
+}
+
+.nasa-modal-backdrop.hidden {
+  display: none !important;
 }
 
 .nasa-modal-card {

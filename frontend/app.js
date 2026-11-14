@@ -390,14 +390,46 @@ class EarthJukeboxApp {
     }
 
     // Keyboard Shortcuts Modal Triggers
-    if (this.dom.keyboardHelpBtn && this.accessibility) {
+    if (this.dom.keyboardHelpBtn) {
       this.dom.keyboardHelpBtn.addEventListener("click", () => {
-        this.accessibility.toggleHelpModal();
+        if (this.accessibility) {
+          this.accessibility.toggleHelpModal();
+        } else {
+          const m = document.getElementById("accessibilityHelpModal");
+          if (m) {
+            m.classList.remove("hidden");
+            m.style.display = "flex";
+          }
+        }
       });
     }
-    if (this.dom.closeAccModalBtn && this.accessibility) {
-      this.dom.closeAccModalBtn.addEventListener("click", () => {
-        this.accessibility.closeAllModals();
+
+    if (this.dom.closeAccModalBtn) {
+      this.dom.closeAccModalBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (this.accessibility) {
+          this.accessibility.closeAllModals();
+        } else {
+          const m = document.getElementById("accessibilityHelpModal");
+          if (m) {
+            m.classList.add("hidden");
+            m.style.display = "none";
+          }
+        }
+      });
+    }
+
+    if (this.dom.accessibilityHelpModal) {
+      this.dom.accessibilityHelpModal.addEventListener("click", (e) => {
+        if (e.target === this.dom.accessibilityHelpModal) {
+          if (this.accessibility) {
+            this.accessibility.closeAllModals();
+          } else {
+            this.dom.accessibilityHelpModal.classList.add("hidden");
+            this.dom.accessibilityHelpModal.style.display = "none";
+          }
+        }
       });
     }
 

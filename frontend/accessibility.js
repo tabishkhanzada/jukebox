@@ -250,26 +250,27 @@ class AccessibilitySuite {
   toggleHelpModal() {
     const modal = document.getElementById("accessibilityHelpModal");
     if (modal) {
-      const isHidden = modal.classList.contains("hidden");
-      if (isHidden) {
+      const isCurrentlyHidden = modal.classList.contains("hidden") || modal.style.display === "none";
+      if (isCurrentlyHidden) {
         modal.classList.remove("hidden");
+        modal.style.display = "flex";
         const closeBtn = modal.querySelector(".close-modal-btn");
         if (closeBtn) closeBtn.focus();
         this.announce("Accessibility and keyboard shortcuts guide opened.", "polite", true);
       } else {
-        modal.classList.add("hidden");
-        this.announce("Keyboard guide closed.", "polite", true);
+        this.closeAllModals();
       }
     }
   }
 
   closeAllModals() {
     const modal = document.getElementById("accessibilityHelpModal");
-    if (modal && !modal.classList.contains("hidden")) {
+    if (modal) {
       modal.classList.add("hidden");
+      modal.style.display = "none";
       this.announce("Modal closed.", "polite", true);
     }
-    if (this.app.dom.mapDrawer && !this.app.dom.mapDrawer.classList.contains("hidden")) {
+    if (this.app && this.app.dom && this.app.dom.mapDrawer) {
       this.app.dom.mapDrawer.classList.add("hidden");
     }
   }
