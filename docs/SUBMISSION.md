@@ -229,16 +229,34 @@ Because the quantization function is strictly monotonic ($x_1 > x_2 \implies f(x
 
 ---
 
-## 8. NASA Earth Science Data Utilized
-- **NASA Langley Research Center POWER Project**: Daily meteorological telemetry (`T2M`, `PRECTOTCORR`, `WS2M`) from 1981 to present across global grids.
-- **NASA Earth Information Center (EIC) Remote Sensing Blends**:
-  - MODIS (Moderate Resolution Imaging Spectroradiometer) on Terra and Aqua
-  - VIIRS (Visible Infrared Imaging Radiometer Suite) on Suomi NPP / NOAA-20
-  - ICESat-2 (Ice, Cloud, and land Elevation Satellite-2) ATLAS lidar
-  - GRACE-FO (Gravity Recovery and Climate Experiment Follow-On)
-  - Jason-3 Radar Altimetry ocean surface topography
-- **Attribution Statement**:
-  > *"These data were obtained from the NASA Langley Research Center POWER Project funded through the NASA Earth Science Directorate Applied Science Program, and the NASA Earth Information Center (EIC) multi-mission observational repository."*
+## 8. NASA Earth Science Data & Official Resources Utilized
+
+> [!NOTE]
+> *NASA does not endorse any non-U.S. Government entity and is not responsible for information contained on non-U.S. Government websites. For non-U.S. Government websites, participants must comply with any data use parameters of that specific website.*
+
+The Earth Information Jukebox systematically incorporates the official data assets and scientific visualization resources designated for **NASA Space Apps Challenge #14**:
+
+### 1. Curated NASA Scientific Visualization Studio (SVS) & EIC Library
+- **[Earth Information Center (EIC) Content Database](https://svs.gsfc.nasa.gov/gallery/earth-information-center/)**: Serves as our primary visual repository for planetary monitoring dashboards, providing multi-mission visual assets.
+- **[Data Sonification: Caldwell 73](https://svs.gsfc.nasa.gov/13786/)**: Informs our core mathematical framework, mapping visual attributes (luminosity $\to$ volume/gain, vertical latitude $\to$ musical pitch, horizontal scan $\to$ timeline).
+- **[Change in Night Lights between 2012 and 2023 - EIC Version](https://svs.gsfc.nasa.gov/5313/)**: SVS #5313 Suomi NPP VIIRS Day/Night Band. High-contrast urban illumination mapped to crystalline chimes and dynamic tempo modulation.
+- **[Global Sea Surface Currents and Temperature](https://svs.gsfc.nasa.gov/3912/#media_group_349716)**: SVS #3912 ECCO2 Modeling. Continuous fluid movement of ocean currents and thermal gradients translated into evolving polyphonic Lydian ambient pads.
+- **[GEOS Aerosols](https://svs.gsfc.nasa.gov/5669/)**: SVS #5669 Goddard Earth Observing System. Multi-track acoustic separation: smoke routes to warm analog saw synth, dust to band-pass noise textures, and sulfates to high-register shimmer sine waves.
+- **[Air Quality Model Runs](https://svs.gsfc.nasa.gov/5533/)**: SVS #5533 Atmospheric Chemistry. Algorithmically converts ground-level particulate densities and color palettes into dynamic harmonic filter curves.
+- **[Perpetual Ocean 2: Western Boundary Currents](https://svs.gsfc.nasa.gov/5425/)**: SVS #5425 ECCO2 High-Resolution. High-contrast boundary currents (Gulf Stream, Kuroshio) driving kinetic streamflow rhythms and harmonic scales.
+- **[DYAMOND Global Carbon Dioxide](https://svs.gsfc.nasa.gov/5196/)**: SVS #5196 Earth System Model. Atmospheric CO2 plume concentrations drive resonant sub-bass drones and harmonic tension intervals.
+- **[Lightning Events Detected from the ISS 2017-2023](https://svs.gsfc.nasa.gov/5011/)**: SVS #5011 ISS Lightning Imaging Sensor (LIS). **Punctuated Sonification**: Sudden high-energy optical flashes trigger instantaneous percussive membrane transients and staccato arpeggio bursts.
+- **[A 3D View of an Atmospheric River from an Earth System Model](https://svs.gsfc.nasa.gov/4960/)**: SVS #4960 ESM. Filamentary moisture plume density and transport mapped to ambient acoustic rain percussion and atmospheric wind filters.
+- **[GEDI Forest Height](https://svs.gsfc.nasa.gov/4950/)**: SVS #4950 GEDI Spaceborne Lidar. Lidar canopy top elevation (0–65m) mapped to organic wooden marimba timbres (higher canopy = higher pitches, dense rainforest = rich polyphony).
+
+### 2. Spaceborne Satellite Telemetry & Remote Sensing Platforms
+- **NASA Langley Research Center POWER Project**: Daily meteorological surface telemetry (`T2M`, `PRECTOTCORR`, `WS2M`) spanning 1981 to present across global 0.5° grids.
+- **MODIS** (Terra & Aqua) & **VIIRS** (Suomi NPP): Sea surface temperature anomalies & active wildfire smoke corridors.
+- **ICESat-2**: Advanced Topographic Laser Altimeter System (ATLAS) measuring polar sea ice elevation and extent.
+- **GRACE-FO & Jason-3**: Satellite gravimetry and radar altimetry capturing dynamic ocean mass and sea level variations.
+
+### 3. Formal Data Attribution Statement
+> *"These data were obtained from the NASA Langley Research Center POWER Project funded through the NASA Earth Science Directorate Applied Science Program, the NASA Scientific Visualization Studio (SVS), and the NASA Earth Information Center (EIC) multi-mission observational repository."*
 
 ---
 

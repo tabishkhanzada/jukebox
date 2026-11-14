@@ -99,14 +99,23 @@ To deliver an **award-winning scientific tool**, our EIC Visual Frame Sonifier u
 3. **Mode C: Interactive Reticle Inspector (Point-and-Hear)**:
    - Hovering or clicking anywhere on the satellite image produces the instantaneous harmonic soundscape of that exact geographic coordinates.
 
-### 1.4 Curated NASA EIC Visual Frames Library
+### 1.4 Curated NASA EIC & SVS Visual Frames Library (13 Official Tracks)
 
-We bundle 4 authentic, high-resolution scientific visual frames sourced directly from NASA Earth Information Center missions:
-1. **NASA EIC Sea Surface Temperature (SST) & Coral Bleaching Thermal Stress** (MODIS/VIIRS satellite blend).
-2. **NASA EIC Sea Level Rise & Ocean Mass Change** (GRACE-FO and Jason-3 radar altimetry).
-3. **NASA EIC Global Surface Air Temperature Anomaly** (GISTEMP Goddard Institute for Space Studies).
-4. **NASA EIC Wildfire Aerosol Optical Depth & Smoke Plumes** (OMPS / Aqua Atmospheric Sensor).
-5. **Custom User Upload**: Drag-and-drop any NASA Earth science PNG/JPG directly into the browser for instant real-time sonification!
+We bundle and stream 13 authentic, high-resolution scientific visual frames sourced directly from NASA Earth Information Center and Scientific Visualization Studio (SVS) missions:
+1. **NASA EIC Sea Surface Temperature (SST) & Coral Bleaching Thermal Stress** (MODIS/VIIRS blend).
+2. **Change in Night Lights (2012–2023) - EIC Version** ([NASA SVS #5313](https://svs.gsfc.nasa.gov/5313/)): Suomi NPP VIIRS DNB. High-contrast urban illumination mapped to crystalline chimes and dynamic tempo modulation.
+3. **Lightning Events Detected from the ISS (2017–2023)** ([NASA SVS #5011](https://svs.gsfc.nasa.gov/5011/)): ISS LIS sensor. **Punctuated Sonification**: Sudden high-energy optical flashes trigger instantaneous percussive membrane transients and staccato arpeggios.
+4. **GEDI Global Forest Canopy Height** ([NASA SVS #4950](https://svs.gsfc.nasa.gov/4950/)): GEDI spaceborne lidar on ISS. Canopy elevation (0–65m) mapped to organic wooden marimba timbres.
+5. **GEOS Aerosols: Dust, Smoke & Sulfate Plumes** ([NASA SVS #5669](https://svs.gsfc.nasa.gov/5669/)): Multi-track timbral separation (smoke = warm saw, dust = filtered noise, sulfates = shimmer sine).
+6. **Global Sea Surface Currents & Temperature** ([NASA SVS #3912](https://svs.gsfc.nasa.gov/3912/)): Fluid ocean boundary currents with thermal gradients mapped to evolving polyphonic Lydian ambient pads.
+7. **DYAMOND Global Carbon Dioxide (CO2)** ([NASA SVS #5196](https://svs.gsfc.nasa.gov/5196/)): Ultra-high-res ESM. CO2 plume concentrations drive resonant sub-bass drones and harmonic tension intervals.
+8. **Atmospheric River Moisture Transport** ([NASA SVS #4960](https://svs.gsfc.nasa.gov/4960/)): Integrated vapor transport (IVT) mapped to ambient breeze, rain percussion, and resonant swells.
+9. **NASA EIC Dynamic Sea Level Rise & Ocean Mass Variations** (GRACE-FO and Jason-3 radar altimetry).
+10. **NASA EIC Wildfire Smoke & Aerosol Optical Depth** (Aqua MODIS & OMPS Atmospheric Sensors).
+11. **NASA EIC Polar Cryosphere & Arctic Sea Ice Minimum** (ICESat-2 Spaceborne Lidar).
+12. **Perpetual Ocean 2: Western Boundary Currents** ([NASA SVS #5425](https://svs.gsfc.nasa.gov/5425/)): Kinetic western boundary streamflows aligned with driving harmonic rhythms.
+13. **Air Quality Atmospheric Model Runs** ([NASA SVS #5533](https://svs.gsfc.nasa.gov/5533/)): High-resolution ground-level particulate and NO2 chemistry models.
+14. **Custom User Upload**: Drag-and-drop any NASA Earth science PNG/JPG directly into the browser for instant real-time optical scanning and OpenCV computer vision analysis!
 
 ---
 

@@ -243,5 +243,24 @@ Result: `{'mean_brightness_pct': 47.0, 'max_brightness_pct': 100.0, 'active_feat
 
 ---
 
-## 📜 NASA Data Attribution
-Data obtained from the **NASA Langley Research Center POWER Project** funded through the NASA Earth Science Directorate Applied Science Program, and the **NASA Earth Information Center (EIC)** multi-mission observational repository (MODIS, VIIRS, ICESat-2, GRACE-FO, Jason-3).
+## 📜 NASA Data Attribution & Official Resources Directory
+
+> [!NOTE]
+> *NASA does not endorse any non-U.S. Government entity and is not responsible for information contained on non-U.S. Government websites. For non-U.S. Government websites, participants must comply with any data use parameters of that specific website.*
+
+The Earth Information Jukebox directly utilizes and references the official datasets and resources provided for **NASA Space Apps Challenge #14**:
+
+| Dataset / Resource | Source & Mission | Visual Characteristics | Acoustic Mapping & Sonification Behavior |
+| :--- | :--- | :--- | :--- |
+| **[Earth Information Center (EIC) Content Database](https://svs.gsfc.nasa.gov/gallery/earth-information-center/)** | NASA GSFC Scientific Visualization Studio (SVS) | Suite of planetary visuals from EIC dashboards | Core visual database providing real planetary frames for our dual OpenCV & HTML5 Canvas raster scanning engine. |
+| **[Data Sonification: Caldwell 73](https://svs.gsfc.nasa.gov/13786/)** | NASA SVS / Chandra X-ray Center | Astronomical deep-space visual sonification | Foundational conceptual framework: establishes our mapping of pixel luminosity $\to$ gain/volume and spatial latitude $\to$ quantized pitch. |
+| **[Change in Night Lights (2012–2023) - EIC Version](https://svs.gsfc.nasa.gov/5313/)** | NASA SVS #5313 • Suomi NPP VIIRS DNB | Decadal urban illumination shift & sharp human footprint | High contrast between dark wilderness and brilliant cities drives crystalline high-register chimes and dynamic tempo modulation. |
+| **[Global Sea Surface Currents and Temperature](https://svs.gsfc.nasa.gov/3912/#media_group_349716)** | NASA SVS #3912 • ECCO2 Ocean State Estimate | Fluid ocean boundary currents with thermal gradients | Fluid movement and thermal differences mapped to lush Lydian mode polyphonic synth pads with soft spatial delays. |
+| **[GEOS Aerosols](https://svs.gsfc.nasa.gov/5669/)** | NASA SVS #5669 • GEOS Forward Processing | Particle speciation (smoke, dust, sulfate, sea salt) | Multi-track experimentation: smoke routes to warm analog saw synth, dust to band-pass noise texture, and sulfates to shimmer sine chimes. |
+| **[Air Quality Model Runs](https://svs.gsfc.nasa.gov/5533/)** | NASA SVS #5533 • SVS Atmospheric Chemistry | High-resolution NO2 and particulate model frames | Color palettes and optical densities algorithmically converted into harmonic density and filter resonance profiles. |
+| **[Perpetual Ocean 2: Western Boundary Currents](https://svs.gsfc.nasa.gov/5425/)** | NASA SVS #5425 • ECCO2 High-Resolution | Striking, high-contrast ocean boundary streams | High-contrast kinetic flow aligned with driving harmonic rhythms and sweeping orbital scales. |
+| **[DYAMOND Global Carbon Dioxide (CO2)](https://svs.gsfc.nasa.gov/5196/)** | NASA SVS #5196 • High-Res Earth System Model | Global atmospheric CO2 plume concentration over time | Primary input driving atmospheric tension chords and deep sub-bass drones indicating regional greenhouse accumulation. |
+| **[Lightning Events Detected from the ISS (2017–2023)](https://svs.gsfc.nasa.gov/5011/)** | NASA SVS #5011 • ISS Lightning Imaging Sensor (LIS) | Orbital lightning flash density & convective storm hubs | **Punctuated Sonification**: Sudden high-energy optical flashes trigger instantaneous percussive membrane clicks and staccato arpeggios. |
+| **[A 3D View of an Atmospheric River](https://svs.gsfc.nasa.gov/4960/)** | NASA SVS #4960 • Earth System Model | 3D moisture filament transport across ocean basins | Density and geographic spread of moisture mapped to ambient acoustic rain percussion and atmospheric wind filters. |
+| **[GEDI Forest Height](https://svs.gsfc.nasa.gov/4950/)** | NASA SVS #4950 • GEDI Spaceborne Lidar on ISS | Global canopy elevation (0–65m) and vertical structure | Canopy top height (RH98) mapped to organic wooden marimba timbres (taller canopy = higher pitches, dense rainforest = rich polyphony). |
+| **[NASA POWER Project Telemetry](https://power.larc.nasa.gov/)** | NASA Langley Research Center • GEOS & CERES | 366-day daily surface meteorology (temperature, rain, wind) | Real-time temporal stream driving our 1-year timeline melody, acoustic rain drums, and thermal zone classifications. |

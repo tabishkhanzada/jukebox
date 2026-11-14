@@ -55,6 +55,96 @@ EIC_FRAMES_METADATA = {
         "unit": "% Pack Ice",
         "range": "0% (Open Ocean) to 100% (Glacial Pack)",
         "description": "September Arctic minimum pack ice margins, multi-year glacial ice cap, and Antarctic shelf thermal dynamics."
+    },
+    "night_lights": {
+        "id": "night_lights",
+        "title": "Change in Night Lights (2012–2023)",
+        "mission": "NASA SVS #5313 • Suomi NPP VIIRS DNB",
+        "file_name": "night_lights.jpg",
+        "parameter": "Urban Radiant Light Intensity",
+        "unit": "nW/(cm²·sr)",
+        "range": "0 to >100 nW",
+        "description": "Decadal shift in planetary urban illumination, high-contrast human footprint, and power grid evolution."
+    },
+    "ocean_currents": {
+        "id": "ocean_currents",
+        "title": "Global Sea Surface Currents & Temperature",
+        "mission": "NASA SVS #3912 • ECCO2 Modeling",
+        "file_name": "ocean_currents.jpg",
+        "parameter": "Current Flow Velocity & Thermal Gradients",
+        "unit": "m/s, °C",
+        "range": "-2°C to +32°C",
+        "description": "Continuous fluid movement of Earth's ocean currents coupled with thermal gradients and dynamic kinetic vortices."
+    },
+    "geos_aerosols": {
+        "id": "geos_aerosols",
+        "title": "GEOS Aerosols: Dust, Smoke & Sulfate Plumes",
+        "mission": "NASA SVS #5669 • Goddard Earth Observing System",
+        "file_name": "geos_aerosols.jpg",
+        "parameter": "Aerosol Speciation & Optical Thickness",
+        "unit": "AOD",
+        "range": "0.0 to 3.5 AOD",
+        "description": "Multi-spectral tracking of trans-continental wildfire smoke, Saharan dust plumes, and industrial sea-salt sulfates."
+    },
+    "co2_flux": {
+        "id": "co2_flux",
+        "title": "DYAMOND Global Carbon Dioxide (CO2)",
+        "mission": "NASA SVS #5196 • High-Res Earth System Model",
+        "file_name": "co2_flux.jpg",
+        "parameter": "Atmospheric CO2 Concentration",
+        "unit": "PPM",
+        "range": "395 to 430 PPM",
+        "description": "Ultra-high-resolution simulation of global CO2 plumes, seasonal terrestrial biosphere respiration, and emissions."
+    },
+    "iss_lightning": {
+        "id": "iss_lightning",
+        "title": "Lightning Events Detected from the ISS",
+        "mission": "NASA SVS #5011 • ISS Lightning Imaging Sensor (LIS)",
+        "file_name": "iss_lightning.jpg",
+        "parameter": "Optical Flash Radiance Density",
+        "unit": "Flashes/km²/yr",
+        "range": "0 to 150 Flashes",
+        "description": "Orbital spaceborne recording of global lightning flash geography, tropical convection centers, and convective storm hubs."
+    },
+    "atmospheric_river": {
+        "id": "atmospheric_river",
+        "title": "Atmospheric River Moisture Transport",
+        "mission": "NASA SVS #4960 • Earth System Modeling",
+        "file_name": "atmospheric_river.jpg",
+        "parameter": "Integrated Vapor Transport (IVT)",
+        "unit": "kg/(m·s)",
+        "range": "0 to 1200 kg/(m·s)",
+        "description": "Extratropical filamentary moisture corridors conveying immense atmospheric water vapor across planetary oceanic basins."
+    },
+    "gedi_forest": {
+        "id": "gedi_forest",
+        "title": "GEDI Global Forest Canopy Height",
+        "mission": "NASA SVS #4950 • GEDI Spaceborne Lidar",
+        "file_name": "gedi_forest.jpg",
+        "parameter": "Forest Canopy Top Height (RH98)",
+        "unit": "Meters",
+        "range": "0 m to 65 m",
+        "description": "Spaceborne lidar profiling of planetary 3D forest vertical canopy architecture, biomass density, and carbon storage."
+    },
+    "perpetual_ocean": {
+        "id": "perpetual_ocean",
+        "title": "Perpetual Ocean: Western Boundary Currents",
+        "mission": "NASA SVS #5425 • ECCO2 High-Resolution",
+        "file_name": "perpetual_ocean.jpg",
+        "parameter": "Kinetic Streamflow & Boundary Eddies",
+        "unit": "cm/s",
+        "range": "0 to 200 cm/s",
+        "description": "High-contrast western boundary currents, mesoscale eddies, and Gulf Stream / Kuroshio kinetic streamflows."
+    },
+    "air_quality": {
+        "id": "air_quality",
+        "title": "Air Quality Atmospheric Model Runs",
+        "mission": "NASA SVS #5533 • SVS Atmospheric Chemistry",
+        "file_name": "air_quality.jpg",
+        "parameter": "Ground-Level Particulate Concentration",
+        "unit": "µg/m³",
+        "range": "0 to 180 µg/m³",
+        "description": "High-resolution air quality forecasts capturing particulate density, urban nitrogen dioxide plumes, and ozone precursors."
     }
 }
 

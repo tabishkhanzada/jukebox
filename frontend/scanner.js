@@ -17,7 +17,7 @@ class EicFrameScanner {
     this.offCanvas = document.createElement("canvas");
     this.offCtx = this.offCanvas.getContext("2d", { willReadFrequently: true });
 
-    // Curated NASA EIC Visual Frames Library
+    // Curated NASA EIC & SVS Visual Frames Library (Official Challenge #14 Resources)
     this.frames = {
       sst: {
         id: "sst",
@@ -28,6 +28,76 @@ class EicFrameScanner {
         unit: "°C",
         range: "0°C to +32°C",
         description: "Equatorial Pacific warm pool anomaly, Kuroshio current thermal plumes, and high coral bleaching risk zones."
+      },
+      night_lights: {
+        id: "night_lights",
+        title: "Change in Night Lights (2012–2023) - EIC Version",
+        mission: "NASA SVS #5313 • Suomi NPP VIIRS DNB",
+        src: "assets/eic_frames/night_lights.jpg",
+        param: "Urban Radiant Light Intensity",
+        unit: "nW/(cm²·sr)",
+        range: "0 to >100 nW",
+        description: "Decadal shift in planetary urban illumination, high-contrast human footprint, and power grid evolution."
+      },
+      iss_lightning: {
+        id: "iss_lightning",
+        title: "Lightning Events Detected from the ISS (2017–2023)",
+        mission: "NASA SVS #5011 • ISS Lightning Imaging Sensor (LIS)",
+        src: "assets/eic_frames/iss_lightning.jpg",
+        param: "Optical Flash Radiance Density",
+        unit: "Flashes/km²/yr",
+        range: "0 to 150 Flashes",
+        description: "Orbital spaceborne recording of global lightning flash geography, tropical convection centers, and storm hubs."
+      },
+      gedi_forest: {
+        id: "gedi_forest",
+        title: "GEDI Global Forest Canopy Height",
+        mission: "NASA SVS #4950 • GEDI Spaceborne Lidar",
+        src: "assets/eic_frames/gedi_forest.jpg",
+        param: "Forest Canopy Top Height (RH98)",
+        unit: "Meters",
+        range: "0 m to 65 m",
+        description: "Spaceborne lidar profiling of planetary 3D forest vertical canopy architecture, biomass density, and carbon storage."
+      },
+      geos_aerosols: {
+        id: "geos_aerosols",
+        title: "GEOS Aerosols: Dust, Smoke & Sulfate Plumes",
+        mission: "NASA SVS #5669 • Goddard Earth Observing System",
+        src: "assets/eic_frames/geos_aerosols.jpg",
+        param: "Aerosol Speciation & Optical Thickness",
+        unit: "AOD",
+        range: "0.0 to 3.5 AOD",
+        description: "Multi-spectral tracking of trans-continental wildfire smoke, Saharan dust plumes, and industrial sea-salt sulfates."
+      },
+      ocean_currents: {
+        id: "ocean_currents",
+        title: "Global Sea Surface Currents & Temperature",
+        mission: "NASA SVS #3912 • ECCO2 Modeling",
+        src: "assets/eic_frames/ocean_currents.jpg",
+        param: "Current Flow Velocity & Thermal Gradients",
+        unit: "m/s, °C",
+        range: "-2°C to +32°C",
+        description: "Continuous fluid movement of Earth's ocean currents coupled with thermal gradients and dynamic kinetic vortices."
+      },
+      co2_flux: {
+        id: "co2_flux",
+        title: "DYAMOND Global Carbon Dioxide (CO2)",
+        mission: "NASA SVS #5196 • High-Res Earth System Model",
+        src: "assets/eic_frames/co2_flux.jpg",
+        param: "Atmospheric CO2 Concentration",
+        unit: "PPM",
+        range: "395 to 430 PPM",
+        description: "Ultra-high-resolution simulation of global CO2 plumes, seasonal terrestrial biosphere respiration, and emissions."
+      },
+      atmospheric_river: {
+        id: "atmospheric_river",
+        title: "Atmospheric River Moisture Transport",
+        mission: "NASA SVS #4960 • Earth System Modeling",
+        src: "assets/eic_frames/atmospheric_river.jpg",
+        param: "Integrated Vapor Transport (IVT)",
+        unit: "kg/(m·s)",
+        range: "0 to 1200 kg/(m·s)",
+        description: "Extratropical filamentary moisture corridors conveying immense atmospheric water vapor across oceanic basins."
       },
       sea_level: {
         id: "sea_level",
@@ -58,6 +128,26 @@ class EicFrameScanner {
         unit: "% Pack Ice",
         range: "0% (Open Ocean) to 100% (Glacial Pack)",
         description: "September Arctic minimum pack ice margins, multi-year glacial ice cap, and Antarctic shelf thermal dynamics."
+      },
+      perpetual_ocean: {
+        id: "perpetual_ocean",
+        title: "Perpetual Ocean: Western Boundary Currents",
+        mission: "NASA SVS #5425 • ECCO2 High-Resolution",
+        src: "assets/eic_frames/perpetual_ocean.jpg",
+        param: "Kinetic Streamflow & Boundary Eddies",
+        unit: "cm/s",
+        range: "0 to 200 cm/s",
+        description: "High-contrast western boundary currents, mesoscale eddies, and Gulf Stream / Kuroshio kinetic streamflows."
+      },
+      air_quality: {
+        id: "air_quality",
+        title: "Air Quality Atmospheric Model Runs",
+        mission: "NASA SVS #5533 • SVS Atmospheric Chemistry",
+        src: "assets/eic_frames/air_quality.jpg",
+        param: "Ground-Level Particulate Concentration",
+        unit: "µg/m³",
+        range: "0 to 180 µg/m³",
+        description: "High-resolution air quality forecasts capturing particulate density, urban nitrogen dioxide plumes, and ozone precursors."
       }
     };
 
@@ -157,8 +247,25 @@ class EicFrameScanner {
       }).connect(this.delay);
       this.shimmerSynth.volume.value = -8;
 
+      // 4. Staccato Percussive Lightning Synth for ISS Flashes (SVS #5011)
+      this.lightningSynth = new Tone.MembraneSynth({
+        pitchDecay: 0.006,
+        octaves: 3,
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.001, decay: 0.08, sustain: 0.01, release: 0.1 }
+      }).connect(this.limiter);
+      this.lightningSynth.volume.value = -3;
+
+      // 5. Wooden Marimba Synth for GEDI Forest Canopy (SVS #4950)
+      this.woodSynth = new Tone.PolySynth(Tone.Synth, {
+        maxPolyphony: 8,
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.004, decay: 0.22, sustain: 0.04, release: 0.18 }
+      }).connect(this.delay);
+      this.woodSynth.volume.value = -5;
+
       this.isAudioReady = true;
-      console.log("EIC Visual Frame Audio Synthesizer initialized successfully.");
+      console.log("EIC Visual Frame Audio Synthesizer initialized successfully with 5 acoustic timbres.");
     } catch (e) {
       console.warn("EIC audio init error:", e);
     }
@@ -326,7 +433,24 @@ class EicFrameScanner {
       const dur = Math.max(0.12, durationSec);
       for (const feat of features) {
         if (!feat || !feat.note) continue;
-        if (feat.isThermalHot && this.warmSynth) {
+
+        // Specialized Acoustic Behaviors per NASA SVS Resource
+        if (this.currentFrameKey === "iss_lightning" && feat.luminance > 0.40 && this.lightningSynth) {
+          // Punctuated optical flash sonification (SVS #5011)
+          this.lightningSynth.triggerAttackRelease(feat.note, "32n", now, Math.min(1.0, feat.velocity * 1.3));
+          if (this.shimmerSynth) {
+            this.shimmerSynth.triggerAttackRelease(feat.note, dur * 0.6, now, feat.velocity * 0.9);
+          }
+        } else if (this.currentFrameKey === "gedi_forest" && this.woodSynth) {
+          // Spaceborne lidar canopy elevation wooden marimba (SVS #4950)
+          this.woodSynth.triggerAttackRelease(feat.note, dur * 0.85, now, feat.velocity);
+        } else if (this.currentFrameKey === "night_lights" && this.shimmerSynth) {
+          // High-contrast urban illumination crystalline chimes (SVS #5313)
+          this.shimmerSynth.triggerAttackRelease(feat.note, dur * 1.1, now, feat.velocity);
+        } else if (this.currentFrameKey === "co2_flux" && this.warmSynth) {
+          // Atmospheric carbon density warm resonant pad (SVS #5196)
+          this.warmSynth.triggerAttackRelease(feat.note, dur * 1.4, now, feat.velocity * 0.75);
+        } else if (feat.isThermalHot && this.warmSynth) {
           this.warmSynth.triggerAttackRelease(feat.note, dur, now, feat.velocity * 0.7);
         } else if (feat.isGlacialIce && this.shimmerSynth) {
           this.shimmerSynth.triggerAttackRelease(feat.note, dur * 1.3, now, feat.velocity * 0.8);
@@ -389,12 +513,16 @@ class EicFrameScanner {
       if (this.synth) this.synth.volume.value = -Infinity;
       if (this.warmSynth) this.warmSynth.volume.value = -Infinity;
       if (this.shimmerSynth) this.shimmerSynth.volume.value = -Infinity;
+      if (this.lightningSynth) this.lightningSynth.volume.value = -Infinity;
+      if (this.woodSynth) this.woodSynth.volume.value = -Infinity;
       return;
     }
     const db = 20 * Math.log10(Math.max(0.01, normalizedVal));
     if (this.synth) this.synth.volume.value = Math.max(-40, db - 4);
     if (this.warmSynth) this.warmSynth.volume.value = Math.max(-40, db - 8);
     if (this.shimmerSynth) this.shimmerSynth.volume.value = Math.max(-40, db - 6);
+    if (this.lightningSynth) this.lightningSynth.volume.value = Math.max(-40, db - 3);
+    if (this.woodSynth) this.woodSynth.volume.value = Math.max(-40, db - 5);
   }
 
   /**

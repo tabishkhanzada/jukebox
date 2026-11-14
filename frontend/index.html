@@ -172,10 +172,38 @@
       <!-- NASA EIC Visual Frame Sonifier Viewport (Toggled via Mode Switcher) -->
       <div id="eicScannerStage" class="eic-scanner-viewport hidden">
         <div class="eic-frame-header-controls">
-          <div class="eic-track-pills font-mono" role="tablist" aria-label="NASA EIC Satellite Datasets">
-            <button class="eic-track-pill active" data-frame="sst" role="tab" aria-selected="true" title="Sea Surface Temperature &amp; Coral Stress (MODIS/VIIRS)">
+          <div class="eic-track-pills font-mono" role="tablist" aria-label="NASA EIC and SVS Satellite Datasets">
+            <button class="eic-track-pill active" data-frame="sst" role="tab" aria-selected="true" title="Sea Surface Temperature &amp; Coral Thermal Stress (MODIS/VIIRS)">
               <span class="pill-emoji">🌊</span>
               <span>SST &amp; CORAL</span>
+            </button>
+            <button class="eic-track-pill" data-frame="night_lights" role="tab" aria-selected="false" title="Change in Night Lights 2012-2023 (NASA SVS #5313)">
+              <span class="pill-emoji">💡</span>
+              <span>NIGHT LIGHTS</span>
+            </button>
+            <button class="eic-track-pill" data-frame="iss_lightning" role="tab" aria-selected="false" title="Lightning Events Detected from the ISS 2017-2023 (NASA SVS #5011)">
+              <span class="pill-emoji">⚡</span>
+              <span>ISS LIGHTNING</span>
+            </button>
+            <button class="eic-track-pill" data-frame="gedi_forest" role="tab" aria-selected="false" title="GEDI Global Forest Canopy Height (NASA SVS #4950)">
+              <span class="pill-emoji">🌳</span>
+              <span>GEDI CANOPY</span>
+            </button>
+            <button class="eic-track-pill" data-frame="geos_aerosols" role="tab" aria-selected="false" title="GEOS Aerosols: Dust, Smoke &amp; Sulfate Plumes (NASA SVS #5669)">
+              <span class="pill-emoji">💨</span>
+              <span>AEROSOLS</span>
+            </button>
+            <button class="eic-track-pill" data-frame="ocean_currents" role="tab" aria-selected="false" title="Global Sea Surface Currents &amp; Temp (NASA SVS #3912)">
+              <span class="pill-emoji">🌊</span>
+              <span>CURRENTS</span>
+            </button>
+            <button class="eic-track-pill" data-frame="co2_flux" role="tab" aria-selected="false" title="DYAMOND Global Carbon Dioxide CO2 (NASA SVS #5196)">
+              <span class="pill-emoji">🌫️</span>
+              <span>GLOBAL CO2</span>
+            </button>
+            <button class="eic-track-pill" data-frame="atmospheric_river" role="tab" aria-selected="false" title="Atmospheric River Moisture Transport (NASA SVS #4960)">
+              <span class="pill-emoji">🌧️</span>
+              <span>ATMOS RIVER</span>
             </button>
             <button class="eic-track-pill" data-frame="sea_level" role="tab" aria-selected="false" title="Sea Level Rise &amp; Ocean Mass (GRACE-FO / Jason-3)">
               <span class="pill-emoji">📈</span>
@@ -189,6 +217,14 @@
               <span class="pill-emoji">❄️</span>
               <span>ARCTIC ICE</span>
             </button>
+            <button class="eic-track-pill" data-frame="perpetual_ocean" role="tab" aria-selected="false" title="Perpetual Ocean: Western Boundary Currents (NASA SVS #5425)">
+              <span class="pill-emoji">🌀</span>
+              <span>PERPETUAL OCEAN</span>
+            </button>
+            <button class="eic-track-pill" data-frame="air_quality" role="tab" aria-selected="false" title="Air Quality Atmospheric Model Runs (NASA SVS #5533)">
+              <span class="pill-emoji">🏭</span>
+              <span>AIR QUALITY</span>
+            </button>
             <button class="eic-track-pill upload-pill" id="eicUploadBtn" role="tab" aria-selected="false" title="Upload custom NASA satellite image">
               <span class="pill-emoji">📁</span>
               <span>UPLOAD</span>
@@ -197,9 +233,18 @@
 
           <select id="eicDatasetSelect" class="nasa-select font-mono" style="display:none;" aria-hidden="true">
             <option value="sst" selected>Sea Surface Temperature &amp; Coral Stress (MODIS/VIIRS)</option>
+            <option value="night_lights">Change in Night Lights 2012-2023 (NASA SVS #5313)</option>
+            <option value="iss_lightning">Lightning Events Detected from the ISS (NASA SVS #5011)</option>
+            <option value="gedi_forest">GEDI Global Forest Canopy Height (NASA SVS #4950)</option>
+            <option value="geos_aerosols">GEOS Aerosols: Dust, Smoke &amp; Sulfate Plumes (NASA SVS #5669)</option>
+            <option value="ocean_currents">Global Sea Surface Currents &amp; Temp (NASA SVS #3912)</option>
+            <option value="co2_flux">DYAMOND Global Carbon Dioxide CO2 (NASA SVS #5196)</option>
+            <option value="atmospheric_river">Atmospheric River Moisture Transport (NASA SVS #4960)</option>
             <option value="sea_level">Sea Level Rise &amp; Ocean Mass (GRACE-FO / Jason-3)</option>
             <option value="wildfire">Wildfire Smoke &amp; Aerosol Optical Depth (Aqua/OMPS)</option>
             <option value="arctic">Polar Cryosphere &amp; Arctic Sea Ice (ICESat-2)</option>
+            <option value="perpetual_ocean">Perpetual Ocean: Western Boundary Currents (NASA SVS #5425)</option>
+            <option value="air_quality">Air Quality Atmospheric Model Runs (NASA SVS #5533)</option>
             <option value="custom">Upload Custom NASA Frame (.png/.jpg)...</option>
           </select>
           <input type="file" id="eicCustomFileInput" accept="image/*" style="display:none;">

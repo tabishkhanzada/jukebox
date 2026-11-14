@@ -1,0 +1,90 @@
+[
+  {
+    "id": "5313",
+    "key": "night_lights",
+    "title": "Night Lights Change (2012\u20132023)",
+    "mission": "NASA EIC \u2022 SVS #5313 Suomi NPP VIIRS",
+    "sonification_mode": "luminance_intensity",
+    "acoustic_mapping": "High-contrast urban light intensity mapped to staccato chimes & dynamic tempo.",
+    "scale": "pentatonic_major",
+    "default_instrument": "synth",
+    "local_src": "assets/eic_frames/night_lights.jpg",
+    "description": "This global, flat map view of night lights data begins with a time series depicting annual averages from 2012 to 2023. The lights then fade away to reveal night lights change between 2012 and 2023, with regions of more light depicted in purple and regions with less light depicted..."
+  },
+  {
+    "id": "3912",
+    "key": "ocean_currents",
+    "title": "Global Sea Surface Currents & Temp",
+    "mission": "NASA SVS #3912 \u2022 ECCO2 Modeling",
+    "sonification_mode": "fluid_currents",
+    "acoustic_mapping": "Thermal gradients & velocity vectors mapped to fluid evolving polyphonic pads.",
+    "scale": "lydian",
+    "default_instrument": "pad"
+  },
+  {
+    "id": "5669",
+    "key": "geos_aerosols",
+    "title": "GEOS Aerosols & Smoke Plumes",
+    "mission": "NASA SVS #5669 \u2022 GEOS Forward Processing",
+    "sonification_mode": "multitrack_aerosol",
+    "acoustic_mapping": "Multi-track split: Smoke (warm sawtooth), Dust (pink noise), Sulfate (crystal chime).",
+    "scale": "pentatonic_minor",
+    "default_instrument": "synth",
+    "local_src": "assets/eic_frames/geos_aerosols.jpg",
+    "description": "Aerosols are tiny solid or liquid particles that float in the atmosphere and can travel long distances, affecting air quality and visibility far from their sources. This visualization still, captured for August 19, 2025 (20:00 UTC), is based on NASA's Goddard Earth Observing Syst..."
+  },
+  {
+    "id": "5196",
+    "key": "co2_flux",
+    "title": "DYAMOND Global Carbon Dioxide (CO2)",
+    "mission": "NASA SVS #5196 \u2022 GEOS Atmospheric Model",
+    "sonification_mode": "carbon_density",
+    "acoustic_mapping": "Atmospheric CO2 PPM concentration mapped to sub-bass drone and harmonic tension.",
+    "scale": "akebono",
+    "default_instrument": "pad",
+    "local_src": "assets/eic_frames/co2_flux.jpg",
+    "description": "Global CO2 ppm for January-March of 2020. This camera move orbits the Earth from a distance. || dyamondPointCloud_12-1-2023b_dyamond_co2_anim_globe_orbit_3x3Hyperwall.00200_print.jpg (1024x576) [46.2\u00a0KB] || dyamondPointCloud_12-1-2023b_dyamond_co2_anim_globe_orbit_3x3Hyperwall.00..."
+  },
+  {
+    "id": "5011",
+    "key": "iss_lightning",
+    "title": "ISS Spaceborne Lightning Detection",
+    "mission": "NASA SVS #5011 \u2022 ISS LIS Sensor",
+    "sonification_mode": "punctuated_staccato",
+    "acoustic_mapping": "Punctuated percussive strikes: rapid optical flashes trigger immediate staccato bursts.",
+    "scale": "pentatonic_major",
+    "default_instrument": "marimba",
+    "local_src": "assets/eic_frames/iss_lightning.jpg",
+    "description": "Lightning events detected by the LIS sensor on the ISS between January 2017 and July 2023 using a 10-day roving window. Data is from the quality controlled science dataset. Available resolution in the download menu are 1920x1080, 3840x2160 (4k), and 7680x2160 (created for EIC dis..."
+  },
+  {
+    "id": "4960",
+    "key": "atmospheric_river",
+    "title": "Atmospheric River Moisture Transport",
+    "mission": "NASA SVS #4960 \u2022 Earth System Model",
+    "sonification_mode": "moisture_density",
+    "acoustic_mapping": "Integrated vapor transport mapped to ambient breeze, rain percussion, and resonant swells.",
+    "scale": "lydian",
+    "default_instrument": "pad"
+  },
+  {
+    "id": "4950",
+    "key": "gedi_forest",
+    "title": "GEDI Global Canopy & Forest Height",
+    "mission": "NASA SVS #4950 \u2022 GEDI Spaceborne Lidar",
+    "sonification_mode": "canopy_elevation",
+    "acoustic_mapping": "Lidar canopy elevation (0-60m) mapped to organic wooden marimba pitch & density.",
+    "scale": "pentatonic_major",
+    "default_instrument": "marimba"
+  },
+  {
+    "id": "5425",
+    "key": "perpetual_ocean",
+    "title": "Perpetual Ocean: Boundary Currents",
+    "mission": "NASA SVS #5425 \u2022 ECCO2 High-Res",
+    "sonification_mode": "kinetic_streamflow",
+    "acoustic_mapping": "High-contrast western boundary streamflow mapped to driving harmonic rhythm.",
+    "scale": "lydian",
+    "default_instrument": "synth"
+  }
+]
