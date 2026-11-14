@@ -434,9 +434,35 @@ class EarthJukeboxApp {
     }
 
     // EIC Visual Frame Selection & Custom Upload
+    const trackPills = document.querySelectorAll(".eic-track-pill[data-frame]");
+    trackPills.forEach(pill => {
+      pill.addEventListener("click", () => {
+        trackPills.forEach(p => {
+          p.classList.remove("active");
+          p.setAttribute("aria-selected", "false");
+        });
+        pill.classList.add("active");
+        pill.setAttribute("aria-selected", "true");
+        const frameKey = pill.getAttribute("data-frame");
+        if (this.dom.eicDatasetSelect) this.dom.eicDatasetSelect.value = frameKey;
+        if (this.scanner) {
+          this.scanner.loadFrame(frameKey);
+          if (this.accessibility) {
+            const title = this.scanner.frames[frameKey]?.title || frameKey;
+            this.accessibility.announce(`Loaded NASA EIC Dataset: ${title}`, "polite", true);
+          }
+        }
+      });
+    });
+
     if (this.dom.eicDatasetSelect && this.scanner) {
       this.dom.eicDatasetSelect.addEventListener("change", (e) => {
         const val = e.target.value;
+        trackPills.forEach(p => {
+          const match = p.getAttribute("data-frame") === val;
+          p.classList.toggle("active", match);
+          p.setAttribute("aria-selected", match ? "true" : "false");
+        });
         if (val === "custom") {
           if (this.dom.eicCustomFileInput) this.dom.eicCustomFileInput.click();
         } else {
@@ -874,16 +900,21 @@ class EarthJukeboxApp {
   toggleViewMode(mode) {
     if (mode === this.activeViewMode) return;
     this.activeViewMode = mode;
-    const timelineSec = document.getElementById("timelineSection");
 
     if (mode === "scanner") {
       // Pause timeline sonifier if playing
       if (this.sonifier && this.sonifier.isPlaying) {
         this.sonifier.pause();
       }
-      if (timelineSec) timelineSec.classList.add("hidden");
       if (this.dom.heroChartContainer) this.dom.heroChartContainer.classList.add("hidden");
       if (this.dom.globeCanvasContainer) this.dom.globeCanvasContainer.classList.add("hidden");
+      if (this.dom.heroReticleTag && this.dom.heroReticleTag.parentElement) {
+        this.dom.heroReticleTag.parentElement.classList.add("hidden");
+      }
+      if (this.dom.thermalLegendDock) this.dom.thermalLegendDock.style.display = "none";
+      if (this.dom.pitchModeSelect && this.dom.pitchModeSelect.parentElement) {
+        this.dom.pitchModeSelect.parentElement.style.display = "none";
+      }
       if (this.dom.eicScannerStage) this.dom.eicScannerStage.classList.remove("hidden");
       if (this.dom.viewScannerBtn) this.dom.viewScannerBtn.classList.add("active");
       if (this.dom.viewTimelineBtn) this.dom.viewTimelineBtn.classList.remove("active");
@@ -901,9 +932,15 @@ class EarthJukeboxApp {
         this.scanner.pause();
       }
       if (this.dom.eicScannerStage) this.dom.eicScannerStage.classList.add("hidden");
-      if (timelineSec) timelineSec.classList.remove("hidden");
       if (this.dom.heroChartContainer) this.dom.heroChartContainer.classList.remove("hidden");
       if (this.dom.globeCanvasContainer) this.dom.globeCanvasContainer.classList.remove("hidden");
+      if (this.dom.heroReticleTag && this.dom.heroReticleTag.parentElement) {
+        this.dom.heroReticleTag.parentElement.classList.remove("hidden");
+      }
+      if (this.dom.thermalLegendDock) this.dom.thermalLegendDock.style.display = "flex";
+      if (this.dom.pitchModeSelect && this.dom.pitchModeSelect.parentElement) {
+        this.dom.pitchModeSelect.parentElement.style.display = "flex";
+      }
       if (this.dom.viewTimelineBtn) this.dom.viewTimelineBtn.classList.add("active");
       if (this.dom.viewScannerBtn) this.dom.viewScannerBtn.classList.remove("active");
 
@@ -928,7 +965,7 @@ class EarthJukeboxApp {
       if (playIcon) playIcon.textContent = "⏸";
     } else {
       this.dom.playBtn.classList.remove("playing");
-      if (playText) playText.textContent = "PLAY";
+      if (playText) playText.textContent = "SCAN SATELLITE";
       if (playIcon) playIcon.textContent = "▶";
     }
   }

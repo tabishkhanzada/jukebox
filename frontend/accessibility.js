@@ -26,6 +26,26 @@ class AccessibilitySuite {
       document.body.appendChild(this.liveRegion);
     }
 
+    // Direct binding for modal close button and backdrop click
+    const closeBtn = document.getElementById("closeAccModalBtn");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.closeAllModals();
+      });
+    }
+
+    const modal = document.getElementById("accessibilityHelpModal");
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          e.preventDefault();
+          this.closeAllModals();
+        }
+      });
+    }
+
     this.initKeyboardListeners();
   }
 

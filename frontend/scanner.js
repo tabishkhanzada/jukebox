@@ -109,54 +109,56 @@ class EicFrameScanner {
   /**
    * Initializes Tone.js visual synthesizer graph
    */
-  async initAudio() {
+  initAudio() {
     if (this.isAudioReady) return;
     if (!window.Tone) return;
 
     try {
-      await Tone.start();
       if (Tone.context && Tone.context.state !== "running") {
-        await Tone.context.resume();
+        Tone.context.resume();
       }
 
       this.limiter = new Tone.Limiter(-1.5).toDestination();
 
-      this.reverb = new Tone.Reverb({
-        decay: 3.2,
-        preDelay: 0.05,
-        wet: 0.35
+      // Freeverb is 100% synchronous, reliable, and instantaneous
+      this.reverb = new Tone.Freeverb({
+        roomSize: 0.65,
+        dampening: 3500
       }).connect(this.limiter);
-      await this.reverb.generate();
+      this.reverb.wet.value = 0.28;
 
       this.delay = new Tone.FeedbackDelay({
-        delayTime: "8n",
-        feedback: 0.15,
-        wet: 0.18
+        delayTime: 0.2,
+        feedback: 0.18,
+        wet: 0.15
       }).connect(this.reverb);
 
       // 1. Primary Celestial PolySynth (Crystalline Sine/Triangle Chimes for Mid-High Frequencies)
       this.synth = new Tone.PolySynth(Tone.Synth, {
+        maxPolyphony: 8,
         oscillator: { type: "triangle8" },
-        envelope: { attack: 0.02, decay: 0.28, sustain: 0.18, release: 0.45 }
+        envelope: { attack: 0.02, decay: 0.25, sustain: 0.15, release: 0.35 }
       }).connect(this.delay);
-      this.synth.volume.value = -4;
+      this.synth.volume.value = -6;
 
       // 2. Warm Resonant Synth for Infrared / Wildfire Heat Zones
       this.warmSynth = new Tone.PolySynth(Tone.Synth, {
+        maxPolyphony: 8,
         oscillator: { type: "sawtooth" },
-        envelope: { attack: 0.04, decay: 0.35, sustain: 0.25, release: 0.6 }
+        envelope: { attack: 0.03, decay: 0.3, sustain: 0.2, release: 0.45 }
       }).connect(this.reverb);
-      this.warmSynth.volume.value = -8;
+      this.warmSynth.volume.value = -9;
 
       // 3. Shimmer High-Glacial Synth for Polar & Ice regions
       this.shimmerSynth = new Tone.PolySynth(Tone.Synth, {
+        maxPolyphony: 8,
         oscillator: { type: "sine" },
-        envelope: { attack: 0.01, decay: 0.4, sustain: 0.1, release: 0.8 }
+        envelope: { attack: 0.01, decay: 0.35, sustain: 0.1, release: 0.6 }
       }).connect(this.delay);
-      this.shimmerSynth.volume.value = -6;
+      this.shimmerSynth.volume.value = -8;
 
       this.isAudioReady = true;
-      console.log("EIC Visual Frame Audio Synthesizer initialized.");
+      console.log("EIC Visual Frame Audio Synthesizer initialized successfully.");
     } catch (e) {
       console.warn("EIC audio init error:", e);
     }
@@ -313,18 +315,23 @@ class EicFrameScanner {
   /**
    * Triggers audio synthesis for active column features
    */
-  sonifyFeatures(features, durationSec = 0.18) {
-    if (!this.isAudioReady || features.length === 0) return;
+  sonifyFeatures(features, durationSec = 0.22) {
+    if (!this.isAudioReady) {
+      this.initAudio();
+    }
+    if (!this.isAudioReady || !features || features.length === 0) return;
 
     try {
       const now = Tone.now();
+      const dur = Math.max(0.12, durationSec);
       for (const feat of features) {
+        if (!feat || !feat.note) continue;
         if (feat.isThermalHot && this.warmSynth) {
-          this.warmSynth.triggerAttackRelease(feat.note, durationSec, now, feat.velocity * 0.75);
+          this.warmSynth.triggerAttackRelease(feat.note, dur, now, feat.velocity * 0.7);
         } else if (feat.isGlacialIce && this.shimmerSynth) {
-          this.shimmerSynth.triggerAttackRelease(feat.note, durationSec * 1.3, now, feat.velocity * 0.85);
+          this.shimmerSynth.triggerAttackRelease(feat.note, dur * 1.3, now, feat.velocity * 0.8);
         } else if (this.synth) {
-          this.synth.triggerAttackRelease(feat.note, durationSec, now, feat.velocity);
+          this.synth.triggerAttackRelease(feat.note, dur, now, feat.velocity);
         }
       }
     } catch (_) {}
@@ -334,9 +341,19 @@ class EicFrameScanner {
    * Transport Play
    */
   async play() {
-    await this.initAudio();
+    this.initAudio();
+    if (window.Tone) {
+      try {
+        await Tone.start();
+        if (Tone.context && Tone.context.state !== "running") {
+          await Tone.context.resume();
+        }
+      } catch (_) {}
+    }
     this.isPlaying = true;
     this.lastTickTime = performance.now();
+    this.lastAudioTriggerTime = 0;
+    this.lastTriggeredCol = -1;
     if (this.onTransportChange) this.onTransportChange(true);
     this.startScanLoop();
   }
@@ -432,10 +449,14 @@ class EicFrameScanner {
   }
 
   /**
-   * Real-time 60fps scanning loop
+   * Real-time 60fps scanning loop with musically cadenced audio synthesis
    */
   startScanLoop() {
     if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
+
+    this.lastTickTime = performance.now();
+    this.lastAudioTriggerTime = 0;
+    this.lastTriggeredCol = -1;
 
     const loop = (now) => {
       if (!this.isPlaying) return;
@@ -446,7 +467,7 @@ class EicFrameScanner {
       const effectiveDuration = this.scanDurationMs / this.speedMultiplier;
       this.scanProgress += delta / effectiveDuration;
 
-      // Loop or stop at end of planetary sweep
+      // Loop sweep
       if (this.scanProgress >= 1.0) {
         this.scanProgress = 0.0;
       }
@@ -454,9 +475,17 @@ class EicFrameScanner {
       const colIdx = Math.floor(this.scanProgress * (this.matrixW - 1));
       const features = this.extractColumnFeatures(colIdx);
 
-      // Periodically trigger audio chords based on speed
-      this.sonifyFeatures(features, Math.max(0.06, (effectiveDuration / this.matrixW) / 1000 * 1.5));
+      // Musically Paced Chord Triggering (Avoids flooding Web Audio API 60x/sec)
+      // At 1.0x speed: 24,000ms / 256 cols = ~94ms per column step
+      const minChordIntervalMs = Math.max(75, 94 / this.speedMultiplier);
+      if (colIdx !== this.lastTriggeredCol && (now - this.lastAudioTriggerTime >= minChordIntervalMs)) {
+        this.lastTriggeredCol = colIdx;
+        this.lastAudioTriggerTime = now;
+        const noteDuration = (minChordIntervalMs / 1000) * 1.5;
+        this.sonifyFeatures(features, noteDuration);
+      }
 
+      // Visual rendering at smooth 60fps
       this.render();
 
       if (this.onScanStep) {
@@ -481,37 +510,37 @@ class EicFrameScanner {
   render() {
     if (!this.ctx || !this.canvas) return;
 
-    const w = this.canvas.width;
-    const h = this.canvas.height;
-    if (w <= 0 || h <= 0) return;
+    const cssW = this.canvas.clientWidth || (this.canvas.width / (window.devicePixelRatio || 1));
+    const cssH = this.canvas.clientHeight || (this.canvas.height / (window.devicePixelRatio || 1));
+    if (cssW <= 0 || cssH <= 0) return;
 
-    this.ctx.clearRect(0, 0, w, h);
+    this.ctx.clearRect(0, 0, cssW, cssH);
 
     // 1. Draw satellite image
     if (this.currentImage && this.isImageLoaded) {
-      this.ctx.drawImage(this.currentImage, 0, 0, w, h);
+      this.ctx.drawImage(this.currentImage, 0, 0, cssW, cssH);
     } else {
       // Placeholder NASA starry grid
       this.ctx.fillStyle = "#040810";
-      this.ctx.fillRect(0, 0, w, h);
+      this.ctx.fillRect(0, 0, cssW, cssH);
       this.ctx.strokeStyle = "rgba(56, 189, 248, 0.15)";
       this.ctx.lineWidth = 1;
-      for (let x = 0; x < w; x += 40) {
+      for (let x = 0; x < cssW; x += 40) {
         this.ctx.beginPath();
         this.ctx.moveTo(x, 0);
-        this.ctx.lineTo(x, h);
+        this.ctx.lineTo(x, cssH);
         this.ctx.stroke();
       }
     }
 
     // 2. Draw Glowing Laser Scanner Playhead
-    const scanX = this.scanProgress * w;
+    const scanX = this.scanProgress * cssW;
     this.ctx.save();
 
     // Outer Neon Glow
     this.ctx.beginPath();
     this.ctx.moveTo(scanX, 0);
-    this.ctx.lineTo(scanX, h);
+    this.ctx.lineTo(scanX, cssH);
     this.ctx.lineWidth = 3.5;
     this.ctx.strokeStyle = "#38bdf8";
     this.ctx.shadowColor = "#0ea5e9";
@@ -521,7 +550,7 @@ class EicFrameScanner {
     // Sharp White Core Line
     this.ctx.beginPath();
     this.ctx.moveTo(scanX, 0);
-    this.ctx.lineTo(scanX, h);
+    this.ctx.lineTo(scanX, cssH);
     this.ctx.lineWidth = 1.2;
     this.ctx.strokeStyle = "#ffffff";
     this.ctx.shadowBlur = 0;
@@ -530,7 +559,7 @@ class EicFrameScanner {
     // Scanner Head Beads (Top & Bottom Reticle Marks)
     this.ctx.beginPath();
     this.ctx.arc(scanX, 18, 5, 0, Math.PI * 2);
-    this.ctx.arc(scanX, h - 18, 5, 0, Math.PI * 2);
+    this.ctx.arc(scanX, cssH - 18, 5, 0, Math.PI * 2);
     this.ctx.fillStyle = "#38bdf8";
     this.ctx.shadowColor = "#38bdf8";
     this.ctx.shadowBlur = 10;
