@@ -34,7 +34,36 @@
             <span id="voice-guide-text">Audio guide</span>
             <kbd>H</kbd>
           </button>
-          <p class="kbd-hint"><kbd>Space</kbd> play · <kbd>1–8</kbd> channels</p>
+          <div class="shortcuts-dropdown-wrap" data-ui>
+            <button type="button" class="btn small shortcuts-btn" id="shortcuts-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="View keyboard shortcuts">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2" /><line x1="6" y1="8" x2="6" y2="8" /><line x1="10" y1="8" x2="10" y2="8" /><line x1="14" y1="8" x2="14" y2="8" /><line x1="18" y1="8" x2="18" y2="8" /><line x1="6" y1="12" x2="6" y2="12" /><line x1="10" y1="12" x2="10" y2="12" /><line x1="14" y1="12" x2="14" y2="12" /><line x1="18" y1="12" x2="18" y2="12" /><line x1="8" y1="16" x2="16" y2="16" /></svg>
+              <span>Shortcuts</span>
+              <kbd>?</kbd>
+            </button>
+            <div class="shortcuts-menu" id="shortcuts-menu" role="dialog" aria-label="Keyboard Shortcuts" hidden>
+              <div class="shortcuts-menu-head">
+                <h3>Keyboard shortcuts</h3>
+                <button type="button" class="shortcuts-close" id="shortcuts-close" aria-label="Close shortcuts"><svg viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></button>
+              </div>
+              <div class="shortcuts-group">
+                <div class="shortcuts-group-title">Playback and audio</div>
+                <div class="shortcut-row"><span>Play or pause sonification</span><kbd>Space</kbd></div>
+                <div class="shortcut-row"><span>Mute or unmute audio</span><kbd>M</kbd></div>
+                <div class="shortcut-row"><span>Reload soundscape</span><kbd>G</kbd></div>
+                <div class="shortcut-row"><span>Step across 32 scan strips</span><span class="kbd-combo"><kbd>←</kbd> <kbd>→</kbd></span></div>
+              </div>
+              <div class="shortcuts-group">
+                <div class="shortcuts-group-title">Channels direct jump</div>
+                <div class="shortcut-row"><span>Video sonification</span><span class="kbd-combo"><kbd>1</kbd>–<kbd>4</kbd></span></div>
+                <div class="shortcut-row"><span>Satellite map layers</span><span class="kbd-combo"><kbd>5</kbd>–<kbd>8</kbd></span></div>
+              </div>
+              <div class="shortcuts-group">
+                <div class="shortcuts-group-title">Navigation and help</div>
+                <div class="shortcut-row"><span>Spoken voice guide</span><kbd>H</kbd></div>
+                <div class="shortcut-row"><span>Toggle shortcuts list</span><kbd>?</kbd></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </header>

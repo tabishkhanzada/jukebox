@@ -453,6 +453,8 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'g' || e.key === 'G') { e.preventDefault(); generate({ fromKey: true }); }
   else if (e.key === 'm' || e.key === 'M') { e.preventDefault(); $('mute').click(); }
   else if (e.key === 'h' || e.key === 'H') { e.preventDefault(); playEarcon('switch'); voiceGuide.toggle(); }
+  else if (e.key === '?' || (e.key === '/' && e.shiftKey)) { e.preventDefault(); toggleShortcuts(); }
+  else if (e.key === 'Escape' && $('shortcuts-menu') && !$('shortcuts-menu').hidden) { e.preventDefault(); toggleShortcuts(false); }
   else if (['1', '2', '3', '4', '5', '6', '7', '8'].includes(e.key)) {
     e.preventDefault();
     selectChannelByKey(e.key);
@@ -537,6 +539,35 @@ const initTheme = () => {
 };
 
 initTheme();
+
+// Keyboard shortcuts dropdown
+function toggleShortcuts(show) {
+  const menu = $('shortcuts-menu');
+  const btn = $('shortcuts-btn');
+  if (!menu) return;
+  const isHidden = menu.hidden;
+  const target = show !== undefined ? show : isHidden;
+  menu.hidden = !target;
+  btn?.setAttribute('aria-expanded', String(target));
+  if (target) playEarcon('switch');
+}
+
+$('shortcuts-btn')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleShortcuts();
+});
+
+$('shortcuts-close')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleShortcuts(false);
+});
+
+document.addEventListener('click', (e) => {
+  const menu = $('shortcuts-menu');
+  if (menu && !menu.hidden && !e.target.closest('.shortcuts-dropdown-wrap')) {
+    toggleShortcuts(false);
+  }
+});
 
 document.querySelectorAll('.channel-card').forEach((card) => {
   card.addEventListener('click', () => {

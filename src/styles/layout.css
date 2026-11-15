@@ -322,26 +322,159 @@ kbd {
   color: var(--on-primary);
 }
 
-.kbd-hint {
-  color: var(--muted);
-  font-size: 14px;
-  display: flex;
+/* ==========================================================================
+   Keyboard Shortcuts Dropdown Menu (Accessible overlay)
+   ========================================================================== */
+.shortcuts-dropdown-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.shortcuts-btn {
+  background: var(--card-raised);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-weight: 600;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
+  border-radius: 999px;
+  padding: 5px 13px;
+  min-height: 36px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.88rem;
   white-space: nowrap;
-  margin: 0;
-  margin-left: 4px;
+  flex: none;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
 }
 
-.kbd-hint kbd {
+.shortcuts-btn svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+
+.shortcuts-btn kbd {
   font-size: 14px;
   padding: 2px 6px;
+  border-radius: 4px;
 }
 
-@media (max-width: 1240px) {
-  .kbd-hint {
-    display: none;
-  }
+.shortcuts-btn:hover {
+  background: var(--border);
+}
+
+.shortcuts-btn:active {
+  transform: translateY(1px);
+}
+
+.shortcuts-btn[aria-expanded='true'] {
+  background: var(--border);
+  color: var(--primary);
+}
+
+.shortcuts-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  background: var(--bg-deep);
+  border-radius: var(--radius);
+  padding: 16px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  outline: 2px solid var(--border);
+}
+
+.shortcuts-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.shortcuts-menu-head h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.shortcuts-close {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shortcuts-close svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.shortcuts-close:hover {
+  color: var(--text);
+  background: var(--card-raised);
+}
+
+.shortcuts-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shortcuts-group-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: -0.01em;
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.shortcut-row span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.shortcut-row kbd,
+.kbd-combo kbd {
+  font-size: 14px;
+  padding: 2px 7px;
+  background: var(--card-raised);
+  color: var(--text);
+  font-weight: 600;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.kbd-combo {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
 }
 
 /* ==========================================================================
