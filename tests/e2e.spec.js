@@ -229,7 +229,7 @@ test('Step 7 — no MediaRecorder: video button hidden, WAV still works, the not
 // Step 6 — frontend wiring
 // Pixel helpers run inside the page: they look for the solid accent-colour core of the line in the canvas.
 const PAGE_HELPERS = () => {
-  const isAccent = (d, i) => Math.abs(d[i] - 255) < 4 && Math.abs(d[i + 1] - 159) < 4 && Math.abs(d[i + 2] - 28) < 4; // ACCENT #FF9F1C
+  const isAccent = (d, i) => Math.abs(d[i] - 56) < 4 && Math.abs(d[i + 1] - 189) < 4 && Math.abs(d[i + 2] - 248) < 4; // ACCENT #38BDF8
   window.__findLineX = () => {
     const c = document.getElementById('stage-canvas'), x = c.getContext('2d'), r = window.__jukebox.state().rect;
     const d = x.getImageData(0, 0, c.width, c.height).data;

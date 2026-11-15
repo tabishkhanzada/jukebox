@@ -5,9 +5,9 @@
 // The line core is solid ACCENT so tests can find it in the pixels; the region outline is solid HILITE.
 import { STRIPS } from '../core/scan.js';
 
-export const ACCENT = '#FF9F1C';
+export const ACCENT = '#38BDF8';
 export const HILITE = '#5BD1FF';
-const GLOW = (a) => `rgba(255,159,28,${a})`;
+const GLOW = (a) => `rgba(56,189,248,${a})`;
 
 export function createStage(canvas) {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -68,7 +68,7 @@ export function createStage(canvas) {
     for (let y = 0; y < H; y += 64) ctx.fillRect(0, y, W, 1);
     const hs = [0.28, 0.42, 0.22, 0.6, 0.48, 0.35, 0.26, 0.4, 0.3, 0.2];
     const bw = W / hs.length;
-    hs.forEach((h, i) => { ctx.fillStyle = i === 3 ? 'rgba(243,156,51,0.28)' : 'rgba(120,150,210,0.18)'; ctx.fillRect(i * bw + 10, H * (0.95 - h * 0.5), bw - 20, H * h * 0.5); });
+    hs.forEach((h, i) => { ctx.fillStyle = i === 3 ? 'rgba(56,189,248,0.28)' : 'rgba(120,150,210,0.18)'; ctx.fillRect(i * bw + 10, H * (0.95 - h * 0.5), bw - 20, H * h * 0.5); });
     ctx.fillStyle = GLOW(0.5); ctx.fillRect(W / 2 - 1, 0, 3, H);
     dot(W / 2 + 0.5, 12, 7, ACCENT); dot(W / 2 + 0.5, H - 12, 7, '#9FD4FF');
   }
