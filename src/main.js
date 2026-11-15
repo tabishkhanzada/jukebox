@@ -48,6 +48,8 @@ const voiceGuide = new VoiceGuide({
     const heroBtn = $('hero-guide-btn');
     if (heroBtn) {
       heroBtn.textContent = speaking ? 'Stop audio guide' : 'Listen to audio guide';
+      heroBtn.setAttribute('aria-pressed', String(speaking));
+      heroBtn.classList.toggle('active', speaking);
     }
   },
 });

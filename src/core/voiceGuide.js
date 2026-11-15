@@ -43,6 +43,9 @@ export class VoiceGuide {
     utt.pitch = 1.0;
     utt.lang = 'en-US';
 
+    this.speaking = true;
+    this.onStateChange?.(true);
+
     utt.onstart = () => {
       this.speaking = true;
       this.onStateChange?.(true);

@@ -533,6 +533,12 @@ kbd {
   font-size: clamp(0.9rem, 1vw, 0.95rem);
 }
 
+#hero-guide-btn[aria-pressed='true'] {
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 700;
+}
+
 /* ==========================================================================
    Main Observatory Deck Layout
    ========================================================================== */

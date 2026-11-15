@@ -29,11 +29,6 @@
             <svg viewBox="0 0 24 24" aria-hidden="true" id="theme-icon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
             <span id="theme-text">Dark mode</span>
           </button>
-          <button type="button" class="btn small voice-guide-btn" id="voice-guide-btn" aria-pressed="false" aria-label="Audio navigation guide, press H to start or stop">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" /></svg>
-            <span id="voice-guide-text">Audio guide</span>
-            <kbd>H</kbd>
-          </button>
           <div class="shortcuts-dropdown-wrap" data-ui>
             <button type="button" class="btn small shortcuts-btn" id="shortcuts-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="View keyboard shortcuts">
               <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2" /><line x1="6" y1="8" x2="6" y2="8" /><line x1="10" y1="8" x2="10" y2="8" /><line x1="14" y1="8" x2="14" y2="8" /><line x1="18" y1="8" x2="18" y2="8" /><line x1="6" y1="12" x2="6" y2="12" /><line x1="10" y1="12" x2="10" y2="12" /><line x1="14" y1="12" x2="14" y2="12" /><line x1="18" y1="12" x2="18" y2="12" /><line x1="8" y1="16" x2="16" y2="16" /></svg>
@@ -76,7 +71,7 @@
           <p class="hero-statement">NASA satellite telemetry and deep-space observations translated into accessible spatial audio in your browser.</p>
           <div class="hero-actions">
             <button type="button" class="btn primary" id="hero-listen-btn">Listen to satellite audio</button>
-            <button type="button" class="btn ghost" id="hero-guide-btn">Listen to audio guide</button>
+            <button type="button" class="btn ghost" id="hero-guide-btn" aria-pressed="false" aria-label="Spoken audio navigation guide, press H to start or stop">Listen to audio guide</button>
             <a href="#channels" class="btn ghost">Browse the 8 channels</a>
           </div>
         </div>
