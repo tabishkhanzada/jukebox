@@ -506,8 +506,31 @@ kbd {
 .hero-actions {
   display: flex;
   align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
+  gap: clamp(10px, 1.4vw, 16px);
+  flex-wrap: nowrap;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hero-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.hero-actions .btn {
+  white-space: nowrap;
+  flex: none;
+}
+
+.hero-actions .btn.primary {
+  padding: 10px clamp(16px, 1.5vw, 22px);
+  font-size: clamp(0.95rem, 1.05vw, 1.05rem);
+}
+
+.hero-actions .btn.ghost {
+  padding: 9px clamp(12px, 1.2vw, 16px);
+  font-size: clamp(0.9rem, 1vw, 0.95rem);
 }
 
 /* ==========================================================================

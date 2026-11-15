@@ -159,7 +159,7 @@ test.describe('Step 8 — accessibility', () => {
       return { backdrop: g.backdropFilter, border: g.borderTopStyle, shadow: g.boxShadow };
     });
     const samples = reqs.filter((u) => u.includes('/samples/'));
-    log8(`[forced-colors + reduced-motion] card backdrop-filter ${st.backdrop}, border ${st.border}, shadow ${st.shadow}; requests at first load ${reqs.length}, sample files loaded ${samples.length}`);
+    log8(`[forced-colors + reduced-motion] card backdrop-filter ${st.backdrop}, border ${st.border}, shd ${st.shadow}; requests at first load ${reqs.length}, sample files loaded ${samples.length}`);
     expect(st.backdrop).toBe('none'); expect(st.border).toBe('solid'); expect(samples).toEqual([]);
   });
 });
