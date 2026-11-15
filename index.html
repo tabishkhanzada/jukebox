@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Hear NASA Earth videos and maps as sound: an accessible data sonification tool for blind and low-vision people." />
+    <meta name="theme-color" content="#ffffff" id="meta-theme-color" />
+    <title>Earth Information Jukebox: NASA Data Sonification</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23152035'/%3E%3Cpath d='M9 18v-4M13 21V11M17 19v-6M21 22V10M25 17v-2' stroke='%2338bdf8' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E" />
+  </head>
+  <body data-mode="video" data-theme="light">
+    <a class="skip-link" href="#stage-col">Skip to the audio player</a>
+
+    <header class="topbar">
+      <div class="topbar-in">
+        <div class="brand">
+          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" /><path d="M9 18v-4M13 21V11M17 19v-6M21 22V10M25 17v-2" /></svg>
+          <div>
+            <h2 class="brand-title">Earth Information Jukebox</h2>
+            <p class="tagline">NASA Space Apps Challenge</p>
+          </div>
+        </div>
+        <div class="mode-switch" role="radiogroup" aria-label="Mode">
+          <label class="seg"><input type="radio" name="mode" value="video" checked /><span>Video sonification</span></label>
+          <label class="seg"><input type="radio" name="mode" value="picture" /><span>Satellite maps</span></label>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" class="btn small theme-toggle-btn" id="theme-toggle-btn" aria-label="Switch to dark mode">
+            <svg viewBox="0 0 24 24" aria-hidden="true" id="theme-icon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
+            <span id="theme-text">Dark mode</span>
+          </button>
+          <button type="button" class="btn small voice-guide-btn" id="voice-guide-btn" aria-pressed="false" aria-label="Audio navigation guide, press H to start or stop">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" /></svg>
+            <span id="voice-guide-text">Audio guide</span>
+            <kbd>H</kbd>
+          </button>
+          <p class="kbd-hint"><b>Shortcuts:</b> <kbd>Space</kbd> play · <kbd>1–8</kbd> channels · <kbd>H</kbd> guide</p>
+        </div>
+      </div>
+    </header>
+
+    <main id="app">
+      <!-- HERO -->
+      <section class="hero-section" aria-labelledby="hero-title">
+        <div class="hero-content">
+          <h1 class="hero-headline" id="hero-title">Hear the Living Earth.</h1>
+          <p class="hero-statement">NASA satellite telemetry and deep-space observations translated into accessible spatial audio in your browser.</p>
+          <div class="hero-actions">
+            <button type="button" class="btn primary" id="hero-listen-btn">Listen to satellite audio</button>
+            <button type="button" class="btn ghost" id="hero-guide-btn">Listen to audio guide</button>
+            <a href="#channels" class="btn ghost">Browse the 8 channels</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- OBSERVATORY DECK -->
+      <div class="layout">
+        <div class="side">
+          <!-- CONTROLS -->
+          <section class="panel glass controls" id="controls" data-ui aria-labelledby="controls-h">
+            <div class="panel-head">
+              <h2 id="controls-h"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" /><circle cx="16" cy="6" r="2" /><circle cx="10" cy="12" r="2" /><circle cx="18" cy="18" r="2" /></svg>Controls</h2>
+              <span class="tag" id="mode-tag">Video mode</span>
+            </div>
+
+            <form id="video-controls" class="mode-form" data-mode="video" novalidate>
+              <div class="field">
+                <label for="video-type">Video channel</label>
+                <select id="video-type">
+                  <option value="airQuality">Air Quality (PM2.5)</option>
+                  <option value="weather">Weather (Near-surface wind)</option>
+                  <option value="co2">Carbon Dioxide (CO2)</option>
+                  <option value="space">Space (Stars)</option>
+                </select>
+              </div>
+              <div class="field file-row" id="video-file-row" hidden>
+                <p class="file-chip"><span class="muted">Your file:</span> <span class="file-name" id="video-file-name"></span></p>
+                <div class="file-actions">
+                  <label class="file-btn" for="video-file">Change file</label>
+                  <button type="button" class="btn small" id="video-use-sample">Use sample instead</button>
+                </div>
+              </div>
+              <input id="video-file" type="file" accept="video/mp4,video/webm" class="visually-hidden" aria-label="Choose your own video file" />
+              <div class="field">
+                <div class="label-row">
+                  <label for="video-speed" id="video-speed-label">Scan speed (seconds per sweep)</label>
+                  <output id="video-speed-out" for="video-speed">4 s</output>
+                </div>
+                <input id="video-speed" type="range" min="2" max="10" step="1" value="4" aria-describedby="video-speed-out" />
+              </div>
+              <div class="field" id="space-turns-field" hidden>
+                <label for="space-turns">Number of turns</label>
+                <select id="space-turns"><option>1</option><option selected>2</option><option>3</option></select>
+              </div>
+              <p class="help muted" id="video-help">A line moves left to right. Only the part under the line makes sound.</p>
+            </form>
+
+            <form id="picture-controls" class="mode-form" data-mode="picture" novalidate hidden>
+              <div class="field">
+                <label for="picture-layer">Map layer</label>
+                <select id="picture-layer">
+                  <option value="temperature">Temperature (Sea Surface)</option>
+                  <option value="precipitation">Precipitation (Rain and Snow)</option>
+                  <option value="aerosol">Aerosol (Air Quality)</option>
+                  <option value="vegetation">Vegetation (NDVI)</option>
+                </select>
+              </div>
+              <div class="field file-row" id="picture-file-row" hidden>
+                <p class="file-chip"><span class="muted">Your file:</span> <span class="file-name" id="picture-file-name"></span></p>
+                <div class="file-actions">
+                  <label class="file-btn" for="picture-file">Change file</label>
+                  <button type="button" class="btn small" id="picture-use-sample">Use sample instead</button>
+                </div>
+              </div>
+              <input id="picture-file" type="file" accept="image/png,image/jpeg" class="visually-hidden" aria-label="Choose your own picture file" />
+              <div class="field">
+                <div class="label-row">
+                  <label for="picture-sweep">Sweep length (seconds)</label>
+                  <output id="picture-sweep-out" for="picture-sweep">32 s</output>
+                </div>
+                <input id="picture-sweep" type="range" min="16" max="64" step="4" value="32" aria-describedby="picture-sweep-out" />
+              </div>
+              <fieldset class="field">
+                <legend>Scan pattern</legend>
+                <div class="radio-row" role="radiogroup" aria-describedby="pattern-help">
+                  <label><input type="radio" name="pattern" value="zigzag" checked /> Zig-zag</label>
+                  <label><input type="radio" name="pattern" value="straight" /> Straight</label>
+                </div>
+                <p class="help muted" id="pattern-help">Zig-zag visits regions going down one strip and up the next. Straight proceeds top to bottom.</p>
+              </fieldset>
+            </form>
+
+            <p class="engine-status" id="engine-status"><span class="dot ok" aria-hidden="true"></span><span id="engine-text">Sound is synthesized on your computer</span></p>
+            <div class="error" id="error" role="alert" hidden></div>
+          </section>
+
+          <!-- HOW THIS SOUND IS MADE -->
+          <section class="pipeline" aria-labelledby="pipe-h">
+            <div class="panel-head">
+              <h2 id="pipe-h">How this sound is made</h2>
+              <span class="tag">44.1 kHz, 16-bit</span>
+            </div>
+            <p id="pipe-text"></p>
+          </section>
+        </div>
+
+        <!-- STAGE -->
+        <section class="stage-col" id="stage-col" data-ui aria-labelledby="stage-h" tabindex="-1">
+          <h2 id="stage-h" class="visually-hidden">Audio Player</h2>
+          <div class="panel glass stage-panel">
+            <div class="stage" id="stage">
+              <canvas id="stage-canvas" width="1280" height="720" role="img" aria-label="Nothing loaded yet. Choose a file or press Play."></canvas>
+              <span class="badge tl" id="badge-source" aria-hidden="true"></span>
+              <span class="badge tr" id="now-pos" aria-hidden="true"></span>
+              <span class="badge br" id="badge-time" aria-hidden="true"></span>
+              <div class="stage-empty" id="stage-empty">
+                <div class="drop-card">
+                  <span class="drop-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" /></svg></span>
+                  <p class="drop-title" id="drop-title">Add your video</p>
+                  <button type="button" class="btn pick" id="stage-pick">Choose video</button>
+                  <p class="drop-sub" id="drop-sub">MP4 or WebM, up to 5 minutes. You can also drop a file here, or press Play to hear the sample.</p>
+                </div>
+              </div>
+              <div class="processing" id="processing" hidden>
+                <p id="processing-text">Working…</p>
+                <progress id="processing-bar" max="1" value="0" aria-labelledby="processing-text"></progress>
+                <button type="button" class="btn ghost small" id="cancel" style="color: var(--stage-text)">Cancel</button>
+              </div>
+            </div>
+            <div class="transport" role="group" aria-label="Playback">
+              <button type="button" class="btn play" id="play" disabled aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-play" d="M8 5v14l11-7z" /><path class="i-pause" d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg></button>
+              <button type="button" class="btn small" id="mute" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zM17 9a4 4 0 0 1 0 6" /></svg><span id="mute-text">Mute</span></button>
+              <span class="time" id="time" aria-label="Time">0:00 / 0:00</span>
+              <input type="range" class="seek" id="seek" min="0" max="1000" step="1" value="0" aria-label="Position in the sound" disabled />
+              <span class="track-status" id="track-status"><span class="dot" aria-hidden="true"></span>No sound yet</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="lower" data-ui>
+          <!-- CAPTION -->
+          <section class="panel glass caption-panel" aria-labelledby="caption-h">
+            <div class="panel-head">
+              <h2 id="caption-h">Live caption</h2>
+              <span class="live-pill" aria-hidden="true">Live</span>
+            </div>
+            <p class="caption" id="caption" aria-live="polite" aria-atomic="true">Nothing is playing.</p>
+            <details class="transcript">
+              <summary>Show transcript</summary>
+              <ol id="transcript"></ol>
+            </details>
+          </section>
+
+          <!-- EXPORT -->
+          <section class="panel glass export" aria-labelledby="export-h">
+            <div class="panel-head">
+              <h2 id="export-h">Download and export</h2>
+            </div>
+            <div class="export-row">
+              <button type="button" class="btn" id="dl-video" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 9h18M8 5v4M16 5v4" /></svg><span id="dl-video-text">Download video</span></button>
+              <button type="button" class="btn" id="dl-wav" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="17" cy="16" r="3" /></svg>Download audio (WAV)</button>
+            </div>
+            <div class="rec" id="rec" hidden>
+              <label for="rec-bar" id="rec-text">Recording video…</label>
+              <progress id="rec-bar" max="1" value="0"></progress>
+            </div>
+            <p class="muted small" id="export-note">Press Play or choose a file first. Files are synthesized in your browser; nothing is uploaded.</p>
+          </section>
+        </div>
+
+        <!-- VALUES (Picture mode only) -->
+        <section class="panel glass values" id="values" data-ui aria-labelledby="values-h">
+          <h2 id="values-h">Values</h2>
+          <p class="values-sub muted" id="values-sub"></p>
+          <div class="table-wrap">
+            <table id="values-table">
+              <caption id="values-caption" class="visually-hidden">Colour to value table</caption>
+              <thead><tr><th scope="col">Colour</th><th scope="col">Value</th><th scope="col">Note</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="now"><span class="now-h">Now playing</span><span id="now-line">—</span></p>
+        </section>
+      </div>
+
+      <!-- 8 CHANNELS MATRIX -->
+      <section class="channels-section" id="channels" aria-labelledby="channels-title">
+        <div class="section-head">
+          <h2 id="channels-title">Eight Scientific Channels</h2>
+          <p>Select any NASA Earth observation or deep space dataset to hear its distinct sonification signature.</p>
+        </div>
+
+        <div class="channel-grid">
+          <!-- 1. Air Quality -->
+          <button type="button" class="channel-card" data-channel-mode="video" data-channel-id="airQuality">
+            <div class="channel-thumb-box">
+              <img src="samples/pictures/aerosol.png" alt="NASA Goddard global PM2.5 aerosol model" class="channel-thumb" width="640" height="400" loading="lazy" />
+              <span class="channel-badge">NASA GMAO</span>
+            </div>
+            <div class="channel-body">
+              <h3 class="channel-title">Air Quality (PM2.5)</h3>
+              <p class="channel-desc">Dark particulate plumes translated into low, resonant wind noise across 32 geographic columns.</p>
+              <span class="channel-action">Load channel →</span>
+            </div>
+          </button>
+
+          <!-- 2. Weather Wind -->
+          <button type="button" class="channel-card" data-channel-mode="video" data-channel-id="weather">
+            <div class="channel-thumb-box">
+              <video src="samples/videos/weather.mp4" class="channel-thumb" muted autoplay loop playsinline poster="samples/pictures/precipitation.png"></video>
+              <span class="channel-badge">GEOS-FP Wind</span>
+            </div>
+            <div class="channel-body">
+              <h3 class="channel-title">Near-Surface Wind</h3>
+              <p class="channel-desc">Cyan to red velocity vectors whistle across stereo channels; calm land remains silent.</p>
+              <span class="channel-action">Load channel →</span>
+            </div>
+          </button>
+
+          <!-- 3. Carbon Dioxide -->
+          <button type="button" class="channel-card" data-channel-mode="video" data-channel-id="co2">
+            <div class="channel-thumb-box">
+              <img src="samples/pictures/temperature.png" alt="NASA SVS DYAMOND atmospheric CO2 simulation" class="channel-thumb" width="640" height="400" loading="lazy" />
+              <span class="channel-badge">DYAMOND CO2</span>
+            </div>
+            <div class="channel-body">
+              <h3 class="channel-title">Carbon Dioxide Plumes</h3>
+              <p class="channel-desc">Golden atmospheric haze drives a deep resonant hum; intense emission hotspots trigger soft crackle.</p>
+              <span class="channel-action">Load channel →</span>
+            </div>
+          </button>
+
+          <!-- 4. Deep Space Stars -->
+          <button type="button" class="channel-card" data-channel-mode="video" data-channel-id="space">
+            <div class="channel-thumb-box">
+              <img src="samples/pictures/space-stars-clean.png" alt="Hubble and GSFC Caldwell 73 globular star cluster" class="channel-thumb" width="640" height="400" loading="lazy" />
+              <span class="channel-badge">Hubble Caldwell 73</span>
+            </div>
+            <div class="channel-body">
+              <h3 class="channel-title">Deep Space (Stars)</h3>
+              <p class="channel-desc">A 360-degree radar sweep touches stars in globular cluster NGC 1851, triggering harmonic chimes.</p>
+              <span class="channel-action">Load channel →</span>
+            </div>
+          </button>
+
+          <!-- 5. Sea Surface Temperature -->
+          <button type="button" class="channel-card" data-channel-mode="picture" data-channel-id="temperature">
+            <div class="channel-thumb-box">
+              <img src="samples/pictures/temperature.png" alt="Global sea surface temperature map" class="channel-thumb" width="640" height="400" loading="lazy" />
+              <span class="channel-badge">GHRSST MUR</span>
+            </div>
+            <div class="channel-body">
+              <h3 class="channel-title">Sea Surface Temperature</h3>
+              <p class="channel-desc">Official ocean temperature bands sonified through soft piano pitches from freezing to tropical heat.</p>
+              <span class="channel-action">Load channel →</span>
+            </div>
+          </button>
+
+          <!-- 6. Precipitation -->
+          <button type="button" class="channel-card" data-channel-mode="picture" data-channel-id="precipitation">
+            <div class="channel-thumb-box">
+              <img src="samples/pictures/precipitation.png" alt="Global precipitation rainfall and snow rate map" class="channel-thumb" width="640" height="400" loading="lazy" />
+              <span class="channel-badge">GPM IMERG</span>
+            </div>
+            <div class="channel-body">
+              <h3 class="channel-title">Precipitation (Rain and Snow)</h3>
+              <p class="channel-desc">Rainfall mapped to acoustic water droplet drops; snowfall mapped to delicate music-box bells.</p>
+              <span class="channel-action">Load channel →</span>
+            </div>
+          </button>
+
+          <!-- 7. Aerosol Depth -->
+          <button type="button" class="channel-card" data-channel-mode="picture" data-channel-id="aerosol">
+            <div class="channel-thumb-box">
+              <img src="samples/pictures/aerosol.png" alt="VIIRS aerosol optical depth deep blue map" class="channel-thumb" width="640" height="400" loading="lazy" />
+              <span class="channel-badge">VIIRS Deep Blue</span>
+            </div>
+            <div class="channel-body">
+              <h3 class="channel-title">Aerosol Optical Depth</h3>
+              <p class="channel-desc">Satellite airborne particulate thickness rendered through warm ambient synthesized pad chords.</p>
+              <span class="channel-action">Load channel →</span>
+            </div>
+          </button>
+
+          <!-- 8. Vegetation NDVI -->
+          <button type="button" class="channel-card" data-channel-mode="picture" data-channel-id="vegetation">
+            <div class="channel-thumb-box">
+              <img src="samples/pictures/vegetation.png" alt="Global photosynthetic vegetation index map" class="channel-thumb" width="640" height="400" loading="lazy" />
+              <span class="channel-badge">NOAA-21 VIIRS</span>
+            </div>
+            <div class="channel-body">
+              <h3 class="channel-title">Vegetation Index (NDVI)</h3>
+              <p class="channel-desc">Photosynthetic canopy density across continents translated into resonant wooden marimba notes.</p>
+              <span class="channel-action">Load channel →</span>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <!-- ACOUSTIC SCIENCE EXPLAINER -->
+      <section class="science-section" aria-labelledby="science-title">
+        <div class="section-head">
+          <h2 id="science-title">The Sonification Architecture</h2>
+          <p>How satellite imagery becomes spatial sound without uploading files to any server.</p>
+        </div>
+
+        <div class="science-grid">
+          <div class="science-card">
+            <h3>1. Spatial Dissection</h3>
+            <p>Each video frame or map is partitioned into 32 vertical columns and 3 latitudinal tiers (96 distinct acoustic sectors). Color arrays are extracted client-side using offscreen canvases.</p>
+          </div>
+          <div class="science-card">
+            <h3>2. Legend Calibration</h3>
+            <p>Colors are matched in perceptual CIELAB space against official NASA GIBS scientific palettes, mapping directly to physical units: degrees Celsius, millimeters per hour, AOD, and NDVI.</p>
+          </div>
+          <div class="science-card">
+            <h3>3. Binaural Synthesis</h3>
+            <p>Dedicated Web Workers run pure DSP engines with biquad filters, seeded stochastic noise, and envelope smoothers, panning sound across stereo channels in sync with the visual scan.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-in">
+        <p class="footer-copy">Earth Information Jukebox is an open-source sonification project for NASA Space Apps Challenge #14. Visuals and data: NASA Goddard Space Flight Center (GMAO, SVS, Worldview/GIBS).</p>
+        <p class="footer-copy">All audio synthesis runs 100% locally in your browser via Web Audio and Web Workers.</p>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

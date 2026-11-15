@@ -1,0 +1,16 @@
+PASS   text on glass: 12.37:1
+PASS   muted on glass: 6.84:1
+PASS   muted on glass+aurora: 5.34:1
+PASS   text on glass+aurora: 9.66:1
+PASS   accent (link/focus) on glass: 7.34:1
+PASS   on-accent text on accent2 (Generate/Play): 10.84:1
+PASS   on-accent on accent (mode switch): 9.85:1
+PASS   error text on error box: 9.07:1
+PASS mobile no horizontal scroll: scrollWidth 390 <= 390
+Measured contrast (desktop): 37 text elements, minimum 4.58:1 ("Upload")
+PASS rendered text contrast >= 4.5:1 (exceptions are disabled controls only: true)
+PASS tab order: skip link → mode → controls → generate → player
+PASS prefers-reduced-motion: aurora animation-name = none
+PASS prefers-reduced-transparency: backdrop-filter=none, background=rgba(16, 26, 58, 0.96)
+Measured contrast (reduced transparency): 37 text elements, minimum 4.73:1 ("Upload")
+PASS console errors: 0 

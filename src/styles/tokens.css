@@ -1,0 +1,73 @@
+/* tokens.css — design tokens for Earth Information Jukebox:
+   White light theme by default (Cleanroom laboratory / scientific journal) with full contrast,
+   plus Observatory dark theme. Surfaces separated by tonal steps (no static drop shadows). */
+:root {
+  --bg: #ffffff;
+  --bg-deep: #f8fafc;
+  --card: #f8fafc;
+  --card-soft: #f1f5f9;
+  --card-raised: #e2e8f0;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --muted: #334155;
+  --primary: #075985;
+  --primary-hover: #0369a1;
+  --primary-soft: rgba(7, 89, 133, 0.10);
+  --on-primary: #ffffff;
+  --orange: #c2410c;
+  --orange-hover: #9a3412;
+  --on-orange: #ffffff;
+  --ok: #166534;
+  --err: #b91c1c;
+  --err-soft: rgba(185, 28, 28, 0.10);
+  --stage: #090e1c;
+  --stage-text: #f1f5f9;
+  --accent: #075985;
+
+  /* layer accents (Okabe-Ito, colour-blind safe) */
+  --l-temperature: #c2410c;
+  --l-precipitation: #075985;
+  --l-aerosol: #d97706;
+  --l-vegetation: #15803d;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+
+  --font-head: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --fs-base: 17px;
+  --lh: 1.6;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-fast: 160ms;
+  --t-med: 280ms;
+}
+
+[data-theme='dark'] {
+  --bg: #070a12;
+  --bg-deep: #03060a;
+  --card: #0e1524;
+  --card-soft: #152035;
+  --card-raised: #1c2a44;
+  --border: #1e2c47;
+  --text: #f8fafc;
+  --muted: #a6b5c9;
+  --primary: #38bdf8;
+  --primary-hover: #7dd3fc;
+  --primary-soft: rgba(56, 189, 248, 0.14);
+  --on-primary: #030712;
+  --orange: #f59e0b;
+  --orange-hover: #fbbf24;
+  --on-orange: #0a0f1d;
+  --ok: #22c55e;
+  --err: #ef4444;
+  --err-soft: rgba(239, 68, 68, 0.16);
+  --stage: #090e1c;
+  --stage-text: #f1f5f9;
+  --accent: #38bdf8;
+
+  --l-temperature: #f59e0b;
+  --l-precipitation: #38bdf8;
+  --l-aerosol: #fb923c;
+  --l-vegetation: #34d399;
+}
